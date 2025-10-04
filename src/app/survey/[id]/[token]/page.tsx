@@ -160,8 +160,11 @@ export default function TokenSurveyResponse() {
                     <h3 className="font-semibold text-gray-900 mb-2">
                       {index + 1}. {question.question}
                     </h3>
+                    {question.description && (
+                      <p className="text-gray-600 text-sm mb-3 leading-relaxed">{question.description}</p>
+                    )}
                     <div className="text-gray-700">
-                      {question.type === 'multiple-choice' || question.type === 'text' || question.type === 'rating' ? (
+                      {question.type === 'single-choice' || question.type === 'multiple-choice' || question.type === 'text' || question.type === 'rating' ? (
                         <p className="bg-gray-50 p-3 rounded-lg">{answer?.answer}</p>
                       ) : question.type === 'checkbox' ? (
                         <div className="bg-gray-50 p-3 rounded-lg">
@@ -284,6 +287,9 @@ export default function TokenSurveyResponse() {
                         {question.question}
                         {question.required && <span className="text-red-500 ml-2">*</span>}
                       </h3>
+                      {question.description && (
+                        <p className="text-gray-600 text-sm mb-3 leading-relaxed">{question.description}</p>
+                      )}
                       {hasError && (
                         <p className="text-red-600 text-sm font-medium">This question is required</p>
                       )}
@@ -308,6 +314,44 @@ export default function TokenSurveyResponse() {
                         <div className="absolute bottom-3 right-3 text-xs text-gray-400">
                           {(answers[question.id] as string || '').length} characters
                         </div>
+                      </div>
+                    )}
+
+                    {question.type === 'single-choice' && (
+                      <div className="space-y-3">
+                        {question.options?.map((option, optionIndex) => (
+                          <label
+                            key={optionIndex}
+                            className={`flex items-center p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 group hover:bg-indigo-50 ${
+                              answers[question.id] === option
+                                ? 'border-indigo-500 bg-indigo-50'
+                                : 'border-gray-200 hover:border-indigo-300'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={question.id}
+                              value={option}
+                              checked={answers[question.id] === option}
+                              onChange={(e) => handleAnswer(question.id, e.target.value)}
+                              className="sr-only"
+                            />
+                            <div className={`w-5 h-5 rounded-full border-2 mr-4 flex items-center justify-center ${
+                              answers[question.id] === option
+                                ? 'border-indigo-500 bg-indigo-500'
+                                : 'border-gray-300 group-hover:border-indigo-400'
+                            }`}>
+                              {answers[question.id] === option && (
+                                <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                              )}
+                            </div>
+                            <span className={`text-lg font-medium ${
+                              answers[question.id] === option ? 'text-indigo-900' : 'text-gray-700'
+                            }`}>
+                              {option}
+                            </span>
+                          </label>
+                        ))}
                       </div>
                     )}
 

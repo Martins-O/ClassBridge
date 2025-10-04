@@ -33,6 +33,42 @@ function CreateSurveyContent() {
     setQuestions(questions.filter(q => q.id !== id));
   };
 
+  // Calculate estimated survey duration
+  const calculateSurveyDuration = () => {
+    let totalMinutes = 0;
+
+    questions.forEach(question => {
+      switch (question.type) {
+        case 'text':
+          totalMinutes += 1; // 1 minute for text input
+          break;
+        case 'single-choice':
+          totalMinutes += 0.5; // 30 seconds for single choice
+          break;
+        case 'multiple-choice':
+          totalMinutes += 0.75; // 45 seconds for multiple choice
+          break;
+        case 'checkbox':
+          totalMinutes += 0.75; // 45 seconds for checkbox
+          break;
+        case 'rating':
+          totalMinutes += 0.5; // 30 seconds for rating
+          break;
+        default:
+          totalMinutes += 0.5;
+      }
+    });
+
+    // Add base time for reading title and description
+    totalMinutes += 0.5;
+
+    // Round to nearest 0.5 minutes
+    totalMinutes = Math.round(totalMinutes * 2) / 2;
+
+    // Minimum 1 minute
+    return Math.max(1, totalMinutes);
+  };
+
   const addOption = (questionId: string) => {
     setQuestions(questions.map(q =>
       q.id === questionId
@@ -112,9 +148,14 @@ function CreateSurveyContent() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
       </svg>
     ),
-    'multiple-choice': (
+    'single-choice': (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    'multiple-choice': (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 713.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 713.138-3.138z" />
       </svg>
     ),
     checkbox: (
@@ -198,6 +239,28 @@ function CreateSurveyContent() {
                   placeholder="Describe what this survey is about and why responses matter..."
                 />
               </div>
+
+              {/* Survey Duration */}
+              {questions.length > 0 && (
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-4 border border-indigo-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-indigo-900">Estimated Duration</h3>
+                      <p className="text-lg font-bold text-indigo-700">
+                        {calculateSurveyDuration()} {calculateSurveyDuration() === 1 ? 'minute' : 'minutes'}
+                      </p>
+                      <p className="text-xs text-indigo-600">
+                        Based on {questions.length} {questions.length === 1 ? 'question' : 'questions'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -252,6 +315,7 @@ function CreateSurveyContent() {
                         </div>
                         <div className={`flex items-center space-x-2 px-3 py-2 rounded-xl border-2 ${
                           question.type === 'text' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                          question.type === 'single-choice' ? 'bg-teal-50 border-teal-200 text-teal-700' :
                           question.type === 'multiple-choice' ? 'bg-green-50 border-green-200 text-green-700' :
                           question.type === 'checkbox' ? 'bg-purple-50 border-purple-200 text-purple-700' :
                           'bg-orange-50 border-orange-200 text-orange-700'
@@ -319,15 +383,29 @@ function CreateSurveyContent() {
                         />
                       </div>
 
+                      {/* Question Description (Optional) */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-3">
+                          Description <span className="text-gray-400 font-normal">(Optional)</span>
+                        </label>
+                        <textarea
+                          value={question.description || ''}
+                          onChange={(e) => updateQuestion(question.id, 'description', e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 text-gray-900 font-medium placeholder-gray-400 min-h-[80px] resize-none"
+                          placeholder="Add additional context or instructions for this question..."
+                        />
+                      </div>
+
                       {/* Question Type */}
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-3">
                           Question Type
                         </label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          {(['text', 'multiple-choice', 'checkbox', 'rating'] as const).map((type) => {
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                          {(['text', 'single-choice', 'multiple-choice', 'checkbox', 'rating'] as const).map((type) => {
                             const typeColors = {
                               text: { bg: 'bg-blue-50', border: 'border-blue-500', text: 'text-blue-700', icon: 'text-blue-600' },
+                              'single-choice': { bg: 'bg-teal-50', border: 'border-teal-500', text: 'text-teal-700', icon: 'text-teal-600' },
                               'multiple-choice': { bg: 'bg-green-50', border: 'border-green-500', text: 'text-green-700', icon: 'text-green-600' },
                               checkbox: { bg: 'bg-purple-50', border: 'border-purple-500', text: 'text-purple-700', icon: 'text-purple-600' },
                               rating: { bg: 'bg-orange-50', border: 'border-orange-500', text: 'text-orange-700', icon: 'text-orange-600' }
@@ -378,7 +456,7 @@ function CreateSurveyContent() {
                       </div>
 
                       {/* Options for choice questions */}
-                      {(question.type === 'multiple-choice' || question.type === 'checkbox') && (
+                      {(question.type === 'single-choice' || question.type === 'multiple-choice' || question.type === 'checkbox') && (
                         <div>
                           <div className="flex justify-between items-center mb-3">
                             <label className="block text-sm font-semibold text-gray-700">

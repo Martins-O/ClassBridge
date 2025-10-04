@@ -2,8 +2,9 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IQuestion {
   id: string;
-  type: 'text' | 'multiple-choice' | 'checkbox' | 'rating';
+  type: 'text' | 'single-choice' | 'multiple-choice' | 'checkbox' | 'rating';
   question: string;
+  description?: string;
   options?: string[];
   required: boolean;
   ratingConfig?: {
@@ -29,9 +30,10 @@ const QuestionSchema = new Schema({
   type: {
     type: String,
     required: true,
-    enum: ['text', 'multiple-choice', 'checkbox', 'rating']
+    enum: ['text', 'single-choice', 'multiple-choice', 'checkbox', 'rating']
   },
   question: { type: String, required: true },
+  description: { type: String },
   options: [{ type: String }],
   required: { type: Boolean, default: false },
   ratingConfig: {
