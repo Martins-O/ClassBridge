@@ -103,7 +103,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse"></div>
@@ -111,25 +111,83 @@ export default function RegisterPage() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-pink-400/10 to-indigo-400/10 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
-      <div className={`max-w-md w-full mx-4 relative z-10 transform transition-all duration-1000 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/30 p-8 hover:shadow-3xl transition-all duration-500 hover:scale-[1.02]">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <Link href="/" className="inline-flex items-center space-x-2 mb-6 group">
-              <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                </svg>
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent group-hover:from-indigo-700 group-hover:to-purple-700 transition-all duration-300">
-                SurveyPro
-              </span>
-            </Link>
+      <div className="min-h-screen flex relative z-10">
+        {/* Left Side - Information */}
+        <div className={`hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600 relative overflow-hidden transform transition-all duration-1000 ${mounted ? 'translate-x-0 opacity-100' : '-translate-x-8 opacity-0'}`}>
+          {/* Information side background pattern */}
+          <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-transparent"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="w-2 h-2 bg-white/20 rounded-full absolute top-20 left-20 animate-pulse"></div>
+            <div className="w-1 h-1 bg-white/20 rounded-full absolute top-32 left-32 animate-pulse delay-500"></div>
+            <div className="w-3 h-3 bg-white/20 rounded-full absolute top-40 left-16 animate-pulse delay-1000"></div>
+            <div className="w-2 h-2 bg-white/20 rounded-full absolute bottom-32 right-20 animate-pulse delay-300"></div>
+            <div className="w-1 h-1 bg-white/20 rounded-full absolute bottom-20 right-32 animate-pulse delay-700"></div>
+          </div>
+
+          <div className="relative flex flex-col justify-center items-start p-16 text-white">
             <div className={`transform transition-all duration-700 delay-200 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Create Account</h1>
-              <p className="text-gray-600">Start creating amazing surveys today</p>
+              <div className="mb-8">
+                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-sm">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  </svg>
+                </div>
+                <h1 className="text-4xl font-bold mb-6 leading-tight">
+                  Join thousands using
+                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white to-indigo-200">
+                    SurveyPro
+                  </span>
+                </h1>
+                <p className="text-xl text-indigo-100 leading-relaxed mb-8">
+                  Create your account and start building powerful surveys to collect valuable insights from your audience.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                  <span className="text-indigo-100">Free to get started</span>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                  <span className="text-indigo-100">No credit card required</span>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                  <span className="text-indigo-100">Beautiful survey templates</span>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                  <span className="text-indigo-100">Instant response analytics</span>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Right Side - Form */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+          <div className={`w-full max-w-md transform transition-all duration-1000 delay-300 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+            <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/30 p-8 hover:shadow-3xl transition-all duration-500">
+              {/* Header */}
+              <div className="text-center mb-8">
+                <div className="lg:hidden mb-6">
+                  <Link href="/" className="inline-flex items-center space-x-2 group">
+                    <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                      </svg>
+                    </div>
+                    <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent group-hover:from-indigo-700 group-hover:to-purple-700 transition-all duration-300">
+                      SurveyPro
+                    </span>
+                  </Link>
+                </div>
+                <div className={`transform transition-all duration-700 delay-200 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Create Account</h1>
+                  <p className="text-gray-600">Start creating amazing surveys today</p>
+                </div>
+              </div>
 
           {/* Error Message */}
           {error && (
@@ -376,6 +434,8 @@ export default function RegisterPage() {
                 <span className="absolute inset-0 bg-gradient-to-r from-indigo-100 to-purple-100 opacity-0 group-hover:opacity-30 transition-opacity duration-300 -z-10 rounded"></span>
               </Link>
             </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
