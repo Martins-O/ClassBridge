@@ -23,7 +23,7 @@ function CreateSurveyContent() {
     setQuestions([...questions, newQuestion]);
   };
 
-  const updateQuestion = (id: string, field: keyof IQuestion, value: string | boolean | string[]) => {
+  const updateQuestion = (id: string, field: keyof IQuestion, value: string | boolean | string[] | Partial<{ min: number; max: number; minLabel: string; maxLabel: string }>) => {
     setQuestions(questions.map(q =>
       q.id === id ? { ...q, [field]: value } : q
     ));

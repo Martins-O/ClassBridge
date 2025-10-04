@@ -347,7 +347,7 @@ function DashboardContent() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
                     {responses.map((response, responseIndex) => (
-                      <tr key={response._id} className="hover:bg-gray-50/50 transition-colors">
+                      <tr key={String(response._id)} className="hover:bg-gray-50/50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
@@ -516,7 +516,7 @@ function DashboardContent() {
         ) : (
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {surveys.map((survey) => (
-              <div key={survey._id} className="group bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-white/20">
+              <div key={String(survey._id)} className="group bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-white/20">
                 <div className="mb-6">
                   <div className="flex items-start justify-between mb-4">
                     <h3 className="text-xl font-bold text-gray-900 leading-tight group-hover:text-indigo-600 transition-colors">
