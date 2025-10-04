@@ -175,7 +175,7 @@ export default function SurveyResponse() {
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Survey Not Found</h2>
-          <p className="text-gray-600 mb-8">The survey you're looking for doesn't exist or may have been removed.</p>
+          <p className="text-gray-600 mb-8">The survey you&apos;re looking for doesn&apos;t exist or may have been removed.</p>
           <Link
             href="/"
             className="inline-flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"

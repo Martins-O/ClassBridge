@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ISurvey } from '@/models/Survey';
-import { IAnswer } from '@/models/Response';
+import { IAnswer, IResponse } from '@/models/Response';
 
 export default function TokenSurveyResponse() {
   const params = useParams();
@@ -14,7 +14,7 @@ export default function TokenSurveyResponse() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [existingResponse, setExistingResponse] = useState<any>(null);
+  const [existingResponse, setExistingResponse] = useState<IResponse | null>(null);
   const [showValidationErrors, setShowValidationErrors] = useState<string[]>([]);
 
   useEffect(() => {
@@ -145,7 +145,7 @@ export default function TokenSurveyResponse() {
               Response Submitted
             </h1>
             <p className="text-gray-600 text-lg mb-8">
-              Thank you for completing this survey. Here's what you submitted:
+              Thank you for completing this survey. Here&apos;s what you submitted:
             </p>
           </div>
 
@@ -154,7 +154,7 @@ export default function TokenSurveyResponse() {
 
             <div className="space-y-6">
               {survey?.questions.map((question, index) => {
-                const answer = existingResponse.answers.find((a: any) => a.questionId === question.id);
+                const answer = existingResponse.answers.find((a: IAnswer) => a.questionId === question.id);
                 return (
                   <div key={question.id} className="border-b border-gray-200 pb-4">
                     <h3 className="font-semibold text-gray-900 mb-2">
@@ -198,7 +198,7 @@ export default function TokenSurveyResponse() {
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Survey Not Found</h2>
-          <p className="text-gray-600 mb-8">The survey link you're looking for doesn't exist or may have been removed.</p>
+          <p className="text-gray-600 mb-8">The survey link you&apos;re looking for doesn&apos;t exist or may have been removed.</p>
           <Link
             href="/"
             className="inline-flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"

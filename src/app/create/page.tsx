@@ -23,7 +23,7 @@ function CreateSurveyContent() {
     setQuestions([...questions, newQuestion]);
   };
 
-  const updateQuestion = (id: string, field: keyof IQuestion, value: any) => {
+  const updateQuestion = (id: string, field: keyof IQuestion, value: string | boolean | string[]) => {
     setQuestions(questions.map(q =>
       q.id === id ? { ...q, [field]: value } : q
     ));
@@ -228,7 +228,7 @@ function CreateSurveyContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No questions yet</h3>
-                <p className="text-gray-600 mb-4">Click "Add Question" to start building your survey</p>
+                <p className="text-gray-600 mb-4">Click &quot;Add Question&quot; to start building your survey</p>
                 <button
                   type="button"
                   onClick={addQuestion}
