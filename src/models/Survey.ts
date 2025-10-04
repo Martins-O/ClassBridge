@@ -19,6 +19,7 @@ export interface ISurvey extends Document {
   description: string;
   questions: IQuestion[];
   uniqueId: string;
+  createdBy: string; // User ID
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,6 +47,7 @@ const SurveySchema = new Schema({
   description: { type: String, required: true },
   questions: [QuestionSchema],
   uniqueId: { type: String, required: true, unique: true },
+  createdBy: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

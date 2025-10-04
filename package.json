@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@prisma/client": "^6.16.3",
+    "@types/bcryptjs": "^2.4.6",
     "@types/mongoose": "^5.11.96",
     "@types/uuid": "^10.0.0",
+    "bcryptjs": "^3.0.2",
     "mongodb": "^6.20.0",
     "mongoose": "^8.19.0",
     "next": "15.5.4",

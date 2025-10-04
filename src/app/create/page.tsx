@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { IQuestion } from '@/models/Survey';
+import AuthGuard from '@/components/AuthGuard';
 
-export default function CreateSurvey() {
+function CreateSurveyContent() {
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -337,16 +338,19 @@ export default function CreateSurvey() {
                                 key={type}
                                 type="button"
                                 onClick={() => {
-                                  updateQuestion(question.id, 'type', type);
-                                  // Set default rating config when switching to rating type
+                                  // Update both type and rating config in one operation
+                                  const updatedQuestion = { ...question, type };
                                   if (type === 'rating') {
-                                    updateQuestion(question.id, 'ratingConfig', {
+                                    updatedQuestion.ratingConfig = {
                                       min: 1,
                                       max: 5,
                                       minLabel: 'Poor',
                                       maxLabel: 'Excellent'
-                                    });
+                                    };
                                   }
+                                  setQuestions(questions.map(q =>
+                                    q.id === question.id ? updatedQuestion : q
+                                  ));
                                 }}
                                 className={`p-5 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center space-y-3 transform hover:scale-105 ${
                                   question.type === type
@@ -602,5 +606,13 @@ export default function CreateSurvey() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function CreateSurvey() {
+  return (
+    <AuthGuard>
+      <CreateSurveyContent />
+    </AuthGuard>
   );
 }

@@ -7,6 +7,15 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
+    // Check authentication
+    const userId = request.cookies.get('userId')?.value;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const { title, description, questions } = await request.json();
 
     if (!title || !questions || questions.length === 0) {
@@ -20,7 +29,8 @@ export async function POST(request: NextRequest) {
       title,
       description,
       questions,
-      uniqueId: uuidv4()
+      uniqueId: uuidv4(),
+      createdBy: userId
     });
 
     await survey.save();
@@ -44,11 +54,21 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
-    const surveys = await Survey.find({})
+    // Check authentication
+    const userId = request.cookies.get('userId')?.value;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Only return surveys created by this user
+    const surveys = await Survey.find({ createdBy: userId })
       .select('title description uniqueId createdAt questions')
       .sort({ createdAt: -1 });
 

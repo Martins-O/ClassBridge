@@ -4,17 +4,20 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ISurvey } from '@/models/Survey';
 import { IResponse } from '@/models/Response';
+import AuthGuard from '@/components/AuthGuard';
 
 interface SurveyWithResponses extends ISurvey {
   responseCount: number;
 }
 
-export default function Dashboard() {
+function DashboardContent() {
   const [surveys, setSurveys] = useState<SurveyWithResponses[]>([]);
   const [selectedSurvey, setSelectedSurvey] = useState<ISurvey | null>(null);
   const [responses, setResponses] = useState<IResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLinkCopied, setShowLinkCopied] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSurveys();
@@ -69,6 +72,52 @@ export default function Dashboard() {
     navigator.clipboard.writeText(link);
     setShowLinkCopied(surveyId);
     setTimeout(() => setShowLinkCopied(null), 2000);
+  };
+
+  const generateUniqueLink = (surveyId: string) => {
+    // Generate a unique token for this respondent
+    const token = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const uniqueLink = `${window.location.origin}/survey/${surveyId}/${token}`;
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(uniqueLink);
+
+    // Show a different message for unique links
+    setShowLinkCopied(`unique_${surveyId}`);
+    setTimeout(() => setShowLinkCopied(null), 3000);
+
+    // Optional: Show an alert with the link for easy sharing
+    alert(`Unique survey link generated and copied to clipboard!\n\nLink: ${uniqueLink}\n\nThis link is for a single respondent and can only be used once.`);
+  };
+
+  const deleteSurvey = async (surveyId: string) => {
+    setDeleting(surveyId);
+    try {
+      const response = await fetch(`/api/surveys/${surveyId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Remove the survey from the list
+        setSurveys(surveys.filter(s => s.uniqueId !== surveyId));
+
+        // If this was the selected survey, clear the selection
+        if (selectedSurvey?.uniqueId === surveyId) {
+          setSelectedSurvey(null);
+          setResponses([]);
+        }
+
+        alert('Survey deleted successfully!');
+      } else {
+        alert('Failed to delete survey');
+      }
+    } catch (error) {
+      console.error('Error deleting survey:', error);
+      alert('Error deleting survey');
+    } finally {
+      setDeleting(null);
+      setShowDeleteConfirm(null);
+    }
   };
 
   const formatDate = (date: string | Date) => {
@@ -205,7 +254,17 @@ export default function Dashboard() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
-                  <span>{showLinkCopied === selectedSurvey.uniqueId ? 'Link Copied!' : 'Copy Survey Link'}</span>
+                  <span>{showLinkCopied === selectedSurvey.uniqueId ? 'Link Copied!' : 'Copy General Link'}</span>
+                </button>
+
+                <button
+                  onClick={() => generateUniqueLink(selectedSurvey.uniqueId)}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-orange-600 to-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                  <span>{showLinkCopied === `unique_${selectedSurvey.uniqueId}` ? 'Unique Link Copied!' : 'Generate Unique Link'}</span>
                 </button>
 
                 <Link
@@ -219,6 +278,16 @@ export default function Dashboard() {
                   </svg>
                   <span>Preview Survey</span>
                 </Link>
+
+                <button
+                  onClick={() => setShowDeleteConfirm(selectedSurvey.uniqueId)}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span>Delete Survey</span>
+                </button>
               </div>
             </div>
           </div>
@@ -254,7 +323,7 @@ export default function Dashboard() {
                   <thead className="bg-gray-50/50">
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Response
+                        Respondent
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Submitted
@@ -283,6 +352,17 @@ export default function Dashboard() {
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
                               #{responseIndex + 1}
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {response.respondentToken?.startsWith('anonymous_')
+                                  ? `Anonymous User ${responseIndex + 1}`
+                                  : `Respondent ${response.respondentToken?.slice(0, 8) || responseIndex + 1}`
+                                }
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                ID: {response.respondentToken?.slice(-8) || 'N/A'}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -503,7 +583,60 @@ export default function Dashboard() {
             ))}
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-3xl p-8 max-w-md mx-4 shadow-2xl">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 15.5C3.498 16.333 4.46 18 6 18z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Survey</h3>
+                <p className="text-gray-600 mb-6">
+                  Are you sure you want to delete this survey? This action will permanently delete the survey and all its responses. This cannot be undone.
+                </p>
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => setShowDeleteConfirm(null)}
+                    disabled={deleting === showDeleteConfirm}
+                    className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => deleteSurvey(showDeleteConfirm)}
+                    disabled={deleting === showDeleteConfirm}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:transform-none"
+                  >
+                    {deleting === showDeleteConfirm ? (
+                      <div className="flex items-center justify-center space-x-2">
+                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Deleting...</span>
+                      </div>
+                    ) : (
+                      'Delete Forever'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <AuthGuard>
+      <DashboardContent />
+    </AuthGuard>
   );
 }

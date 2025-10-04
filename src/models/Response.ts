@@ -7,6 +7,7 @@ export interface IAnswer {
 
 export interface IResponse extends Document {
   surveyId: string;
+  respondentToken: string;
   answers: IAnswer[];
   submittedAt: Date;
 }
@@ -18,6 +19,7 @@ const AnswerSchema = new Schema({
 
 const ResponseSchema = new Schema({
   surveyId: { type: String, required: true },
+  respondentToken: { type: String, required: true },
   answers: [AnswerSchema],
   submittedAt: { type: Date, default: Date.now }
 });

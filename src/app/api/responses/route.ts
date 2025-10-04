@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const { surveyId, answers } = await request.json();
+    const { surveyId, answers, respondentToken } = await request.json();
 
     if (!surveyId || !answers || answers.length === 0) {
       return NextResponse.json(
@@ -15,9 +15,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if response already exists for this token
+    if (respondentToken) {
+      const existingResponse = await Response.findOne({
+        surveyId,
+        respondentToken
+      });
+
+      if (existingResponse) {
+        return NextResponse.json(
+          { error: 'Response already submitted for this link' },
+          { status: 409 }
+        );
+      }
+    }
+
     const response = new Response({
       surveyId,
-      answers
+      answers,
+      respondentToken: respondentToken || `anonymous_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     });
 
     await response.save();
