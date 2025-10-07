@@ -18,6 +18,7 @@ function DashboardContent() {
   const [showLinkCopied, setShowLinkCopied] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [selectedResponse, setSelectedResponse] = useState<IResponse | null>(null);
 
   useEffect(() => {
     fetchSurveys();
@@ -347,7 +348,11 @@ function DashboardContent() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
                     {responses.map((response, responseIndex) => (
-                      <tr key={String(response._id)} className="hover:bg-gray-50/50 transition-colors">
+                      <tr 
+                        key={String(response._id)} 
+                        onClick={() => setSelectedResponse(response)}
+                        className="hover:bg-indigo-50/50 transition-colors cursor-pointer"
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
@@ -624,6 +629,124 @@ function DashboardContent() {
                     )}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Response Detail Modal */}
+        {selectedResponse && selectedSurvey && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-3xl max-w-4xl w-full mx-4 my-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-8 py-6 rounded-t-3xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">Response Details</h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Submitted on {formatDate(selectedResponse.submittedAt)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedResponse(null)}
+                    className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Content */}
+              <div className="px-8 py-6">
+                {/* Respondent Info */}
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 mb-6">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white text-lg font-bold">
+                      {responses.findIndex(r => r._id === selectedResponse._id) + 1}
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        {selectedResponse.respondentToken?.startsWith('anonymous_')
+                          ? `Anonymous User ${responses.findIndex(r => r._id === selectedResponse._id) + 1}`
+                          : `Respondent ${selectedResponse.respondentToken?.slice(0, 8)}`
+                        }
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        Token: {selectedResponse.respondentToken || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Questions and Answers */}
+                <div className="space-y-6">
+                  {selectedSurvey.questions?.map((question, index) => {
+                    const answer = selectedResponse.answers.find(a => a.questionId === question.id);
+                    return (
+                      <div key={question.id} className="bg-gray-50 rounded-2xl p-6">
+                        <div className="flex items-start space-x-4 mb-4">
+                          <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1">
+                            <h5 className="text-lg font-semibold text-gray-900 mb-1">
+                              {question.question}
+                            </h5>
+                            {question.description && (
+                              <p className="text-sm text-gray-600 mb-3">{question.description}</p>
+                            )}
+                            <div className="mt-3">
+                              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                {question.type === 'text' && 'Text Response'}
+                                {question.type === 'single-choice' && 'Single Choice'}
+                                {question.type === 'multiple-choice' && 'Multiple Choice'}
+                                {question.type === 'checkbox' && 'Checkbox'}
+                                {question.type === 'rating' && 'Rating'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="ml-12">
+                          {answer ? (
+                            <div className="bg-white rounded-xl p-4 border-2 border-indigo-200">
+                              {Array.isArray(answer.answer) ? (
+                                <div className="space-y-2">
+                                  {answer.answer.map((item, idx) => (
+                                    <div key={idx} className="flex items-center space-x-2">
+                                      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                      </svg>
+                                      <span className="text-gray-900 font-medium">{item}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-gray-900 font-medium whitespace-pre-wrap">{answer.answer}</p>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="bg-white rounded-xl p-4 border-2 border-gray-200">
+                              <span className="text-gray-400 italic">No answer provided</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-8 py-6 rounded-b-3xl">
+                <button
+                  onClick={() => setSelectedResponse(null)}
+                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>

@@ -12,6 +12,7 @@ function CreateSurveyContent() {
   const [description, setDescription] = useState('');
   const [questions, setQuestions] = useState<IQuestion[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const addQuestion = () => {
     const newQuestion: IQuestion = {
