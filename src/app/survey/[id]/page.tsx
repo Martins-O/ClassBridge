@@ -353,42 +353,53 @@ export default function SurveyResponse() {
 
                     {question.type === 'multiple-choice' && (
                       <div className="space-y-3">
-                        {question.options?.map((option, optionIndex) => (
-                          <label
-                            key={optionIndex}
-                            className={`flex items-center p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 group hover:bg-indigo-50 ${
-                              answers[question.id] === option
-                                ? 'border-indigo-500 bg-indigo-50'
-                                : 'border-gray-200 hover:border-indigo-300'
-                            }`}
-                          >
-                            <div className="relative">
-                              <input
-                                type="radio"
-                                name={question.id}
-                                value={option}
-                                checked={answers[question.id] === option}
-                                onChange={(e) => handleAnswer(question.id, e.target.value)}
-                                className="sr-only"
-                              />
-                              <div className={`w-5 h-5 border-2 rounded-full transition-all duration-300 ${
-                                answers[question.id] === option
-                                  ? 'border-indigo-500 bg-indigo-500'
-                                  : 'border-gray-300 group-hover:border-indigo-400'
-                              }`}>
-                                {answers[question.id] === option && (
-                                  <div className="w-1.5 h-1.5 bg-white rounded-full mx-auto mt-1.5"></div>
-                                )}
+                        {question.options?.map((option, optionIndex) => {
+                          const isChecked = (answers[question.id] as string[] || []).includes(option);
+                          return (
+                            <label
+                              key={optionIndex}
+                              className={`flex items-center p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 group hover:bg-indigo-50 ${
+                                isChecked
+                                  ? 'border-indigo-500 bg-indigo-50'
+                                  : 'border-gray-200 hover:border-indigo-300'
+                              }`}
+                            >
+                              <div className="relative">
+                                <input
+                                  type="checkbox"
+                                  value={option}
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    const currentAnswers = answers[question.id] as string[] || [];
+                                    if (e.target.checked) {
+                                      handleAnswer(question.id, [...currentAnswers, option]);
+                                    } else {
+                                      handleAnswer(question.id, currentAnswers.filter(a => a !== option));
+                                    }
+                                  }}
+                                  className="sr-only"
+                                />
+                                <div className={`w-5 h-5 border-2 rounded transition-all duration-300 ${
+                                  isChecked
+                                    ? 'border-indigo-500 bg-indigo-500'
+                                    : 'border-gray-300 group-hover:border-indigo-400'
+                                }`}>
+                                  {isChecked && (
+                                    <svg className="w-3 h-3 text-white mx-auto mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                            <span className="ml-4 text-gray-700 font-medium flex-1">{option}</span>
-                            <div className={`w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-sm font-semibold flex items-center justify-center ${
-                              answers[question.id] === option ? 'bg-indigo-100 text-indigo-600' : ''
-                            }`}>
-                              {String.fromCharCode(65 + optionIndex)}
-                            </div>
-                          </label>
-                        ))}
+                              <span className="ml-4 text-gray-700 font-medium flex-1">{option}</span>
+                              <div className={`w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-sm font-semibold flex items-center justify-center ${
+                                isChecked ? 'bg-indigo-100 text-indigo-600' : ''
+                              }`}>
+                                {String.fromCharCode(65 + optionIndex)}
+                              </div>
+                            </label>
+                          );
+                        })}
                       </div>
                     )}
 
