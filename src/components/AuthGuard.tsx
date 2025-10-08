@@ -21,6 +21,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   useEffect(() => {
     checkAuth();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkAuth = async () => {

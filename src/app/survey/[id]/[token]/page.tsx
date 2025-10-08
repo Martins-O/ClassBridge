@@ -19,6 +19,7 @@ export default function TokenSurveyResponse() {
 
   useEffect(() => {
     fetchSurveyAndResponse();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id, params.token]);
 
   const fetchSurveyAndResponse = async () => {
@@ -108,7 +109,7 @@ export default function TokenSurveyResponse() {
       } else {
         alert('Failed to submit response');
       }
-    } catch (error) {
+    } catch {
       alert('Error submitting response');
     } finally {
       setIsSubmitting(false);

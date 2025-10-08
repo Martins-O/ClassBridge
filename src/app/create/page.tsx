@@ -131,12 +131,12 @@ function CreateSurveyContent() {
       });
 
       if (response.ok) {
-        const survey = await response.json();
+        await response.json();
         router.push(`/dashboard`);
       } else {
         alert('Failed to create survey');
       }
-    } catch (error) {
+    } catch {
       alert('Error creating survey');
     } finally {
       setIsSubmitting(false);
@@ -663,6 +663,20 @@ function CreateSurveyContent() {
                   Cancel
                 </Link>
                 <button
+                  type="button"
+                  onClick={() => setShowPreview(true)}
+                  disabled={!title.trim() || questions.length === 0}
+                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-2xl hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transition-all duration-300"
+                >
+                  <span className="flex items-center space-x-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span>Preview</span>
+                  </span>
+                </button>
+                <button
                   type="submit"
                   disabled={isSubmitting || !title.trim() || questions.length === 0}
                   className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-2xl hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transition-all duration-300"
@@ -683,6 +697,222 @@ function CreateSurveyContent() {
             </div>
           </div>
         </form>
+
+        {/* Preview Modal */}
+        {showPreview && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-3xl max-w-4xl w-full mx-4 my-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6 rounded-t-3xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">Survey Preview</h3>
+                    <p className="text-indigo-100 text-sm mt-1">
+                      This is how your survey will look to respondents
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowPreview(false)}
+                    className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Content */}
+              <div className="px-8 py-6 bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
+                {/* Survey Header */}
+                <div className="text-center mb-12">
+                  <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">
+                    {title || 'Untitled Survey'}
+                  </h1>
+                  {description && (
+                    <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                      {description}
+                    </p>
+                  )}
+                  <div className="mt-6 flex items-center justify-center space-x-4 text-sm text-gray-500">
+                    <span className="flex items-center space-x-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>{questions.length} questions</span>
+                    </span>
+                    <span className="flex items-center space-x-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>~{calculateSurveyDuration()} min</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Questions Preview */}
+                <div className="space-y-8">
+                  {questions.map((question, index) => (
+                    <div
+                      key={question.id}
+                      className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/20"
+                    >
+                      <div className="mb-6">
+                        <div className="flex items-start space-x-4 mb-4">
+                          <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-bold text-sm bg-gradient-to-r from-indigo-500 to-purple-500">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-xl font-semibold text-gray-900 mb-2 leading-relaxed">
+                              {question.question || 'Question text will appear here'}
+                              {question.required && <span className="text-red-500 ml-2">*</span>}
+                            </h3>
+                            {question.description && (
+                              <p className="text-gray-600 text-sm mb-3 leading-relaxed">{question.description}</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Question Input Preview */}
+                        <div className="ml-14">
+                          {question.type === 'text' && (
+                            <div className="relative">
+                              <textarea
+                                disabled
+                                className="w-full px-6 py-4 border-2 rounded-2xl border-gray-200 bg-gray-50 resize-none text-gray-500"
+                                rows={4}
+                                placeholder="Respondents will type their answer here..."
+                              />
+                            </div>
+                          )}
+
+                          {question.type === 'single-choice' && (
+                            <div className="space-y-3">
+                              {question.options && question.options.length > 0 ? (
+                                question.options.map((option, optionIndex) => (
+                                  <div
+                                    key={optionIndex}
+                                    className="flex items-center p-4 border-2 rounded-2xl border-gray-200 bg-gray-50"
+                                  >
+                                    <div className="w-5 h-5 rounded-full border-2 border-gray-300 mr-4"></div>
+                                    <span className="text-lg font-medium text-gray-700">
+                                      {option || `Option ${optionIndex + 1}`}
+                                    </span>
+                                  </div>
+                                ))
+                              ) : (
+                                <p className="text-gray-400 italic">No options added yet</p>
+                              )}
+                            </div>
+                          )}
+
+                          {question.type === 'multiple-choice' && (
+                            <div className="space-y-3">
+                              {question.options && question.options.length > 0 ? (
+                                question.options.map((option, optionIndex) => (
+                                  <div
+                                    key={optionIndex}
+                                    className="flex items-center p-4 border-2 rounded-2xl border-gray-200 bg-gray-50"
+                                  >
+                                    <div className="w-5 h-5 border-2 rounded border-gray-300 mr-4"></div>
+                                    <span className="text-gray-700 font-medium flex-1">{option || `Option ${optionIndex + 1}`}</span>
+                                    <div className="w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-sm font-semibold flex items-center justify-center">
+                                      {String.fromCharCode(65 + optionIndex)}
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <p className="text-gray-400 italic">No options added yet</p>
+                              )}
+                            </div>
+                          )}
+
+                          {question.type === 'checkbox' && (
+                            <div className="space-y-3">
+                              {question.options && question.options.length > 0 ? (
+                                question.options.map((option, optionIndex) => (
+                                  <div
+                                    key={optionIndex}
+                                    className="flex items-center p-4 border-2 rounded-2xl border-gray-200 bg-gray-50"
+                                  >
+                                    <div className="w-5 h-5 border-2 rounded border-gray-300 mr-4"></div>
+                                    <span className="text-gray-700 font-medium flex-1">{option || `Option ${optionIndex + 1}`}</span>
+                                  </div>
+                                ))
+                              ) : (
+                                <p className="text-gray-400 italic">No options added yet</p>
+                              )}
+                            </div>
+                          )}
+
+                          {question.type === 'rating' && (
+                            <div>
+                              {(question.ratingConfig?.minLabel || question.ratingConfig?.maxLabel) && (
+                                <div className="flex items-center justify-between mb-4">
+                                  <span className="text-sm text-gray-500">
+                                    {question.ratingConfig?.minLabel || question.ratingConfig?.min || 1}
+                                  </span>
+                                  <span className="text-sm text-gray-500">
+                                    {question.ratingConfig?.maxLabel || question.ratingConfig?.max || 5}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="flex justify-center space-x-3 flex-wrap">
+                                {Array.from({
+                                  length: (question.ratingConfig?.max || 5) - (question.ratingConfig?.min || 1) + 1
+                                }, (_, i) => {
+                                  const rating = (question.ratingConfig?.min || 1) + i;
+                                  return (
+                                    <div
+                                      key={rating}
+                                      className="w-16 h-16 rounded-2xl border-2 border-gray-300 bg-gray-50 font-bold text-lg flex items-center justify-center text-gray-600 mb-2"
+                                    >
+                                      {rating}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Preview Submit Section */}
+                <div className="mt-12 text-center">
+                  <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/20">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Ready to submit?</h3>
+                    <p className="text-gray-600 mb-8">Thank you for taking the time to complete this survey!</p>
+                    <button
+                      disabled
+                      className="inline-flex items-center space-x-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-12 py-4 rounded-2xl font-semibold opacity-50 cursor-not-allowed text-lg"
+                    >
+                      <span>Submit Response</span>
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 px-8 py-6 rounded-b-3xl flex justify-between items-center">
+                <p className="text-sm text-gray-600">
+                  <span className="font-semibold">Preview Mode:</span> This is a read-only preview
+                </p>
+                <button
+                  onClick={() => setShowPreview(false)}
+                  className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                >
+                  Close Preview
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

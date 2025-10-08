@@ -14,11 +14,11 @@ export default function SurveyResponse() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showValidationErrors, setShowValidationErrors] = useState<string[]>([]);
 
   useEffect(() => {
     fetchSurvey();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const fetchSurvey = async () => {
@@ -31,7 +31,7 @@ export default function SurveyResponse() {
         alert('Survey not found');
         router.push('/');
       }
-    } catch (error) {
+    } catch {
       alert('Error loading survey');
       router.push('/');
     } finally {
@@ -92,7 +92,7 @@ export default function SurveyResponse() {
       } else {
         alert('Failed to submit response');
       }
-    } catch (error) {
+    } catch {
       alert('Error submitting response');
     } finally {
       setIsSubmitting(false);
