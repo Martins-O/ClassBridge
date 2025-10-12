@@ -396,7 +396,13 @@ function DashboardContent() {
                         })}
                         {selectedSurvey.questions && selectedSurvey.questions.length > 4 && (
                           <td className="px-6 py-4 text-sm text-gray-500">
-                            <button className="text-indigo-600 hover:text-indigo-700 font-medium">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent row click
+                                setSelectedResponse(response);
+                              }}
+                              className="text-indigo-600 hover:text-indigo-700 font-medium"
+                            >
                               View all →
                             </button>
                           </td>
