@@ -21,6 +21,14 @@ function DashboardContent() {
   const [selectedResponse, setSelectedResponse] = useState<IResponse | null>(null);
 
   useEffect(() => {
+    console.log('State updated:', {
+      selectedResponse,
+      selectedSurvey: selectedSurvey ? 'exists' : 'null',
+      hasSurveyQuestions: selectedSurvey?.questions ? 'yes' : 'no'
+    });
+  }, [selectedResponse, selectedSurvey]);
+
+  useEffect(() => {
     fetchSurveys();
   }, []);
 
@@ -350,7 +358,12 @@ function DashboardContent() {
                     {responses.map((response, responseIndex) => (
                       <tr 
                         key={String(response._id)} 
-                        onClick={() => setSelectedResponse(response)}
+                        onClick={() => {
+                          console.log('Row clicked for response:', response._id);
+                          console.log('Setting selectedResponse to:', response);
+                          setSelectedResponse(response);
+                          console.log('selectedResponse state should be updated now');
+                        }}
                         className="hover:bg-indigo-50/50 transition-colors cursor-pointer"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -399,7 +412,10 @@ function DashboardContent() {
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation(); // Prevent row click
+                                console.log('View all button clicked for response:', response._id);
+                                console.log('Setting selectedResponse to:', response);
                                 setSelectedResponse(response);
+                                console.log('selectedResponse state should be updated now');
                               }}
                               className="text-indigo-600 hover:text-indigo-700 font-medium"
                             >
@@ -642,6 +658,11 @@ function DashboardContent() {
 
         {/* Response Detail Modal */}
         {selectedResponse && selectedSurvey && (selectedSurvey as ISurvey).questions && (
+          console.log('Modal condition met:', {
+            selectedResponse: !!selectedResponse,
+            selectedSurvey: !!selectedSurvey,
+            hasQuestions: !!(selectedSurvey as ISurvey).questions
+          }),
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
             <div className="bg-white rounded-3xl max-w-4xl w-full mx-4 my-8 shadow-2xl max-h-[90vh] overflow-y-auto">
               {/* Modal Header */}
