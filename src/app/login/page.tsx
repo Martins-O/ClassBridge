@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ClassBridgeLogo from '@/components/ClassBridgeLogo';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -125,20 +126,13 @@ export default function LoginPage() {
               {/* Header */}
               <div className="text-center mb-8">
                 <div className="lg:hidden mb-6">
-                  <Link href="/" className="inline-flex items-center space-x-2 group">
-                    <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                      </svg>
-                    </div>
-                    <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent group-hover:from-indigo-700 group-hover:to-purple-700 transition-all duration-300">
-                      SurveyPro
-                    </span>
+                  <Link href="/" className="inline-block group">
+                    <ClassBridgeLogo size="lg" className="group-hover:scale-105 transition-transform duration-300" />
                   </Link>
                 </div>
                 <div className={`transform transition-all duration-700 delay-200 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
                   <h1 className="text-3xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Welcome Back</h1>
-                  <p className="text-gray-600">Sign in to manage your surveys</p>
+                  <p className="text-gray-600">Sign in to manage your educational platform</p>
                 </div>
               </div>
 

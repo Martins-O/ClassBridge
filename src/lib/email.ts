@@ -32,8 +32,8 @@ export async function sendEmail(emailData: EmailData): Promise<boolean> {
     const sendSmtpEmail = new brevo.SendSmtpEmail();
 
     sendSmtpEmail.sender = {
-      name: process.env.EMAIL_FROM_NAME || 'Survey Platform',
-      email: process.env.EMAIL_FROM_ADDRESS || 'noreply@surveyplatform.com'
+      name: process.env.EMAIL_FROM_NAME || 'ClassBridge',
+      email: process.env.EMAIL_FROM_ADDRESS || 'noreply@classbridge.com'
     };
 
     sendSmtpEmail.to = [{
@@ -87,14 +87,25 @@ export function generateStudentInvitationEmail(data: StudentInvitationData): Ema
         }
         .header {
           text-align: center;
-          border-bottom: 2px solid #3b82f6;
-          padding-bottom: 20px;
+          background: linear-gradient(135deg, #6366f1, #8b5cf6);
+          border-radius: 8px 8px 0 0;
+          padding: 30px 20px;
           margin-bottom: 30px;
         }
         .header h1 {
-          color: #3b82f6;
+          color: white;
           margin: 0;
           font-size: 28px;
+          font-weight: bold;
+        }
+        .logo {
+          display: inline-block;
+          width: 40px;
+          height: 40px;
+          background: white;
+          border-radius: 8px;
+          margin-bottom: 15px;
+          position: relative;
         }
         .content {
           margin-bottom: 30px;
@@ -148,13 +159,28 @@ export function generateStudentInvitationEmail(data: StudentInvitationData): Ema
     <body>
       <div class="container">
         <div class="header">
-          <h1>🎓 Student Invitation</h1>
+          <div class="logo">
+            <svg viewBox="0 0 40 40" style="width: 100%; height: 100%; padding: 8px;">
+              <defs>
+                <linearGradient id="bridgeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6366f1" />
+                  <stop offset="50%" stop-color="#8b5cf6" />
+                  <stop offset="100%" stop-color="#a855f7" />
+                </linearGradient>
+              </defs>
+              <path d="M4 22 Q12 15, 20 17 Q28 19, 36 22 L36 25 Q28 22, 20 20 Q12 18, 4 25 Z" fill="url(#bridgeGradient)" />
+              <rect x="3" y="22" width="2" height="8" fill="url(#bridgeGradient)" rx="1" />
+              <rect x="35" y="22" width="2" height="8" fill="url(#bridgeGradient)" rx="1" />
+              <rect x="19" y="17" width="2" height="13" fill="url(#bridgeGradient)" rx="1" />
+            </svg>
+          </div>
+          <h1>🎓 ClassBridge Invitation</h1>
         </div>
 
         <div class="content">
           <h2>Hello ${data.studentName}!</h2>
 
-          <p>You have been invited to join a class on our educational platform. We're excited to have you as part of our learning community!</p>
+          <p>You have been invited to join a class on ClassBridge! We're excited to have you as part of our educational community where mentors and students connect seamlessly.</p>
 
           <div class="invitation-details">
             <p><strong>School:</strong> ${data.schoolName}</p>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ClassBridgeLogo from '@/components/ClassBridgeLogo';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -133,13 +134,13 @@ export default function RegisterPage() {
                   </svg>
                 </div>
                 <h1 className="text-4xl font-bold mb-6 leading-tight">
-                  Join thousands using
+                  Join educators using
                   <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white to-indigo-200">
-                    SurveyPro
+                    ClassBridge
                   </span>
                 </h1>
                 <p className="text-xl text-indigo-100 leading-relaxed mb-8">
-                  Create your account and start building powerful surveys to collect valuable insights from your audience.
+                  Create your account and start connecting mentors with students through comprehensive educational management.
                 </p>
               </div>
 
@@ -172,20 +173,13 @@ export default function RegisterPage() {
               {/* Header */}
               <div className="text-center mb-8">
                 <div className="lg:hidden mb-6">
-                  <Link href="/" className="inline-flex items-center space-x-2 group">
-                    <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                      </svg>
-                    </div>
-                    <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent group-hover:from-indigo-700 group-hover:to-purple-700 transition-all duration-300">
-                      SurveyPro
-                    </span>
+                  <Link href="/" className="inline-block group">
+                    <ClassBridgeLogo size="lg" className="group-hover:scale-105 transition-transform duration-300" />
                   </Link>
                 </div>
                 <div className={`transform transition-all duration-700 delay-200 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
                   <h1 className="text-3xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Create Account</h1>
-                  <p className="text-gray-600">Start creating amazing surveys today</p>
+                  <p className="text-gray-600">Start your educational management journey</p>
                 </div>
               </div>
 

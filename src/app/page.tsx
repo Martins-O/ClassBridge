@@ -1,20 +1,12 @@
 import Link from "next/link";
+import ClassBridgeLogo from "@/components/ClassBridgeLogo";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
       {/* Navigation */}
       <nav className="flex justify-between items-center p-6 max-w-7xl mx-auto">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
-          </div>
-          <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            SurveyPro
-          </span>
-        </div>
+        <ClassBridgeLogo size="md" />
         <div className="flex items-center space-x-6">
           <Link
             href="/register-school"
@@ -37,14 +29,14 @@ export default function Home() {
           <div className="animate-fadeIn">
             <h1 className="text-6xl md:text-7xl font-bold mb-6">
               <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
-                Beautiful
+                Bridge the Gap
               </span>
               <br />
-              <span className="text-gray-900">Surveys Made Simple</span>
+              <span className="text-gray-900">Between Learning & Teaching</span>
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-              Create stunning surveys, collect meaningful responses, and gain actionable insights
-              with our intuitive survey builder.
+              Connect mentors and students seamlessly. Manage schools, organize classes, and assess progress
+              with our comprehensive educational management platform.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -79,24 +71,24 @@ export default function Home() {
           <div className="group bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-white/20">
             <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl w-16 h-16 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">Smart Builder</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">School Management</h3>
             <p className="text-gray-600 text-center leading-relaxed">
-              Drag-and-drop interface with intelligent question types, conditional logic, and beautiful templates.
+              Comprehensive school administration with class organization, mentor assignment, and student enrollment.
             </p>
           </div>
 
           <div className="group bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-white/20">
             <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl w-16 h-16 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">Instant Sharing</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">Smart Invitations</h3>
             <p className="text-gray-600 text-center leading-relaxed">
-              Generate secure links instantly. Share via social media, email, or embed directly into your website.
+              Seamless student onboarding with email invitations, secure registration, and automatic class enrollment.
             </p>
           </div>
 
@@ -106,9 +98,9 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">Rich Analytics</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">Progress Tracking</h3>
             <p className="text-gray-600 text-center leading-relaxed">
-              Real-time analytics, exportable reports, and beautiful visualizations to understand your data.
+              Real-time analytics, assessment tracking, and detailed reports to monitor student progress and engagement.
             </p>
           </div>
         </div>
@@ -116,13 +108,13 @@ export default function Home() {
         {/* CTA Section */}
         <div className="text-center mt-32">
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl p-12 text-white">
-            <h2 className="text-4xl font-bold mb-4">Ready to get started?</h2>
-            <p className="text-xl mb-8 opacity-90">Join thousands who trust SurveyPro for their research needs.</p>
+            <h2 className="text-4xl font-bold mb-4">Ready to bridge your classroom?</h2>
+            <p className="text-xl mb-8 opacity-90">Join educators worldwide who trust ClassBridge for comprehensive educational management.</p>
             <Link
-              href="/create"
+              href="/register-school"
               className="inline-flex items-center space-x-2 bg-white text-indigo-600 px-8 py-4 rounded-2xl font-semibold hover:bg-gray-50 transition-colors"
             >
-              <span>Create Your First Survey</span>
+              <span>Register Your School</span>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
