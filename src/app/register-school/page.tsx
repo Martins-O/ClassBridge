@@ -66,7 +66,7 @@ export default function SchoolRegistration() {
         const data = await response.json();
         setError(data.error || 'Failed to register school');
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -329,7 +329,7 @@ export default function SchoolRegistration() {
                       </svg>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">Your school's official website (optional)</p>
+                  <p className="text-sm text-gray-500 mt-2">Your school&apos;s official website (optional)</p>
                 </div>
 
                 {/* Description */}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
 
@@ -30,15 +30,11 @@ function ClassDashboardContent() {
   const [classData, setClassData] = useState<Class | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const router = useRouter();
   const params = useParams();
   const classId = params.id as string;
 
   useEffect(() => {
-    fetchClassDetails();
-  }, [classId]);
-
-  const fetchClassDetails = async () => {
+    const fetchClassDetails = async () => {
     try {
       const response = await fetch(`/api/classes/${classId}`);
       if (response.ok) {
@@ -53,7 +49,10 @@ function ClassDashboardContent() {
     } finally {
       setLoading(false);
     }
-  };
+    };
+
+    fetchClassDetails();
+  }, [classId]);
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {

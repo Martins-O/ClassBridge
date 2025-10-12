@@ -18,7 +18,6 @@ function SurveysContent() {
   const [showLinkCopied, setShowLinkCopied] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [selectedResponse, setSelectedResponse] = useState<IResponse | null>(null);
 
   useEffect(() => {
     fetchSurveys();
@@ -265,16 +264,15 @@ function SurveysContent() {
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {responses.map((response) => (
-                      <tr key={response._id} className="hover:bg-gray-50">
+                      <tr key={response._id?.toString()} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
-                          {response._id}
+                          {response._id?.toString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {formatDate(response.submittedAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <button
-                            onClick={() => setSelectedResponse(response)}
                             className="text-indigo-600 hover:text-indigo-900 font-medium"
                           >
                             View Details

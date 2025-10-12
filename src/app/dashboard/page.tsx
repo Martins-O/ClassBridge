@@ -80,7 +80,7 @@ function DashboardContent() {
             const responseData = await responseRes.json();
             totalResponses += responseData.responses.length;
           }
-        } catch (error) {
+        } catch {
           console.error('Error fetching responses for survey:', survey.uniqueId);
         }
       }

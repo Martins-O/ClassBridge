@@ -5,7 +5,7 @@ import User from '@/models/User';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
@@ -26,7 +26,8 @@ export async function GET(
       );
     }
 
-    const classId = params.id;
+    const { id } = await params;
+    const classId = id;
     const classData = await Class.findById(classId).populate([
       'mentorIds',
       'studentIds',
@@ -49,11 +50,11 @@ export async function GET(
       hasAccess = classData.schoolId?._id?.toString() === user.schoolId?.toString();
     } else if (user.role === 'mentor') {
       hasAccess = classData.mentorIds.some(
-        (mentorId: any) => mentorId._id?.toString() === userId
+        (mentorId: { _id?: string }) => mentorId._id?.toString() === userId
       );
     } else if (user.role === 'student') {
       hasAccess = classData.studentIds.some(
-        (studentId: any) => studentId._id?.toString() === userId
+        (studentId: { _id?: string }) => studentId._id?.toString() === userId
       );
     }
 

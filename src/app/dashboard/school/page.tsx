@@ -41,12 +41,11 @@ export default function SchoolManagement() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [school, setSchool] = useState<School | null>(null);
-  const [classes, setClasses] = useState<Class[]>([]);
-  const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'classes' | 'students' | 'mentors'>('overview');
+  const [classes, setClasses] = useState<Class[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -57,6 +56,16 @@ export default function SchoolManagement() {
     semester: '',
     maxStudents: 50
   });
+  const [inviteFormData, setInviteFormData] = useState({
+    studentName: '',
+    studentEmail: '',
+    gradeLevel: '',
+    studentId: '',
+    selectedClasses: [] as string[],
+    personalMessage: ''
+  });
+  const [isSubmittingInvite, setIsSubmittingInvite] = useState(false);
+  const [inviteError, setInviteError] = useState('');
 
   const fetchUserAndSchool = useCallback(async () => {
     try {
@@ -79,18 +88,6 @@ export default function SchoolManagement() {
     }
   }, []);
 
-  const fetchSchools = useCallback(async () => {
-    try {
-      const response = await fetch('/api/schools');
-      if (response.ok) {
-        const data = await response.json();
-        setSchools(data.schools || []);
-      }
-    } catch (error) {
-      console.error('Error fetching schools:', error);
-    }
-  }, []);
-
   const fetchClasses = useCallback(async () => {
     try {
       const response = await fetch('/api/classes');
@@ -107,9 +104,8 @@ export default function SchoolManagement() {
 
   useEffect(() => {
     fetchUserAndSchool();
-    fetchSchools();
     fetchClasses();
-  }, [fetchUserAndSchool, fetchSchools, fetchClasses]);
+  }, [fetchUserAndSchool, fetchClasses]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,6 +154,78 @@ export default function SchoolManagement() {
     } catch (error) {
       console.error('Error updating class:', error);
     }
+  };
+
+  const handleInviteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingInvite(true);
+    setInviteError('');
+
+    try {
+      // Send invitation for each selected class
+      const invitePromises = inviteFormData.selectedClasses.map(classId =>
+        fetch('/api/students/invite', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            studentEmail: inviteFormData.studentEmail,
+            studentName: inviteFormData.studentName,
+            classId: classId
+          }),
+        })
+      );
+
+      const results = await Promise.all(invitePromises);
+
+      // Check if all invitations were successful
+      const allSuccessful = results.every(response => response.ok);
+
+      if (allSuccessful) {
+        // Reset form and close modal
+        setInviteFormData({
+          studentName: '',
+          studentEmail: '',
+          gradeLevel: '',
+          studentId: '',
+          selectedClasses: [],
+          personalMessage: ''
+        });
+        setShowInviteModal(false);
+
+        // Show success message
+        alert(`Invitation sent successfully to ${inviteFormData.studentEmail}!`);
+      } else {
+        // Handle partial or complete failure
+        const failedResults = await Promise.all(
+          results.map(async (response) => {
+            if (!response.ok) {
+              const errorData = await response.json();
+              return errorData.error || 'Failed to send invitation';
+            }
+            return null;
+          })
+        );
+
+        const errors = failedResults.filter(error => error !== null);
+        setInviteError(errors.join(', '));
+      }
+    } catch (error) {
+      console.error('Error sending invitation:', error);
+      setInviteError('Failed to send invitation. Please try again.');
+    } finally {
+      setIsSubmittingInvite(false);
+    }
+  };
+
+  const handleClassSelection = (classId: string, checked: boolean) => {
+    setInviteFormData(prev => ({
+      ...prev,
+      selectedClasses: checked
+        ? [...prev.selectedClasses, classId]
+        : prev.selectedClasses.filter(id => id !== classId)
+    }));
   };
 
   if (loading) {
@@ -225,7 +293,7 @@ export default function SchoolManagement() {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as 'overview' | 'classes' | 'students' | 'mentors')}
               className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
                 activeTab === tab.id
                   ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
@@ -671,7 +739,7 @@ export default function SchoolManagement() {
               <div className="p-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Invite Student to School</h2>
 
-                <form className="space-y-6">
+                <form onSubmit={handleInviteSubmit} className="space-y-6">
                   <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
                     <div className="flex items-start space-x-3">
                       <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
@@ -696,6 +764,8 @@ export default function SchoolManagement() {
                       <input
                         type="text"
                         required
+                        value={inviteFormData.studentName}
+                        onChange={(e) => setInviteFormData(prev => ({ ...prev, studentName: e.target.value }))}
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-green-500"
                         placeholder="John Doe"
                       />
@@ -708,6 +778,8 @@ export default function SchoolManagement() {
                       <input
                         type="email"
                         required
+                        value={inviteFormData.studentEmail}
+                        onChange={(e) => setInviteFormData(prev => ({ ...prev, studentEmail: e.target.value }))}
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-green-500"
                         placeholder="john@example.com"
                       />
@@ -719,6 +791,8 @@ export default function SchoolManagement() {
                       </label>
                       <input
                         type="text"
+                        value={inviteFormData.gradeLevel}
+                        onChange={(e) => setInviteFormData(prev => ({ ...prev, gradeLevel: e.target.value }))}
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-green-500"
                         placeholder="9th Grade"
                       />
@@ -730,6 +804,8 @@ export default function SchoolManagement() {
                       </label>
                       <input
                         type="text"
+                        value={inviteFormData.studentId}
+                        onChange={(e) => setInviteFormData(prev => ({ ...prev, studentId: e.target.value }))}
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-green-500"
                         placeholder="STU2024001"
                       />
@@ -747,6 +823,8 @@ export default function SchoolManagement() {
                           <label key={classItem._id} className="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-lg cursor-pointer">
                             <input
                               type="checkbox"
+                              checked={inviteFormData.selectedClasses.includes(classItem._id)}
+                              onChange={(e) => handleClassSelection(classItem._id, e.target.checked)}
                               className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
                             />
                             <div className="flex-1">
@@ -770,24 +848,50 @@ export default function SchoolManagement() {
                     </label>
                     <textarea
                       rows={3}
+                      value={inviteFormData.personalMessage}
+                      onChange={(e) => setInviteFormData(prev => ({ ...prev, personalMessage: e.target.value }))}
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-green-500 resize-none"
                       placeholder="Welcome to our school! We're excited to have you join us..."
                     />
                   </div>
 
+                  {inviteError && (
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                      <div className="flex items-center space-x-2">
+                        <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="text-red-700 text-sm">{inviteError}</p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex justify-end space-x-4">
                     <button
                       type="button"
-                      onClick={() => setShowInviteModal(false)}
-                      className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 transition-colors"
+                      onClick={() => {
+                        setShowInviteModal(false);
+                        setInviteError('');
+                        setInviteFormData({
+                          studentName: '',
+                          studentEmail: '',
+                          gradeLevel: '',
+                          studentId: '',
+                          selectedClasses: [],
+                          personalMessage: ''
+                        });
+                      }}
+                      disabled={isSubmittingInvite}
+                      className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 transition-colors disabled:opacity-50"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                      disabled={isSubmittingInvite || inviteFormData.selectedClasses.length === 0}
+                      className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:transform-none"
                     >
-                      Send Invitation
+                      {isSubmittingInvite ? 'Sending...' : 'Send Invitation'}
                     </button>
                   </div>
                 </form>
