@@ -360,8 +360,19 @@ function DashboardContent() {
                         key={String(response._id)} 
                         onClick={() => {
                           console.log('Row clicked for response:', response._id);
+                          console.log('Current selectedSurvey:', selectedSurvey);
                           console.log('Setting selectedResponse to:', response);
                           setSelectedResponse(response);
+                          // Also set the selectedSurvey if not already set
+                          if (!selectedSurvey) {
+                            console.log('selectedSurvey was null, need to find and set it');
+                            // Find the survey that contains this response
+                            const surveyForResponse = surveys.find(s => s.uniqueId === response.surveyId);
+                            if (surveyForResponse) {
+                              console.log('Found survey for response:', surveyForResponse.title);
+                              setSelectedSurvey(surveyForResponse);
+                            }
+                          }
                           console.log('selectedResponse state should be updated now');
                         }}
                         className="hover:bg-indigo-50/50 transition-colors cursor-pointer"
@@ -413,8 +424,19 @@ function DashboardContent() {
                               onClick={(e) => {
                                 e.stopPropagation(); // Prevent row click
                                 console.log('View all button clicked for response:', response._id);
+                                console.log('Current selectedSurvey:', selectedSurvey);
                                 console.log('Setting selectedResponse to:', response);
                                 setSelectedResponse(response);
+                                // Also set the selectedSurvey if not already set
+                                if (!selectedSurvey) {
+                                  console.log('selectedSurvey was null, need to find and set it');
+                                  // Find the survey that contains this response
+                                  const surveyForResponse = surveys.find(s => s.uniqueId === response.surveyId);
+                                  if (surveyForResponse) {
+                                    console.log('Found survey for response:', surveyForResponse.title);
+                                    setSelectedSurvey(surveyForResponse);
+                                  }
+                                }
                                 console.log('selectedResponse state should be updated now');
                               }}
                               className="text-indigo-600 hover:text-indigo-700 font-medium"
