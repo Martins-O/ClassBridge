@@ -6,12 +6,10 @@ export interface IClass extends Document {
   schoolId: string; // Reference to the school
   mentorIds: string[]; // References to mentor users
   studentIds: string[]; // References to student users
-  subject?: string;
-  grade?: string;
   academicYear: string;
-  semester?: string;
+  duration: string; // e.g., "3 months", "1 semester", "6 weeks"
+  cohort: string; // e.g., "Spring 2024", "Cohort A", "Batch 1"
   isActive: boolean;
-  maxStudents?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,30 +37,24 @@ const ClassSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User'
   }],
-  subject: {
-    type: String,
-    trim: true
-  },
-  grade: {
-    type: String,
-    trim: true
-  },
   academicYear: {
     type: String,
     required: true,
     trim: true
   },
-  semester: {
+  duration: {
     type: String,
+    required: true,
+    trim: true
+  },
+  cohort: {
+    type: String,
+    required: true,
     trim: true
   },
   isActive: {
     type: Boolean,
     default: true
-  },
-  maxStudents: {
-    type: Number,
-    default: 50
   }
 }, {
   timestamps: true

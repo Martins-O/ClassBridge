@@ -9,6 +9,7 @@ export interface IUser extends Document {
   role: UserRole;
   schoolId?: string; // Reference to school (for school_admin, mentor, student)
   classIds: string[]; // References to classes (for mentors and students)
+  studentId?: string; // Auto-generated student ID (for students only)
   isActive: boolean;
   profileImage?: string;
   phone?: string;
@@ -49,6 +50,12 @@ const UserSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Class'
   }],
+  studentId: {
+    type: String,
+    unique: true,
+    sparse: true, // Only students will have this field
+    trim: true
+  },
   isActive: {
     type: Boolean,
     default: true

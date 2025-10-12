@@ -5,6 +5,27 @@ import User from '@/models/User';
 import Class from '@/models/Class';
 import bcrypt from 'bcrypt';
 
+// Function to generate unique student ID
+async function generateStudentId(schoolId: string): Promise<string> {
+  const currentYear = new Date().getFullYear();
+  const schoolIdLast4 = schoolId.slice(-4).toUpperCase();
+
+  // Find the highest student number for this school and year
+  const lastStudent = await User.findOne({
+    schoolId: schoolId,
+    role: 'student',
+    studentId: { $regex: `^${currentYear}${schoolIdLast4}` }
+  }).sort({ studentId: -1 });
+
+  let nextNumber = 1;
+  if (lastStudent?.studentId) {
+    const lastNumber = parseInt(lastStudent.studentId.slice(-4));
+    nextNumber = lastNumber + 1;
+  }
+
+  return `${currentYear}${schoolIdLast4}${nextNumber.toString().padStart(4, '0')}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
@@ -64,6 +85,9 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // Generate unique student ID
+    const studentId = await generateStudentId(invitation.schoolId._id.toString());
+
     // Create new student user
     const newUser = new User({
       name: invitation.name,
@@ -71,6 +95,7 @@ export async function POST(request: NextRequest) {
       password: hashedPassword,
       role: 'student',
       schoolId: invitation.schoolId._id,
+      studentId: studentId,
       isActive: true
     });
 

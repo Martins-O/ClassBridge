@@ -50,17 +50,14 @@ export default function SchoolManagement() {
     name: '',
     description: '',
     schoolId: '',
-    subject: '',
     grade: '',
     academicYear: '',
-    semester: '',
-    maxStudents: 50
+    duration: '',
+    cohort: ''
   });
   const [inviteFormData, setInviteFormData] = useState({
     studentName: '',
     studentEmail: '',
-    gradeLevel: '',
-    studentId: '',
     selectedClasses: [] as string[],
     personalMessage: ''
   });
@@ -126,11 +123,10 @@ export default function SchoolManagement() {
           name: '',
           description: '',
           schoolId: user?.schoolId || '',
-          subject: '',
           grade: '',
           academicYear: '',
-          semester: '',
-          maxStudents: 50
+          duration: '',
+          cohort: ''
         });
         fetchClasses();
       }
@@ -188,8 +184,6 @@ export default function SchoolManagement() {
         setInviteFormData({
           studentName: '',
           studentEmail: '',
-          gradeLevel: '',
-          studentId: '',
           selectedClasses: [],
           personalMessage: ''
         });
@@ -634,14 +628,15 @@ export default function SchoolManagement() {
 
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Subject
+                        Duration *
                       </label>
                       <input
                         type="text"
-                        value={formData.subject}
-                        onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                        value={formData.duration}
+                        onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
+                        required
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                        placeholder="Mathematics"
+                        placeholder="3 months, 1 semester, 6 weeks"
                       />
                     </div>
 
@@ -674,30 +669,18 @@ export default function SchoolManagement() {
 
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Semester
+                        Cohort *
                       </label>
                       <input
                         type="text"
-                        value={formData.semester}
-                        onChange={(e) => setFormData(prev => ({ ...prev, semester: e.target.value }))}
+                        value={formData.cohort}
+                        onChange={(e) => setFormData(prev => ({ ...prev, cohort: e.target.value }))}
+                        required
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                        placeholder="Fall"
+                        placeholder="Spring 2024, Cohort A, Batch 1"
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Max Students
-                      </label>
-                      <input
-                        type="number"
-                        value={formData.maxStudents}
-                        onChange={(e) => setFormData(prev => ({ ...prev, maxStudents: parseInt(e.target.value) }))}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                        placeholder="50"
-                        min="1"
-                      />
-                    </div>
                   </div>
 
                   <div>
@@ -769,7 +752,7 @@ export default function SchoolManagement() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-6">
                     <div>
                       <label className={`block text-sm font-semibold mb-3 transition-colors duration-300 ${focusedField === 'studentName' ? 'text-indigo-600' : 'text-gray-700'}`}>
                         Student Name *
@@ -826,59 +809,6 @@ export default function SchoolManagement() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className={`block text-sm font-semibold mb-3 transition-colors duration-300 ${focusedField === 'gradeLevel' ? 'text-indigo-600' : 'text-gray-700'}`}>
-                        Grade Level
-                      </label>
-                      <div className="relative group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                        <input
-                          type="text"
-                          value={inviteFormData.gradeLevel}
-                          onChange={(e) => setInviteFormData(prev => ({ ...prev, gradeLevel: e.target.value }))}
-                          onFocus={() => setFocusedField('gradeLevel')}
-                          onBlur={() => setFocusedField('')}
-                          className={`relative w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all duration-300 text-gray-900 font-medium ${
-                            focusedField === 'gradeLevel'
-                              ? 'border-indigo-500 ring-2 ring-indigo-200 scale-[1.02] shadow-lg'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          placeholder="e.g., 9th Grade, Year 10"
-                        />
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <svg className={`w-5 h-5 transition-all duration-300 ${focusedField === 'gradeLevel' ? 'text-indigo-500 scale-110' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className={`block text-sm font-semibold mb-3 transition-colors duration-300 ${focusedField === 'studentId' ? 'text-indigo-600' : 'text-gray-700'}`}>
-                        Student ID (Optional)
-                      </label>
-                      <div className="relative group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                        <input
-                          type="text"
-                          value={inviteFormData.studentId}
-                          onChange={(e) => setInviteFormData(prev => ({ ...prev, studentId: e.target.value }))}
-                          onFocus={() => setFocusedField('studentId')}
-                          onBlur={() => setFocusedField('')}
-                          className={`relative w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all duration-300 text-gray-900 font-medium ${
-                            focusedField === 'studentId'
-                              ? 'border-indigo-500 ring-2 ring-indigo-200 scale-[1.02] shadow-lg'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          placeholder="e.g., STU2024001"
-                        />
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <svg className={`w-5 h-5 transition-all duration-300 ${focusedField === 'studentId' ? 'text-indigo-500 scale-110' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
                   </div>
 
                   <div>
@@ -981,8 +911,6 @@ export default function SchoolManagement() {
                         setInviteFormData({
                           studentName: '',
                           studentEmail: '',
-                          gradeLevel: '',
-                          studentId: '',
                           selectedClasses: [],
                           personalMessage: ''
                         });
