@@ -2,17 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Class from '@/models/Class';
 import User from '@/models/User';
+import mongoose from 'mongoose';
 
 // POST /api/classes/[id]/users - Add users to class
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
 
+    const { id } = await params;
     const body = await request.json();
-    const { userIds, userType } = body; // userType: 'teacher' or 'student'
+    const { userIds, userType }: { userIds: string[]; userType: 'teacher' | 'student' } = body;
 
     if (!userIds || !Array.isArray(userIds) || !userType) {
       return NextResponse.json(
@@ -21,7 +23,7 @@ export async function POST(
       );
     }
 
-    const classData = await Class.findById(params.id);
+    const classData = await Class.findById(id);
     if (!classData) {
       return NextResponse.json(
         { error: 'Class not found' },
@@ -78,13 +80,14 @@ export async function POST(
 // DELETE /api/classes/[id]/users - Remove users from class
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
 
+    const { id } = await params;
     const body = await request.json();
-    const { userIds, userType } = body;
+    const { userIds, userType }: { userIds: string[]; userType: 'teacher' | 'student' } = body;
 
     if (!userIds || !Array.isArray(userIds) || !userType) {
       return NextResponse.json(
@@ -93,7 +96,7 @@ export async function DELETE(
       );
     }
 
-    const classData = await Class.findById(params.id);
+    const classData = await Class.findById(id);
     if (!classData) {
       return NextResponse.json(
         { error: 'Class not found' },
@@ -104,11 +107,11 @@ export async function DELETE(
     // Remove users from appropriate array
     if (userType === 'teacher') {
       classData.teacherIds = classData.teacherIds.filter(
-        (id: any) => !userIds.some((userId: string) => userId === id.toString())
+        (id: mongoose.Types.ObjectId) => !userIds.some((userId: string) => userId === id.toString())
       );
     } else if (userType === 'student') {
       classData.studentIds = classData.studentIds.filter(
-        (id: any) => !userIds.some((userId: string) => userId === id.toString())
+        (id: mongoose.Types.ObjectId) => !userIds.some((userId: string) => userId === id.toString())
       );
     }
 

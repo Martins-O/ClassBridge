@@ -5,12 +5,13 @@ import Class from '@/models/Class';
 // GET /api/classes/[id] - Get a specific class
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
 
-    const classData = await Class.findById(params.id)
+    const { id } = await params;
+    const classData = await Class.findById(id)
       .populate('teacherIds', 'name email')
       .populate('studentIds', 'name email')
       .populate('schoolId', 'name');
@@ -36,11 +37,12 @@ export async function GET(
 // PUT /api/classes/[id] - Update class
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
 
+    const { id } = await params;
     const body = await request.json();
     const {
       name,
@@ -54,7 +56,7 @@ export async function PUT(
       isActive
     } = body;
 
-    const classData = await Class.findById(params.id);
+    const classData = await Class.findById(id);
     if (!classData) {
       return NextResponse.json(
         { error: 'Class not found' },
@@ -93,12 +95,13 @@ export async function PUT(
 // DELETE /api/classes/[id] - Delete class
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
 
-    const classData = await Class.findByIdAndDelete(params.id);
+    const { id } = await params;
+    const classData = await Class.findByIdAndDelete(id);
     if (!classData) {
       return NextResponse.json(
         { error: 'Class not found' },

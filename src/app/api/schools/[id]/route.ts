@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import School from '@/models/School';
-import User from '@/models/User';
 
 // GET /api/schools/[id] - Get a specific school
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
 
-    const school = await School.findById(params.id).populate('adminId', 'name email');
+    const { id } = await params;
+    const school = await School.findById(id).populate('adminId', 'name email');
     if (!school) {
       return NextResponse.json(
         { error: 'School not found' },
@@ -33,15 +33,16 @@ export async function GET(
 // PUT /api/schools/[id] - Update school information
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
 
+    const { id } = await params;
     const body = await request.json();
     const { name, email, phone, address, website, description, subscriptionType } = body;
 
-    const school = await School.findById(params.id);
+    const school = await School.findById(id);
     if (!school) {
       return NextResponse.json(
         { error: 'School not found' },
@@ -53,7 +54,7 @@ export async function PUT(
     if (email && email !== school.email) {
       const existingSchool = await School.findOne({
         email: email.toLowerCase(),
-        _id: { $ne: params.id }
+        _id: { $ne: id }
       });
       if (existingSchool) {
         return NextResponse.json(

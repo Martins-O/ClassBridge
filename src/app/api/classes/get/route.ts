@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Class from '@/models/Class';
 import School from '@/models/School';
-import User from '@/models/User';
 
 // GET /api/classes?schoolId=xxx - Get classes for a school
 export async function GET(request: NextRequest) {

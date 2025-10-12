@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useState, useEffect, useCallback } from 'react';
 
 interface Class {
   _id: string;
@@ -40,12 +39,7 @@ export default function ClassManagement() {
     maxStudents: 50
   });
 
-  useEffect(() => {
-    fetchSchools();
-    fetchClasses();
-  }, []);
-
-  const fetchSchools = async () => {
+  const fetchSchools = useCallback(async () => {
     try {
       const response = await fetch('/api/schools');
       if (response.ok) {
@@ -58,9 +52,9 @@ export default function ClassManagement() {
     } catch (error) {
       console.error('Error fetching schools:', error);
     }
-  };
+  }, [formData.schoolId]);
 
-  const fetchClasses = async () => {
+  const fetchClasses = useCallback(async () => {
     try {
       const response = await fetch('/api/classes?schoolId=all');
       if (response.ok) {
@@ -72,7 +66,12 @@ export default function ClassManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchSchools();
+    fetchClasses();
+  }, [fetchSchools, fetchClasses]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

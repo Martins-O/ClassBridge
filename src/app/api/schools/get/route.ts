@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import School from '@/models/School';
-import User from '@/models/User';
-import mongoose from 'mongoose';
 
 // GET /api/schools - Get schools for current user
 export async function GET(request: NextRequest) {
@@ -32,7 +30,7 @@ export async function GET(request: NextRequest) {
       schools = await School.find({}).populate('adminId', 'name email');
     } else if (user.role === 'school_admin') {
       // School admin can only see their own schools
-      schools = await School.find({ adminId: new mongoose.Types.ObjectId(user.id) }).populate('adminId', 'name email');
+      schools = await School.find({ adminId: user.id }).populate('adminId', 'name email');
     } else {
       return NextResponse.json(
         { error: 'Access denied' },
