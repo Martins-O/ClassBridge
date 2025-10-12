@@ -15,12 +15,20 @@ export default function Home() {
             SurveyPro
           </span>
         </div>
-        <Link
-          href="/dashboard"
-          className="text-gray-600 hover:text-indigo-600 transition-colors font-medium"
-        >
-          My Surveys
-        </Link>
+        <div className="flex items-center space-x-6">
+          <Link
+            href="/register-school"
+            className="text-gray-600 hover:text-indigo-600 transition-colors font-medium"
+          >
+            Register School
+          </Link>
+          <Link
+            href="/dashboard"
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2 rounded-xl font-medium hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+          >
+            Dashboard
+          </Link>
+        </div>
       </nav>
 
       {/* Hero Section */}

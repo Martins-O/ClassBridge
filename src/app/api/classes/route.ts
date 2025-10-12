@@ -2,11 +2,37 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Class from '@/models/Class';
 import School from '@/models/School';
+import User from '@/models/User';
 
 // POST /api/classes - Create a new class
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
+
+    // Check authentication and user role
+    const userId = request.cookies.get('userId')?.value;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Only school admins and super admins can create classes
+    if (!['school_admin', 'super_admin'].includes(user.role)) {
+      return NextResponse.json(
+        { error: 'Only school administrators can create classes' },
+        { status: 403 }
+      );
+    }
 
     const body = await request.json();
     const {
@@ -36,6 +62,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'School not found' },
         { status: 404 }
+      );
+    }
+
+    // For school admins, ensure they can only create classes for their own school
+    if (user.role === 'school_admin' && user.schoolId?.toString() !== schoolId) {
+      return NextResponse.json(
+        { error: 'You can only create classes for your own school' },
+        { status: 403 }
       );
     }
 

@@ -37,10 +37,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update admin user role to school_admin
-    adminUser.role = 'school_admin';
-    await adminUser.save();
-
     // Create new school
     const school = new School({
       name,
@@ -53,6 +49,11 @@ export async function POST(request: NextRequest) {
     });
 
     await school.save();
+
+    // Update admin user role to school_admin and associate with school
+    adminUser.role = 'school_admin';
+    adminUser.schoolId = school._id;
+    await adminUser.save();
 
     return NextResponse.json({
       message: 'School registered successfully',
