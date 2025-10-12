@@ -45,13 +45,15 @@ export async function POST(request: NextRequest) {
       grade,
       academicYear,
       semester,
-      maxStudents
+      maxStudents,
+      duration,
+      cohort
     } = body;
 
     // Validate required fields
-    if (!name || !schoolId || !academicYear) {
+    if (!name || !schoolId || !academicYear || !duration || !cohort) {
       return NextResponse.json(
-        { error: 'Name, school ID, and academic year are required' },
+        { error: 'Name, school ID, academic year, duration, and cohort are required' },
         { status: 400 }
       );
     }
