@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ISurvey, IQuestion } from '@/models/Survey';
+import { ISurvey } from '@/models/Survey';
 import { IResponse } from '@/models/Response';
 import AuthGuard from '@/components/AuthGuard';
 
@@ -635,7 +635,7 @@ function DashboardContent() {
         )}
 
         {/* Response Detail Modal */}
-        {selectedResponse && selectedSurvey && selectedSurvey.questions && (
+        {selectedResponse && selectedSurvey && (selectedSurvey as ISurvey).questions && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
             <div className="bg-white rounded-3xl max-w-4xl w-full mx-4 my-8 shadow-2xl max-h-[90vh] overflow-y-auto">
               {/* Modal Header */}
@@ -682,7 +682,7 @@ function DashboardContent() {
 
                 {/* Questions and Answers */}
                 <div className="space-y-6">
-                  {selectedSurvey.questions.map((question, index) => {
+                  {(selectedSurvey as ISurvey).questions.map((question, index) => {
                     const answer = selectedResponse.answers.find(a => a.questionId === question.id);
                     return (
                       <div key={question.id} className="bg-gray-50 rounded-2xl p-6">
