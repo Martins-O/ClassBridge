@@ -73,3 +73,49 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// GET /api/schools - Fetch schools
+export async function GET(request: NextRequest) {
+  try {
+    await connectDB();
+
+    // Check authentication
+    const userId = request.cookies.get('userId')?.value;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    let schools;
+
+    // Filter schools based on user role
+    if (user.role === 'super_admin') {
+      // Super admin can see all schools
+      schools = await School.find().populate('adminId');
+    } else if (user.role === 'school_admin') {
+      // School admin can only see their own school
+      schools = await School.find({ _id: user.schoolId }).populate('adminId');
+    } else {
+      // Other roles can see all schools for selection purposes
+      schools = await School.find().select('name _id');
+    }
+
+    return NextResponse.json({ schools });
+  } catch (error) {
+    console.error('Error fetching schools:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

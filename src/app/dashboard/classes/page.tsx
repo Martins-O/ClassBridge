@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Class {
   _id: string;
@@ -10,7 +11,7 @@ interface Class {
   grade?: string;
   academicYear: string;
   semester?: string;
-  teacherIds: Array<{ _id: string; name: string; email: string }>;
+  mentorIds: Array<{ _id: string; name: string; email: string }>;
   studentIds: Array<{ _id: string; name: string; email: string }>;
   isActive: boolean;
   maxStudents?: number;
@@ -23,6 +24,7 @@ interface School {
 }
 
 export default function ClassManagement() {
+  const router = useRouter();
   const [classes, setClasses] = useState<Class[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
@@ -187,8 +189,8 @@ export default function ClassManagement() {
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-gray-50/50 rounded-xl">
                   <div className="text-center">
-                    <p className="text-lg font-bold text-indigo-600">{classItem.teacherIds.length}</p>
-                    <p className="text-xs text-gray-500">Teachers</p>
+                    <p className="text-lg font-bold text-indigo-600">{classItem.mentorIds.length}</p>
+                    <p className="text-xs text-gray-500">Mentors</p>
                   </div>
                   <div className="text-center">
                     <p className="text-lg font-bold text-purple-600">{classItem.studentIds.length}</p>
@@ -199,10 +201,10 @@ export default function ClassManagement() {
                 {/* Actions */}
                 <div className="space-y-2">
                   <button
-                    onClick={() => setSelectedClass(classItem)}
+                    onClick={() => router.push(`/dashboard/classes/${classItem._id}`)}
                     className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-xl font-medium hover:shadow-lg transition-all duration-300"
                   >
-                    Manage Class
+                    View Class Dashboard
                   </button>
                   <button
                     onClick={() => toggleClassStatus(classItem._id, !classItem.isActive)}
@@ -372,21 +374,21 @@ export default function ClassManagement() {
                   </button>
                 </div>
 
-                {/* Teachers and Students */}
+                {/* Mentors and Students */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Teachers ({selectedClass.teacherIds.length})</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Mentors ({selectedClass.mentorIds.length})</h3>
                     <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {selectedClass.teacherIds.map(teacher => (
-                        <div key={teacher._id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
+                      {selectedClass.mentorIds.map(mentor => (
+                        <div key={mentor._id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
                           <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
                             <span className="text-indigo-600 font-semibold text-sm">
-                              {teacher.name.charAt(0).toUpperCase()}
+                              {mentor.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">{teacher.name}</p>
-                            <p className="text-sm text-gray-500">{teacher.email}</p>
+                            <p className="font-medium text-gray-900">{mentor.name}</p>
+                            <p className="text-sm text-gray-500">{mentor.email}</p>
                           </div>
                         </div>
                       ))}
@@ -414,10 +416,16 @@ export default function ClassManagement() {
                 </div>
 
                 <div className="mt-6 pt-6 border-t border-gray-200">
-                  <div className="flex justify-end">
+                  <div className="flex justify-end space-x-4">
+                    <button
+                      onClick={() => router.push(`/dashboard/classes/${selectedClass._id}`)}
+                      className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                    >
+                      View Dashboard
+                    </button>
                     <button
                       onClick={() => setSelectedClass(null)}
-                      className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                      className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 transition-colors"
                     >
                       Close
                     </button>

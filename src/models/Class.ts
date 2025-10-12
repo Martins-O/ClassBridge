@@ -4,7 +4,7 @@ export interface IClass extends Document {
   name: string;
   description?: string;
   schoolId: string; // Reference to the school
-  teacherIds: string[]; // References to mentor/teacher users
+  mentorIds: string[]; // References to mentor users
   studentIds: string[]; // References to student users
   subject?: string;
   grade?: string;
@@ -31,7 +31,7 @@ const ClassSchema = new Schema({
     ref: 'School',
     required: true
   },
-  teacherIds: [{
+  mentorIds: [{
     type: Schema.Types.ObjectId,
     ref: 'User'
   }],

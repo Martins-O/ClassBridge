@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import School from '@/models/School';
+import User from '@/models/User';
 
 // GET /api/schools/[id] - Get a specific school
 export async function GET(
@@ -10,12 +11,45 @@ export async function GET(
   try {
     await connectDB();
 
+    // Check authentication
+    const userId = request.cookies.get('userId')?.value;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
     const { id } = await params;
     const school = await School.findById(id).populate('adminId', 'name email');
     if (!school) {
       return NextResponse.json(
         { error: 'School not found' },
         { status: 404 }
+      );
+    }
+
+    // Check if user has access to this school
+    let hasAccess = false;
+
+    if (user.role === 'super_admin') {
+      hasAccess = true;
+    } else if (user.role === 'school_admin') {
+      hasAccess = school._id.toString() === user.schoolId?.toString();
+    }
+
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: 'Access denied' },
+        { status: 403 }
       );
     }
 

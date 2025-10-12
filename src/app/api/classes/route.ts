@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       name,
       description,
       schoolId,
-      teacherIds = [],
+      mentorIds = [],
       studentIds = [],
       subject,
       grade,
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       name,
       description,
       schoolId,
-      teacherIds,
+      mentorIds,
       studentIds,
       subject,
       grade,
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     await newClass.save();
 
     // Populate references for response
-    await newClass.populate(['teacherIds', 'studentIds']);
+    await newClass.populate(['mentorIds', 'studentIds']);
 
     return NextResponse.json({
       message: 'Class created successfully',
@@ -99,6 +99,57 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error creating class:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// GET /api/classes - Fetch classes
+export async function GET(request: NextRequest) {
+  try {
+    await connectDB();
+
+    // Check authentication
+    const userId = request.cookies.get('userId')?.value;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    let classes;
+
+    // Filter classes based on user role
+    if (user.role === 'super_admin') {
+      // Super admin can see all classes
+      classes = await Class.find().populate(['mentorIds', 'studentIds']);
+    } else if (user.role === 'school_admin') {
+      // School admin can see classes from their school
+      classes = await Class.find({ schoolId: user.schoolId }).populate(['mentorIds', 'studentIds']);
+    } else if (user.role === 'mentor') {
+      // Mentors can see classes they're assigned to
+      classes = await Class.find({ mentorIds: userId }).populate(['mentorIds', 'studentIds']);
+    } else if (user.role === 'student') {
+      // Students can see classes they're enrolled in
+      classes = await Class.find({ studentIds: userId }).populate(['mentorIds', 'studentIds']);
+    } else {
+      classes = [];
+    }
+
+    return NextResponse.json({ classes });
+  } catch (error) {
+    console.error('Error fetching classes:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
