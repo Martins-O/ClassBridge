@@ -27,6 +27,14 @@ export interface StudentInvitationData {
   inviterName: string;
 }
 
+export interface MentorInvitationData {
+  mentorEmail: string;
+  mentorName: string;
+  schoolName: string;
+  invitationToken: string;
+  inviterName: string;
+}
+
 export async function sendEmail(emailData: EmailData): Promise<boolean> {
   try {
     const sendSmtpEmail = new brevo.SendSmtpEmail();
@@ -236,6 +244,222 @@ If you didn't expect this invitation, you can safely ignore this email.
     to: data.studentEmail,
     toName: data.studentName,
     subject: `Invitation to join ${data.className} at ${data.schoolName}`,
+    htmlContent,
+    textContent
+  };
+}
+
+export function generateMentorInvitationEmail(data: MentorInvitationData): EmailData {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const invitationUrl = `${baseUrl}/mentor-invitation/${data.invitationToken}`;
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Mentor Invitation</title>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          background-color: #f4f4f4;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 20px auto;
+          background-color: #ffffff;
+          padding: 30px;
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+          text-align: center;
+          background: linear-gradient(135deg, #8b5cf6, #ec4899);
+          border-radius: 8px 8px 0 0;
+          padding: 30px 20px;
+          margin-bottom: 30px;
+        }
+        .header h1 {
+          color: white;
+          margin: 0;
+          font-size: 28px;
+          font-weight: bold;
+        }
+        .logo {
+          display: inline-block;
+          width: 40px;
+          height: 40px;
+          background: white;
+          border-radius: 8px;
+          margin-bottom: 15px;
+          position: relative;
+        }
+        .content {
+          margin-bottom: 30px;
+        }
+        .content h2 {
+          color: #1f2937;
+          margin-bottom: 15px;
+        }
+        .invitation-details {
+          background-color: #faf5ff;
+          padding: 20px;
+          border-radius: 6px;
+          border-left: 4px solid #8b5cf6;
+          margin: 20px 0;
+        }
+        .invitation-details p {
+          margin: 8px 0;
+          font-weight: 600;
+        }
+        .cta-button {
+          display: inline-block;
+          background: linear-gradient(135deg, #8b5cf6, #ec4899);
+          color: white;
+          padding: 15px 35px;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: 600;
+          text-align: center;
+          margin: 20px 0;
+        }
+        .cta-button:hover {
+          background: linear-gradient(135deg, #7c3aed, #db2777);
+        }
+        .footer {
+          text-align: center;
+          color: #6b7280;
+          font-size: 14px;
+          border-top: 1px solid #e5e7eb;
+          padding-top: 20px;
+          margin-top: 30px;
+        }
+        .note {
+          background-color: #fef3c7;
+          border: 1px solid #f59e0b;
+          border-radius: 6px;
+          padding: 15px;
+          margin: 20px 0;
+        }
+        .features {
+          background-color: #f8fafc;
+          padding: 20px;
+          border-radius: 6px;
+          margin: 20px 0;
+        }
+        .features ul {
+          margin: 0;
+          padding-left: 20px;
+        }
+        .features li {
+          margin: 8px 0;
+          color: #374151;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="logo">
+            <svg viewBox="0 0 40 40" style="width: 100%; height: 100%; padding: 8px;">
+              <defs>
+                <linearGradient id="bridgeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#8b5cf6" />
+                  <stop offset="50%" stop-color="#a855f7" />
+                  <stop offset="100%" stop-color="#ec4899" />
+                </linearGradient>
+              </defs>
+              <path d="M4 22 Q12 15, 20 17 Q28 19, 36 22 L36 25 Q28 22, 20 20 Q12 18, 4 25 Z" fill="url(#bridgeGradient)" />
+              <rect x="3" y="22" width="2" height="8" fill="url(#bridgeGradient)" rx="1" />
+              <rect x="35" y="22" width="2" height="8" fill="url(#bridgeGradient)" rx="1" />
+              <rect x="19" y="17" width="2" height="13" fill="url(#bridgeGradient)" rx="1" />
+            </svg>
+          </div>
+          <h1>🎓 Mentor Invitation</h1>
+        </div>
+
+        <div class="content">
+          <h2>Hello ${data.mentorName}!</h2>
+
+          <p>You have been invited to become a mentor at <strong>${data.schoolName}</strong> on ClassBridge! We believe your expertise would be invaluable in guiding and inspiring students on their educational journey.</p>
+
+          <div class="invitation-details">
+            <p><strong>School:</strong> ${data.schoolName}</p>
+            <p><strong>Role:</strong> Mentor</p>
+            <p><strong>Invited by:</strong> ${data.inviterName}</p>
+          </div>
+
+          <div class="features">
+            <h3>As a mentor, you'll be able to:</h3>
+            <ul>
+              <li>Guide and support students in their learning journey</li>
+              <li>Manage classes and track student progress</li>
+              <li>Create and share educational resources</li>
+              <li>Collaborate with other mentors and administrators</li>
+              <li>Make a meaningful impact on students' educational success</li>
+            </ul>
+          </div>
+
+          <p>To accept this invitation and create your mentor account, please click the button below:</p>
+
+          <div style="text-align: center;">
+            <a href="${invitationUrl}" class="cta-button">Accept Invitation & Join as Mentor</a>
+          </div>
+
+          <div class="note">
+            <p><strong>Note:</strong> This invitation link is unique to you and will expire in 7 days. If you have any questions about the role or ClassBridge platform, please contact ${data.inviterName} or your school administrator.</p>
+          </div>
+
+          <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+          <p style="word-break: break-all; color: #8b5cf6;">${invitationUrl}</p>
+        </div>
+
+        <div class="footer">
+          <p>This invitation was sent to ${data.mentorEmail}</p>
+          <p>If you didn't expect this invitation or don't want to become a mentor, you can safely ignore this email.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const textContent = `
+Hello ${data.mentorName}!
+
+You have been invited to become a mentor at ${data.schoolName} on ClassBridge!
+
+Invitation Details:
+- School: ${data.schoolName}
+- Role: Mentor
+- Invited by: ${data.inviterName}
+
+As a mentor, you'll be able to:
+- Guide and support students in their learning journey
+- Manage classes and track student progress
+- Create and share educational resources
+- Collaborate with other mentors and administrators
+- Make a meaningful impact on students' educational success
+
+To accept this invitation and create your mentor account, please visit:
+${invitationUrl}
+
+This invitation link is unique to you and will expire in 7 days.
+
+If you have any questions about the role or ClassBridge platform, please contact ${data.inviterName} or your school administrator.
+
+This invitation was sent to ${data.mentorEmail}
+If you didn't expect this invitation or don't want to become a mentor, you can safely ignore this email.
+  `;
+
+  return {
+    to: data.mentorEmail,
+    toName: data.mentorName,
+    subject: `Invitation to become a mentor at ${data.schoolName}`,
     htmlContent,
     textContent
   };

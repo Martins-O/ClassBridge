@@ -2,6 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import AuthGuard from '@/components/AuthGuard';
+
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  schoolId?: string;
+}
 
 interface Class {
   _id: string;
@@ -29,15 +38,21 @@ interface School {
   adminId: string;
 }
 
-interface User {
+interface Mentor {
   _id: string;
   name: string;
   email: string;
-  role: string;
-  schoolId?: string;
+  schoolId: string;
+  classIds: string[];
+  isActive: boolean;
+  createdAt: string;
+  assignedClasses: Array<{
+    _id: string;
+    name: string;
+  }>;
 }
 
-export default function SchoolManagement() {
+function SchoolManagementContent() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [school, setSchool] = useState<School | null>(null);
@@ -46,6 +61,8 @@ export default function SchoolManagement() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'classes' | 'students' | 'mentors'>('overview');
   const [classes, setClasses] = useState<Class[]>([]);
+  const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [showMentorModal, setShowMentorModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -61,8 +78,22 @@ export default function SchoolManagement() {
     selectedClasses: [] as string[],
     personalMessage: ''
   });
+  const [mentorFormData, setMentorFormData] = useState({
+    name: '',
+    email: ''
+  });
+  const [showMentorClassModal, setShowMentorClassModal] = useState(false);
+  const [selectedMentorForClasses, setSelectedMentorForClasses] = useState<Mentor | null>(null);
+  const [mentorClassFormData, setMentorClassFormData] = useState({
+    selectedClasses: [] as string[],
+    action: 'assign' as 'assign' | 'remove'
+  });
+  const [isSubmittingMentorClasses, setIsSubmittingMentorClasses] = useState(false);
+  const [mentorClassError, setMentorClassError] = useState('');
   const [isSubmittingInvite, setIsSubmittingInvite] = useState(false);
   const [inviteError, setInviteError] = useState('');
+  const [isSubmittingMentor, setIsSubmittingMentor] = useState(false);
+  const [mentorError, setMentorError] = useState('');
   const [focusedField, setFocusedField] = useState('');
 
   const fetchUserAndSchool = useCallback(async () => {
@@ -100,10 +131,28 @@ export default function SchoolManagement() {
     }
   }, []);
 
+  const fetchMentors = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/mentors?schoolId=${user?.schoolId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setMentors(data.mentors || []);
+      }
+    } catch (error) {
+      console.error('Error fetching mentors:', error);
+    }
+  }, [user?.schoolId]);
+
   useEffect(() => {
     fetchUserAndSchool();
     fetchClasses();
   }, [fetchUserAndSchool, fetchClasses]);
+
+  useEffect(() => {
+    if (user?.schoolId && activeTab === 'mentors') {
+      fetchMentors();
+    }
+  }, [user?.schoolId, activeTab, fetchMentors]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,8 +264,118 @@ export default function SchoolManagement() {
     }
   };
 
+  const handleMentorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingMentor(true);
+    setMentorError('');
+
+    try {
+      const response = await fetch('/api/mentors', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...mentorFormData,
+          schoolId: user?.schoolId
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Reset form and close modal
+        setMentorFormData({
+          name: '',
+          email: ''
+        });
+        setShowMentorModal(false);
+
+        // Refresh mentors list
+        fetchMentors();
+
+        // Show success message
+        const successMessage = data.isExistingUser
+          ? `✅ Mentor ${mentorFormData.name} has been added to your school!`
+          : `🎉 Invitation sent successfully to ${mentorFormData.email}! They will receive instructions to set up their mentor account.`;
+        alert(successMessage);
+      } else {
+        const errorData = await response.json();
+        setMentorError(errorData.error || 'Failed to invite mentor');
+      }
+    } catch (error) {
+      console.error('Error inviting mentor:', error);
+      setMentorError('Failed to invite mentor. Please try again.');
+    } finally {
+      setIsSubmittingMentor(false);
+    }
+  };
+
+  const handleMentorClassSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingMentorClasses(true);
+    setMentorClassError('');
+
+    try {
+      const response = await fetch('/api/mentors', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mentorId: selectedMentorForClasses?._id,
+          classIds: mentorClassFormData.selectedClasses,
+          action: mentorClassFormData.action
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Reset form and close modal
+        setMentorClassFormData({
+          selectedClasses: [],
+          action: 'assign'
+        });
+        setShowMentorClassModal(false);
+        setSelectedMentorForClasses(null);
+
+        // Refresh mentors list
+        fetchMentors();
+
+        // Show success message
+        const actionText = mentorClassFormData.action === 'assign' ? 'assigned to' : 'removed from';
+        alert(`✅ Mentor ${data.mentor.name} has been ${actionText} the selected classes!`);
+      } else {
+        const errorData = await response.json();
+        setMentorClassError(errorData.error || 'Failed to update mentor class assignments');
+      }
+    } catch (error) {
+      console.error('Error updating mentor class assignments:', error);
+      setMentorClassError('Failed to update mentor class assignments. Please try again.');
+    } finally {
+      setIsSubmittingMentorClasses(false);
+    }
+  };
+
+  const openMentorClassModal = (mentor: Mentor, defaultAction: 'assign' | 'remove' = 'assign') => {
+    setSelectedMentorForClasses(mentor);
+    setMentorClassFormData({
+      selectedClasses: mentor.assignedClasses.map(cls => cls._id),
+      action: defaultAction
+    });
+    setShowMentorClassModal(true);
+  };
+
   const handleClassSelection = (classId: string, checked: boolean) => {
     setInviteFormData(prev => ({
+      ...prev,
+      selectedClasses: checked
+        ? [...prev.selectedClasses, classId]
+        : prev.selectedClasses.filter(id => id !== classId)
+    }));
+  };
+
+  const handleMentorClassSelection = (classId: string, checked: boolean) => {
+    setMentorClassFormData(prev => ({
       ...prev,
       selectedClasses: checked
         ? [...prev.selectedClasses, classId]
@@ -597,9 +756,114 @@ export default function SchoolManagement() {
 
         {/* Mentors Tab */}
         {activeTab === 'mentors' && (
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/20">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Mentor Management</h2>
-            <p className="text-gray-600">Mentor management features coming soon...</p>
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Mentor Management</h2>
+              <button
+                onClick={() => setShowMentorModal(true)}
+                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+              >
+                Invite Mentor
+              </button>
+            </div>
+
+            {/* Mentor Invitation Info */}
+            <div className="bg-purple-50 border border-purple-200 rounded-3xl p-6 mb-8">
+              <div className="flex items-start space-x-4">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-purple-900 mb-2">Mentor Invitation Process</h3>
+                  <p className="text-purple-800 mb-3">Mentors help guide and support students in their learning journey:</p>
+                  <ul className="space-y-1 text-purple-800">
+                    <li>• Mentors receive an email invitation to join your school</li>
+                    <li>• They can be assigned to specific classes as instructors or guides</li>
+                    <li>• Mentors can track student progress and provide feedback</li>
+                    <li>• Multiple mentors can collaborate on the same class</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Mentors List */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-white/20 overflow-hidden">
+              <div className="px-8 py-6 border-b border-gray-200">
+                <h3 className="text-xl font-bold text-gray-900">School Mentors</h3>
+                <p className="text-gray-600 mt-1">Mentors who have joined your school</p>
+              </div>
+
+              <div className="p-8">
+                {mentors.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No mentors yet</h3>
+                    <p className="text-gray-600 mb-6">Invite your first mentor to start building your educational team.</p>
+                    <button
+                      onClick={() => setShowMentorModal(true)}
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                    >
+                      Invite Your First Mentor
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {mentors.map((mentor) => (
+                      <div key={mentor._id} className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/30">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-bold text-gray-900 mb-1">{mentor.name}</h3>
+                            <p className="text-gray-600 text-sm mb-2">{mentor.email}</p>
+                            <p className="text-xs text-gray-500">
+                              Joined {new Date(mentor.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className={`w-3 h-3 rounded-full ${mentor.isActive ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                        </div>
+
+                        {/* Class Assignments */}
+                        <div className="mb-4">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Assigned Classes:</h4>
+                          {mentor.assignedClasses.length > 0 ? (
+                            <div className="space-y-2">
+                              {mentor.assignedClasses.map((classItem) => (
+                                <div key={classItem._id} className="bg-purple-50 text-purple-700 px-3 py-1 rounded-lg text-sm">
+                                  {classItem.name}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-gray-500 text-sm italic">No class assignments yet</p>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="space-y-2">
+                          <button
+                            onClick={() => openMentorClassModal(mentor, 'assign')}
+                            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-xl font-medium hover:shadow-lg transition-all duration-300 text-sm"
+                          >
+                            Manage Classes
+                          </button>
+                          <button
+                            onClick={() => {/* TODO: Edit mentor */}}
+                            className="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-medium hover:bg-gray-200 transition-colors text-sm"
+                          >
+                            Edit Details
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -945,7 +1209,287 @@ export default function SchoolManagement() {
             </div>
           </div>
         )}
+
+        {/* Mentor Invitation Modal */}
+        {showMentorModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Invite Mentor to School</h2>
+
+                <form onSubmit={handleMentorSubmit} className="space-y-6">
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-6 mb-2">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-purple-900 mb-2 text-lg">How Mentor Invitations Work</h3>
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                            <p className="text-purple-800 text-sm">Mentors receive a professional email invitation</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-2 h-2 bg-pink-400 rounded-full"></div>
+                            <p className="text-purple-800 text-sm">They create an account or link their existing account</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                            <p className="text-purple-800 text-sm">You can then assign them to specific classes</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Mentor Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={mentorFormData.name}
+                        onChange={(e) => setMentorFormData(prev => ({ ...prev, name: e.target.value }))}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-purple-500"
+                        placeholder="John Smith"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={mentorFormData.email}
+                        onChange={(e) => setMentorFormData(prev => ({ ...prev, email: e.target.value }))}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-purple-500"
+                        placeholder="john.smith@example.com"
+                      />
+                    </div>
+                  </div>
+
+                  {mentorError && (
+                    <div className="bg-red-50/90 border border-red-200 rounded-xl p-4 animate-in slide-in-from-top-2 duration-300 backdrop-blur-sm">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-red-800 text-sm font-semibold">Error</p>
+                          <p className="text-red-700 text-sm">{mentorError}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end space-x-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMentorModal(false);
+                        setMentorError('');
+                        setMentorFormData({
+                          name: '',
+                          email: ''
+                        });
+                      }}
+                      className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingMentor}
+                      className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:transform-none disabled:cursor-not-allowed flex items-center space-x-2"
+                    >
+                      {isSubmittingMentor ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Inviting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                          </svg>
+                          <span>Send Invitation</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mentor Class Assignment Modal */}
+        {showMentorClassModal && selectedMentorForClasses && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Manage {selectedMentorForClasses.name}&apos;s Classes
+                </h2>
+
+                <form onSubmit={handleMentorClassSubmit} className="space-y-6">
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-6 mb-6">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-purple-900 text-lg">{selectedMentorForClasses.name}</h3>
+                        <p className="text-purple-800">{selectedMentorForClasses.email}</p>
+                        <p className="text-purple-700 text-sm">
+                          Currently assigned to {selectedMentorForClasses.assignedClasses.length} class(es)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Toggle */}
+                  <div className="flex justify-center mb-6">
+                    <div className="bg-gray-100 p-1 rounded-xl inline-flex">
+                      <button
+                        type="button"
+                        onClick={() => setMentorClassFormData(prev => ({ ...prev, action: 'assign' }))}
+                        className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
+                          mentorClassFormData.action === 'assign'
+                            ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      >
+                        Assign to Classes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMentorClassFormData(prev => ({ ...prev, action: 'remove' }))}
+                        className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
+                          mentorClassFormData.action === 'remove'
+                            ? 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      >
+                        Remove from Classes
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                      Select Classes ({mentorClassFormData.action === 'assign' ? 'to assign mentor to' : 'to remove mentor from'})
+                    </label>
+                    <div className="bg-gray-50 rounded-xl p-5 border-2 border-gray-200 max-h-64 overflow-y-auto">
+                      <div className="space-y-3">
+                        {classes.map((classItem) => (
+                          <label key={classItem._id} className="group flex items-center space-x-4 p-3 bg-white rounded-lg cursor-pointer hover:bg-purple-50 transition-all duration-200 border border-gray-100 hover:border-purple-200">
+                            <input
+                              type="checkbox"
+                              checked={mentorClassFormData.selectedClasses.includes(classItem._id)}
+                              onChange={(e) => handleMentorClassSelection(classItem._id, e.target.checked)}
+                              className="w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500 focus:ring-2 transition-all duration-200"
+                            />
+                            <div className="flex-1">
+                              <p className="font-semibold text-gray-900 group-hover:text-purple-900 transition-colors duration-200">{classItem.name}</p>
+                              <p className="text-sm text-gray-600 group-hover:text-purple-600 transition-colors duration-200">
+                                {classItem.subject} • {classItem.academicYear}
+                              </p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                      {classes.length === 0 && (
+                        <div className="text-center py-8">
+                          <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                          </div>
+                          <p className="text-sm text-gray-500 font-medium">No classes available</p>
+                          <p className="text-xs text-gray-400 mt-1">Create classes first to assign mentors</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {mentorClassError && (
+                    <div className="bg-red-50/90 border border-red-200 rounded-xl p-4 animate-in slide-in-from-top-2 duration-300 backdrop-blur-sm">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-red-800 text-sm font-semibold">Error</p>
+                          <p className="text-red-700 text-sm">{mentorClassError}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end space-x-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMentorClassModal(false);
+                        setMentorClassError('');
+                        setMentorClassFormData({
+                          selectedClasses: [],
+                          action: 'assign'
+                        });
+                        setSelectedMentorForClasses(null);
+                      }}
+                      className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingMentorClasses || mentorClassFormData.selectedClasses.length === 0}
+                      className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:transform-none disabled:cursor-not-allowed flex items-center space-x-2"
+                    >
+                      {isSubmittingMentorClasses ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Updating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                          </svg>
+                          <span>{mentorClassFormData.action === 'assign' ? 'Assign' : 'Remove'} Mentor</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+export default function SchoolManagement() {
+  return (
+    <AuthGuard>
+      <SchoolManagementContent />
+    </AuthGuard>
   );
 }
