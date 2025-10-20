@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Survey from '@/models/Survey';
 import { v4 as uuidv4 } from 'uuid';
+import { getUserIdFromRequest } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
     // Check authentication
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
     await connectDB();
 
     // Check authentication
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },

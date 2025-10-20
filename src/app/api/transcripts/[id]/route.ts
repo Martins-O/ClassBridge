@@ -3,6 +3,7 @@ import connectDB from '@/lib/mongodb';
 import Transcript from '@/models/Transcript';
 import User from '@/models/User';
 import Class from '@/models/Class';
+import { getUserIdFromRequest } from '@/lib/session';
 
 // GET /api/transcripts/[id] - Fetch a specific transcript
 export async function GET(
@@ -12,7 +13,7 @@ export async function GET(
   try {
     await connectDB();
 
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -87,7 +88,7 @@ export async function PUT(
   try {
     await connectDB();
 
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -163,7 +164,7 @@ export async function DELETE(
   try {
     await connectDB();
 
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },

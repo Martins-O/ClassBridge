@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getSessionCookieName } from '@/lib/session';
 
 export async function POST() {
   const response = NextResponse.json({
@@ -7,7 +8,7 @@ export async function POST() {
   });
 
   // Clear the userId cookie
-  response.cookies.set('userId', '', {
+  response.cookies.set(getSessionCookieName(), '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',

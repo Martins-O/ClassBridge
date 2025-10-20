@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Survey from '@/models/Survey';
 import Response from '@/models/Response';
+import { getUserIdFromRequest } from '@/lib/session';
 
 export async function GET(
   request: NextRequest,
@@ -38,7 +39,7 @@ export async function DELETE(
     await connectDB();
 
     // Check authentication
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },

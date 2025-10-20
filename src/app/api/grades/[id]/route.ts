@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Grade from '@/models/Grade';
 import User from '@/models/User';
+import { getUserIdFromRequest } from '@/lib/session';
 
 // GET /api/grades/[id] - Fetch a specific grade
 export async function GET(
@@ -11,7 +12,7 @@ export async function GET(
   try {
     await connectDB();
 
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -80,7 +81,7 @@ export async function PUT(
   try {
     await connectDB();
 
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -164,7 +165,7 @@ export async function DELETE(
   try {
     await connectDB();
 
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },

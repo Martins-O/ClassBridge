@@ -3,6 +3,67 @@ import connectDB from '@/lib/mongodb';
 import Class from '@/models/Class';
 import School from '@/models/School';
 import User from '@/models/User';
+import { getUserIdFromRequest } from '@/lib/session';
+
+type PopulatedReference = {
+  _id: { toString(): string };
+  name?: string;
+  email?: string;
+  studentId?: string;
+  isActive?: boolean;
+};
+
+type PopulatedClassDoc = {
+  _id: { toString(): string };
+  name: string;
+  description?: string;
+  subject?: string;
+  grade?: string;
+  academicYear: string;
+  semester?: string;
+  cohort?: string;
+  duration?: string;
+  schoolId?: { toString(): string };
+  mentorIds?: PopulatedReference[];
+  studentIds?: PopulatedReference[];
+  isActive?: boolean;
+  maxStudents?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
+
+function formatClassDocument(classDoc: PopulatedClassDoc) {
+  return {
+    id: classDoc._id.toString(),
+    name: classDoc.name,
+    description: classDoc.description,
+    subject: classDoc.subject,
+    grade: classDoc.grade,
+    academicYear: classDoc.academicYear,
+    semester: classDoc.semester,
+    cohort: classDoc.cohort,
+    duration: classDoc.duration,
+    schoolId: classDoc.schoolId?.toString(),
+    mentorIds: (classDoc.mentorIds || []).map((mentor) => mentor._id.toString()),
+    mentors: (classDoc.mentorIds || []).map((mentor) => ({
+      id: mentor._id.toString(),
+      name: mentor.name,
+      email: mentor.email,
+    })),
+    studentIds: (classDoc.studentIds || []).map((student) => student._id.toString()),
+    students: (classDoc.studentIds || []).map((student) => ({
+      id: student._id.toString(),
+      name: student.name,
+      email: student.email,
+      studentId: student.studentId,
+      isActive: student.isActive,
+    })),
+    isActive: classDoc.isActive,
+    maxStudents: classDoc.maxStudents,
+    createdAt: classDoc.createdAt,
+    updatedAt: classDoc.updatedAt,
+  };
+}
 
 // POST /api/classes - Create a new class
 export async function POST(request: NextRequest) {
@@ -12,7 +73,7 @@ export async function POST(request: NextRequest) {
     console.log('POST /api/classes - Database connected successfully');
 
     // Check authentication and user role
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       console.log('POST /api/classes - No userId in cookies');
       return NextResponse.json(
@@ -157,7 +218,7 @@ export async function GET(request: NextRequest) {
     await connectDB();
 
     // Check authentication
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -178,21 +239,35 @@ export async function GET(request: NextRequest) {
     // Filter classes based on user role
     if (user.role === 'super_admin') {
       // Super admin can see all classes
-      classes = await Class.find().populate(['mentorIds', 'studentIds']);
+      classes = await Class.find()
+        .populate('mentorIds', 'name email')
+        .populate('studentIds', 'name email studentId isActive')
+        .lean();
     } else if (user.role === 'school_admin') {
       // School admin can see classes from their school
-      classes = await Class.find({ schoolId: user.schoolId }).populate(['mentorIds', 'studentIds']);
+      classes = await Class.find({ schoolId: user.schoolId })
+        .populate('mentorIds', 'name email')
+        .populate('studentIds', 'name email studentId isActive')
+        .lean();
     } else if (user.role === 'mentor') {
       // Mentors can see classes they're assigned to
-      classes = await Class.find({ mentorIds: userId }).populate(['mentorIds', 'studentIds']);
+      classes = await Class.find({ mentorIds: userId })
+        .populate('mentorIds', 'name email')
+        .populate('studentIds', 'name email studentId isActive')
+        .lean();
     } else if (user.role === 'student') {
       // Students can see classes they're enrolled in
-      classes = await Class.find({ studentIds: userId }).populate(['mentorIds', 'studentIds']);
+      classes = await Class.find({ studentIds: userId })
+        .populate('mentorIds', 'name email')
+        .populate('studentIds', 'name email studentId isActive')
+        .lean();
     } else {
       classes = [];
     }
 
-    return NextResponse.json({ classes });
+    const formattedClasses = classes.map((classDoc) => formatClassDocument(classDoc as PopulatedClassDoc));
+
+    return NextResponse.json({ classes: formattedClasses });
   } catch (error) {
     console.error('Error fetching classes:', error);
     return NextResponse.json(

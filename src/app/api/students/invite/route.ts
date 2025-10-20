@@ -5,13 +5,14 @@ import User from '@/models/User';
 import Class from '@/models/Class';
 import { sendEmail, generateStudentInvitationEmail } from '@/lib/email';
 import crypto from 'crypto';
+import { getUserIdFromRequest } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
     // Check authentication
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },

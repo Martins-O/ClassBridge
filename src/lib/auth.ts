@@ -1,12 +1,13 @@
 import { NextRequest } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
+import { getUserIdFromRequest } from '@/lib/session';
 
 export async function getCurrentUser(request: NextRequest) {
   try {
     await connectDB();
 
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return null;
     }

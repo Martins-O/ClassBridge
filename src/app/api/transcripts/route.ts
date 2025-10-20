@@ -3,13 +3,14 @@ import connectDB from '@/lib/mongodb';
 import Transcript from '@/models/Transcript';
 import User from '@/models/User';
 import Class from '@/models/Class';
+import { getUserIdFromRequest } from '@/lib/session';
 
 // GET /api/transcripts - Fetch transcripts with filtering
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },

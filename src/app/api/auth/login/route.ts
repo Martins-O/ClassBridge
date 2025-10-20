@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
+import { encodeSessionToken, getSessionCookieName } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,8 +46,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Set a simple session cookie with user ID
-    response.cookies.set('userId', user._id.toString(), {
+    const sessionToken = encodeSessionToken(user._id.toString());
+
+    response.cookies.set(getSessionCookieName(), sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

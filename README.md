@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Configuration
+
+- Set `SESSION_SECRET` in your runtime environment to enable signed authentication cookies. A fallback is used in development, but production deployments must define this value explicitly.
+
 ## Getting Started
 
 First, run the development server:

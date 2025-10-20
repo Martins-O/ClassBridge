@@ -34,6 +34,10 @@ export interface ITranscript extends Document {
   lastUpdated: Date;
   createdAt: Date;
   updatedAt: Date;
+
+  // Methods
+  calculateGPA(): number;
+  updateAcademicSummary(): void;
 }
 
 const CourseRecordSchema = new Schema({

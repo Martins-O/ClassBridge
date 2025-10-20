@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Class from '@/models/Class';
 import User from '@/models/User';
+import { getUserIdFromRequest } from '@/lib/session';
 
 export async function GET(
   request: NextRequest,
@@ -10,7 +11,7 @@ export async function GET(
   try {
     await connectDB();
 
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -26,31 +27,38 @@ export async function GET(
       );
     }
 
-    const { id: classId } = await params;
+    const { id } = await params;
+    const classId = id;
 
-    // Find the class
-    const classData = await Class.findById(classId);
-    if (!classData) {
+    const classDoc = await Class.findById(classId).populate('studentIds', 'name email studentId isActive');
+    if (!classDoc) {
       return NextResponse.json(
         { error: 'Class not found' },
         { status: 404 }
       );
     }
 
-    // Check permissions - only mentors/admins from the same school or students in the class can view
     let hasAccess = false;
-    if (currentUser.role === 'super_admin') {
-      hasAccess = true;
-    } else if (currentUser.role === 'school_admin') {
-      hasAccess = classData.schoolId.toString() === currentUser.schoolId?.toString();
-    } else if (currentUser.role === 'mentor') {
-      hasAccess = classData.mentorIds.some(
-        (mentorId: string) => mentorId.toString() === userId
-      );
-    } else if (currentUser.role === 'student') {
-      hasAccess = classData.studentIds.some(
-        (studentId: string) => studentId.toString() === userId
-      );
+
+    switch (currentUser.role) {
+      case 'super_admin':
+        hasAccess = true;
+        break;
+      case 'school_admin':
+        hasAccess = classDoc.schoolId?.toString() === currentUser.schoolId?.toString();
+        break;
+      case 'mentor':
+        hasAccess = classDoc.mentorIds.some(
+          (mentorId: { toString(): string }) => mentorId.toString() === userId
+        );
+        break;
+      case 'student':
+        hasAccess = classDoc.studentIds.some(
+          (student: { _id: { toString(): string } }) => student._id.toString() === userId
+        );
+        break;
+      default:
+        hasAccess = false;
     }
 
     if (!hasAccess) {
@@ -60,21 +68,15 @@ export async function GET(
       );
     }
 
-    // Fetch students in this class
-    const students = await User.find({
-      _id: { $in: classData.studentIds },
-      role: 'student'
-    }).select('_id name email studentId isActive createdAt').sort({ name: 1 });
+    const students = classDoc.studentIds.map((student: { _id: string; name: string; email: string; studentId?: string; isActive?: boolean }) => ({
+      id: student._id,
+      name: student.name,
+      email: student.email,
+      studentId: student.studentId,
+      isActive: student.isActive,
+    }));
 
-    return NextResponse.json({
-      students,
-      classInfo: {
-        _id: classData._id,
-        name: classData.name,
-        studentCount: students.length
-      }
-    });
-
+    return NextResponse.json({ students });
   } catch (error) {
     console.error('Error fetching class students:', error);
     return NextResponse.json(

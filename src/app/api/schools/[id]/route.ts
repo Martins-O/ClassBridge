@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import School from '@/models/School';
 import User from '@/models/User';
+import { getUserIdFromRequest } from '@/lib/session';
 
 // GET /api/schools/[id] - Get a specific school
 export async function GET(
@@ -12,7 +13,7 @@ export async function GET(
     await connectDB();
 
     // Check authentication
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import Class from '@/models/Class';
+import { getUserIdFromRequest } from '@/lib/session';
 
 // PUT /api/mentors/[id] - Update mentor information or assign/remove from classes
 export async function PUT(
@@ -11,7 +12,7 @@ export async function PUT(
   try {
     await connectDB();
 
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -124,7 +125,7 @@ export async function DELETE(
   try {
     await connectDB();
 
-    const userId = request.cookies.get('userId')?.value;
+    const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },
