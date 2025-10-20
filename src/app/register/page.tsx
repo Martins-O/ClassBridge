@@ -155,11 +155,11 @@ export default function RegisterPage() {
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="w-2 h-2 bg-white rounded-full"></div>
-                  <span className="text-indigo-100">Beautiful survey templates</span>
+                  <span className="text-indigo-100">Comprehensive class management</span>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="w-2 h-2 bg-white rounded-full"></div>
-                  <span className="text-indigo-100">Instant response analytics</span>
+                  <span className="text-indigo-100">Student progress tracking</span>
                 </div>
               </div>
             </div>

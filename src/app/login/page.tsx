@@ -89,30 +89,30 @@ export default function LoginPage() {
                 <h1 className="text-4xl font-bold mb-6 leading-tight">
                   Welcome back to
                   <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white to-indigo-200">
-                    SurveyPro
+                    ClassBridge
                   </span>
                 </h1>
                 <p className="text-xl text-indigo-100 leading-relaxed mb-8">
-                  Continue building amazing surveys and gathering valuable insights from your audience.
+                  Continue managing your educational platform and connecting mentors with students.
                 </p>
               </div>
 
               <div className="space-y-6">
                 <div className="flex items-center space-x-4">
                   <div className="w-2 h-2 bg-white rounded-full"></div>
-                  <span className="text-indigo-100">Create unlimited surveys</span>
+                  <span className="text-indigo-100">Manage unlimited classes</span>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="w-2 h-2 bg-white rounded-full"></div>
-                  <span className="text-indigo-100">Real-time response tracking</span>
+                  <span className="text-indigo-100">Real-time student progress</span>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="w-2 h-2 bg-white rounded-full"></div>
-                  <span className="text-indigo-100">Advanced analytics dashboard</span>
+                  <span className="text-indigo-100">Advanced grade analytics</span>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="w-2 h-2 bg-white rounded-full"></div>
-                  <span className="text-indigo-100">Shareable survey links</span>
+                  <span className="text-indigo-100">Student invitation system</span>
                 </div>
               </div>
             </div>

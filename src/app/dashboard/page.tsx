@@ -16,19 +16,32 @@ interface User {
 }
 
 interface DashboardStats {
-  totalSurveys: number;
-  totalResponses: number;
   totalClasses: number;
   totalSchools: number;
+  totalStudents: number;
+  totalMentors: number;
+}
+
+interface StudentStats {
+  myClasses: number;
+  pendingAssessments: number;
+  completedAssessments: number;
+  averageGrade: number;
 }
 
 function DashboardContent() {
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<DashboardStats>({
-    totalSurveys: 0,
-    totalResponses: 0,
     totalClasses: 0,
-    totalSchools: 0
+    totalSchools: 0,
+    totalStudents: 0,
+    totalMentors: 0
+  });
+  const [studentStats, setStudentStats] = useState<StudentStats>({
+    myClasses: 0,
+    pendingAssessments: 0,
+    completedAssessments: 0,
+    averageGrade: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -43,27 +56,99 @@ function DashboardContent() {
       if (userResponse.ok) {
         const userData = await userResponse.json();
         setUser(userData.user);
+
+        // If user is a student, fetch student-specific stats
+        if (userData.user.role === 'student') {
+          await fetchStudentStats(userData.user.id);
+        } else {
+          // Fetch admin/mentor stats for non-student users
+          await fetchAdminStats();
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStudentStats = async (userId: string) => {
+    try {
+      const [classesRes, assessmentsRes, gradesRes] = await Promise.all([
+        fetch('/api/classes'),
+        fetch('/api/assessments'),
+        fetch('/api/grades')
+      ]);
+
+      let myClasses = 0;
+      let pendingAssessments = 0;
+      let completedAssessments = 0;
+      let averageGrade = 0;
+
+      // Count student's classes
+      if (classesRes.ok) {
+        const classesData = await classesRes.json();
+        const classes = classesData.classes || [];
+        myClasses = classes.filter((cls: any) =>
+          cls.studentIds && cls.studentIds.includes(userId)
+        ).length;
       }
 
-      // Fetch basic stats
-      const [surveysRes, classesRes, schoolsRes] = await Promise.all([
-        fetch('/api/surveys'),
+      // Count assessments
+      if (assessmentsRes.ok) {
+        const assessmentsData = await assessmentsRes.json();
+        const assessments = assessmentsData.assessments || [];
+
+        // For now, count total assessments (in a real app, would filter by student's classes)
+        const activeAssessments = assessments.filter((a: any) => a.isActive);
+        pendingAssessments = activeAssessments.length;
+        completedAssessments = 0; // Would need to check attempts
+      }
+
+      // Calculate average grade
+      if (gradesRes.ok) {
+        const gradesData = await gradesRes.json();
+        const grades = gradesData.grades || [];
+        const studentGrades = grades.filter((g: any) => g.studentId === userId);
+
+        if (studentGrades.length > 0) {
+          const total = studentGrades.reduce((sum: number, grade: any) => sum + (grade.score || 0), 0);
+          averageGrade = Math.round(total / studentGrades.length);
+        }
+      }
+
+      setStudentStats({
+        myClasses,
+        pendingAssessments,
+        completedAssessments,
+        averageGrade
+      });
+    } catch (error) {
+      console.error('Error fetching student stats:', error);
+    }
+  };
+
+  const fetchAdminStats = async () => {
+    try {
+      const [classesRes, schoolsRes] = await Promise.all([
         fetch('/api/classes'),
         fetch('/api/schools')
       ]);
 
-      let surveys = [];
       let classes = [];
       let schools = [];
-
-      if (surveysRes.ok) {
-        const surveysData = await surveysRes.json();
-        surveys = surveysData.surveys || [];
-      }
+      let totalStudents = 0;
+      let totalMentors = 0;
 
       if (classesRes.ok) {
         const classesData = await classesRes.json();
         classes = classesData.classes || [];
+
+        // Count students and mentors from classes
+        classes.forEach((cls: { studentIds?: string[]; mentorId?: string }) => {
+          if (cls.studentIds) totalStudents += cls.studentIds.length;
+          if (cls.mentorId) totalMentors += 1;
+        });
       }
 
       if (schoolsRes.ok) {
@@ -71,30 +156,14 @@ function DashboardContent() {
         schools = schoolsData.schools || [];
       }
 
-      // Get total responses across all surveys
-      let totalResponses = 0;
-      for (const survey of surveys) {
-        try {
-          const responseRes = await fetch(`/api/responses?surveyId=${survey.uniqueId}`);
-          if (responseRes.ok) {
-            const responseData = await responseRes.json();
-            totalResponses += responseData.responses.length;
-          }
-        } catch {
-          console.error('Error fetching responses for survey:', survey.uniqueId);
-        }
-      }
-
       setStats({
-        totalSurveys: surveys.length,
-        totalResponses,
         totalClasses: classes.length,
-        totalSchools: schools.length
+        totalSchools: schools.length,
+        totalStudents,
+        totalMentors
       });
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching admin stats:', error);
     }
   };
 
@@ -120,52 +189,36 @@ function DashboardContent() {
 
     const actions = [];
 
-    // Common actions for all users
-    actions.push({
-      title: 'Surveys',
-      description: 'View and manage surveys',
-      href: '/dashboard/surveys',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      ),
-      color: 'from-blue-500 to-cyan-500'
-    });
-
-    // School and class management for admins
-    if (['super_admin', 'school_admin'].includes(user.role)) {
-      actions.push({
-        title: 'School Management',
-        description: 'Manage school and classes',
-        href: '/dashboard/school',
-        icon: (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-          </svg>
-        ),
-        color: 'from-indigo-500 to-purple-500'
-      });
-    }
-
-    // Mentor dashboard
-    if (user.role === 'mentor') {
+    if (user.role === 'student') {
+      // Student-specific actions
       actions.push({
         title: 'My Classes',
-        description: 'View and manage your assigned classes',
-        href: '/dashboard/mentor',
+        description: 'View your enrolled classes and course materials',
+        href: '/dashboard/classes',
         icon: (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        ),
+        color: 'from-blue-500 to-cyan-500'
+      });
+
+      actions.push({
+        title: 'Available Assessments',
+        description: 'Take assessments assigned to your classes',
+        href: '/dashboard/assessments',
+        icon: (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         ),
         color: 'from-purple-500 to-pink-500'
       });
 
       actions.push({
-        title: 'Grade Management',
-        description: 'Create and manage student grades',
-        href: '/dashboard/grades',
+        title: 'My Transcript',
+        description: 'View your academic transcript and grades',
+        href: '/dashboard/transcript',
         icon: (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -173,36 +226,88 @@ function DashboardContent() {
         ),
         color: 'from-green-500 to-emerald-500'
       });
-    }
 
-    // Student transcript access
-    if (user.role === 'student') {
       actions.push({
-        title: 'My Transcript',
-        description: 'View your academic transcript and grades',
-        href: '/dashboard/transcript',
+        title: 'Study Materials',
+        description: 'Access course resources and materials',
+        href: '/dashboard/materials',
         icon: (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+          </svg>
+        ),
+        color: 'from-orange-500 to-red-500'
+      });
+    } else {
+      // Non-student actions (admin, mentor, etc.)
+      actions.push({
+        title: 'My Classes',
+        description: 'View all your classes and activities',
+        href: '/dashboard/classes',
+        icon: (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
         ),
         color: 'from-blue-500 to-cyan-500'
       });
-    }
 
-    // School registration for new users
-    if (!user.schoolId) {
-      actions.push({
-        title: 'Register School',
-        description: 'Register your educational institution',
-        href: '/register-school',
-        icon: (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-        ),
-        color: 'from-green-500 to-emerald-500'
-      });
+      // School and class management for admins
+      if (['super_admin', 'school_admin'].includes(user.role)) {
+        actions.push({
+          title: 'School Management',
+          description: 'Manage school and classes',
+          href: '/dashboard/school',
+          icon: (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          ),
+          color: 'from-indigo-500 to-purple-500'
+        });
+      }
+
+      // Mentor dashboard
+      if (user.role === 'mentor') {
+        actions.push({
+          title: 'Grade Management',
+          description: 'Create and manage student grades',
+          href: '/dashboard/grades',
+          icon: (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          ),
+          color: 'from-green-500 to-emerald-500'
+        });
+
+        actions.push({
+          title: 'Assessment Management',
+          description: 'Create and manage student assessments',
+          href: '/dashboard/assessments',
+          icon: (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          ),
+          color: 'from-orange-500 to-red-500'
+        });
+      }
+
+      // School registration for new users
+      if (!user.schoolId) {
+        actions.push({
+          title: 'Register School',
+          description: 'Register your educational institution',
+          href: '/register-school',
+          icon: (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          ),
+          color: 'from-green-500 to-emerald-500'
+        });
+      }
     }
 
     return actions;
@@ -249,61 +354,125 @@ function DashboardContent() {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+          {user?.role === 'student' ? (
+            // Student-specific statistics
+            <>
+              <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{studentStats.myClasses}</p>
+                    <p className="text-gray-600">My Classes</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalSurveys}</p>
-                <p className="text-gray-600">Total Surveys</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-2.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                </svg>
+              <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{studentStats.pendingAssessments}</p>
+                    <p className="text-gray-600">Pending Assessments</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalResponses}</p>
-                <p className="text-gray-600">Survey Responses</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
+              <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{studentStats.averageGrade}%</p>
+                    <p className="text-gray-600">Average Grade</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalClasses}</p>
-                <p className="text-gray-600">Active Classes</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
+              <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{studentStats.completedAssessments}</p>
+                    <p className="text-gray-600">Completed Assessments</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalSchools}</p>
-                <p className="text-gray-600">Registered Schools</p>
+            </>
+          ) : (
+            // Admin/Mentor statistics
+            <>
+              <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalClasses}</p>
+                    <p className="text-gray-600">Active Classes</p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+
+              <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-2.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalStudents}</p>
+                    <p className="text-gray-600">Total Students</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalMentors}</p>
+                    <p className="text-gray-600">Active Mentors</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalSchools}</p>
+                    <p className="text-gray-600">Registered Schools</p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Quick Actions */}
@@ -336,45 +505,91 @@ function DashboardContent() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Getting Started */}
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/20">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Getting Started</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-6">
+              {user?.role === 'student' ? 'Your Learning Journey' : 'Getting Started'}
+            </h3>
             <div className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">Create Your First Survey</h4>
-                  <p className="text-gray-600 text-sm">Build and share surveys to collect responses from your audience.</p>
-                </div>
-              </div>
+              {user?.role === 'student' ? (
+                // Student-specific getting started
+                <>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Explore Your Classes</h4>
+                      <p className="text-gray-600 text-sm">Check out your enrolled classes and access course materials.</p>
+                    </div>
+                  </div>
 
-              {user?.role === 'school_admin' && (
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Complete Assessments</h4>
+                      <p className="text-gray-600 text-sm">Take available assessments to track your learning progress.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Set Up Your Classes</h4>
-                    <p className="text-gray-600 text-sm">Organize students and mentors into classes for better management.</p>
+
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">View Your Progress</h4>
+                      <p className="text-gray-600 text-sm">Check your transcript and monitor your academic achievements.</p>
+                    </div>
                   </div>
-                </div>
+                </>
+              ) : (
+                // Admin/Mentor getting started
+                <>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Set Up Your School</h4>
+                      <p className="text-gray-600 text-sm">Register your school and start managing classes and students.</p>
+                    </div>
+                  </div>
+
+                  {user?.role === 'school_admin' && (
+                    <div className="flex items-start space-x-3">
+                      <div className="w-6 h-6 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900">Set Up Your Classes</h4>
+                        <p className="text-gray-600 text-sm">Organize students and mentors into classes for better management.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Invite Team Members</h4>
+                      <p className="text-gray-600 text-sm">Add mentors, students, and administrators to your platform.</p>
+                    </div>
+                  </div>
+                </>
               )}
-
-              <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">Invite Team Members</h4>
-                  <p className="text-gray-600 text-sm">Add mentors, students, and administrators to your platform.</p>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -383,16 +598,16 @@ function DashboardContent() {
             <h3 className="text-xl font-bold text-gray-900 mb-6">Platform Features</h3>
             <div className="space-y-4">
               <Link
-                href="/dashboard/surveys"
+                href="/dashboard/classes"
                 className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors group"
               >
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
                     <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
                   </div>
-                  <span className="font-medium text-gray-900">Survey Management</span>
+                  <span className="font-medium text-gray-900">Class Management</span>
                 </div>
                 <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
