@@ -109,7 +109,7 @@ export async function PUT(
     });
 
   } catch (error) {
-    console.error('Error updating mentor:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -184,7 +184,7 @@ export async function DELETE(
     });
 
   } catch (error) {
-    console.error('Error deactivating mentor:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error accepting invitation:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

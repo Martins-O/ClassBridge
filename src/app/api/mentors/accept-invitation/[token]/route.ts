@@ -44,7 +44,7 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error('Error fetching mentor invitation:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -128,7 +128,7 @@ export async function POST(
     }, { status: 201 });
 
   } catch (error) {
-    console.error('Error accepting mentor invitation:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

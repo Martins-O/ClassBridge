@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
 
@@ -47,9 +47,9 @@ function DashboardContent() {
 
   useEffect(() => {
     fetchUserAndStats();
-  }, []);
+  }, [fetchUserAndStats]);
 
-  const fetchUserAndStats = async () => {
+  const fetchUserAndStats = useCallback(async () => {
     try {
       // Fetch user info
       const userResponse = await fetch('/api/auth/me');
@@ -66,11 +66,10 @@ function DashboardContent() {
         }
       }
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const fetchStudentStats = async (userId: string) => {
     try {
@@ -124,7 +123,6 @@ function DashboardContent() {
         averageGrade
       });
     } catch (error) {
-      console.error('Error fetching student stats:', error);
     }
   };
 
@@ -163,7 +161,6 @@ function DashboardContent() {
         totalMentors
       });
     } catch (error) {
-      console.error('Error fetching admin stats:', error);
     }
   };
 

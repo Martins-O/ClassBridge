@@ -113,7 +113,6 @@ function SchoolManagementContent() {
         }
       }
     } catch (error) {
-      console.error('Error fetching user and school:', error);
     }
   }, []);
 
@@ -125,7 +124,6 @@ function SchoolManagementContent() {
         setClasses(data.classes || []);
       }
     } catch (error) {
-      console.error('Error fetching classes:', error);
     } finally {
       setLoading(false);
     }
@@ -139,7 +137,6 @@ function SchoolManagementContent() {
         setMentors(data.mentors || []);
       }
     } catch (error) {
-      console.error('Error fetching mentors:', error);
     }
   }, [user?.schoolId]);
 
@@ -180,7 +177,6 @@ function SchoolManagementContent() {
         fetchClasses();
       }
     } catch (error) {
-      console.error('Error creating class:', error);
     }
   };
 
@@ -198,7 +194,6 @@ function SchoolManagementContent() {
         fetchClasses();
       }
     } catch (error) {
-      console.error('Error updating class:', error);
     }
   };
 
@@ -257,7 +252,6 @@ function SchoolManagementContent() {
         setInviteError(errors.join(', '));
       }
     } catch (error) {
-      console.error('Error sending invitation:', error);
       setInviteError('Failed to send invitation. Please try again.');
     } finally {
       setIsSubmittingInvite(false);
@@ -303,7 +297,6 @@ function SchoolManagementContent() {
         setMentorError(errorData.error || 'Failed to invite mentor');
       }
     } catch (error) {
-      console.error('Error inviting mentor:', error);
       setMentorError('Failed to invite mentor. Please try again.');
     } finally {
       setIsSubmittingMentor(false);
@@ -349,7 +342,6 @@ function SchoolManagementContent() {
         setMentorClassError(errorData.error || 'Failed to update mentor class assignments');
       }
     } catch (error) {
-      console.error('Error updating mentor class assignments:', error);
       setMentorClassError('Failed to update mentor class assignments. Please try again.');
     } finally {
       setIsSubmittingMentorClasses(false);

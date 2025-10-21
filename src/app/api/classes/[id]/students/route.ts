@@ -78,7 +78,7 @@ export async function GET(
 
     return NextResponse.json({ students });
   } catch (error) {
-    console.error('Error fetching class students:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

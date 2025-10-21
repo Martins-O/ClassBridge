@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
 
@@ -33,8 +33,7 @@ interface AssessmentAttempt {
   };
 }
 
-function AssessmentResultContent({ params }: { params: { id: string } }) {
-  const router = useRouter();
+function AssessmentResultContent() {
   const searchParams = useSearchParams();
   const attemptId = searchParams.get('attemptId');
 
@@ -49,9 +48,9 @@ function AssessmentResultContent({ params }: { params: { id: string } }) {
       setError('No attempt ID provided');
       setLoading(false);
     }
-  }, [attemptId]);
+  }, [attemptId, fetchAttemptResult]);
 
-  const fetchAttemptResult = async () => {
+  const fetchAttemptResult = useCallback(async () => {
     try {
       const response = await fetch(`/api/assessments/attempts/${attemptId}`);
       if (response.ok) {
@@ -61,12 +60,11 @@ function AssessmentResultContent({ params }: { params: { id: string } }) {
         setError('Assessment result not found');
       }
     } catch (error) {
-      console.error('Error fetching assessment result:', error);
       setError('Failed to load assessment result');
     } finally {
       setLoading(false);
     }
-  };
+  }, [attemptId]);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -302,10 +300,10 @@ function AssessmentResultContent({ params }: { params: { id: string } }) {
   );
 }
 
-export default function AssessmentResult({ params }: { params: { id: string } }) {
+export default function AssessmentResult() {
   return (
     <AuthGuard>
-      <AssessmentResultContent params={params} />
+      <AssessmentResultContent />
     </AuthGuard>
   );
 }

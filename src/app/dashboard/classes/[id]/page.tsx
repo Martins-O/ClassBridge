@@ -44,7 +44,6 @@ function ClassDashboardContent() {
         setError('Failed to fetch class details');
       }
     } catch (error) {
-      console.error('Error fetching class:', error);
       setError('An error occurred while fetching class details');
     } finally {
       setLoading(false);

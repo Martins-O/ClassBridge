@@ -45,7 +45,7 @@ export function verifySessionToken(token: string | undefined) {
       return userId;
     }
   } catch (error) {
-    console.error('Failed to verify session token:', error);
+    // Silent failure for security
   }
 
   return null;

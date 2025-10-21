@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
@@ -76,9 +76,9 @@ function AssessmentDetailContent({ params }: { params: { id: string } }) {
   useEffect(() => {
     fetchAssessment();
     fetchAttempts();
-  }, [params.id]);
+  }, [params.id, fetchAssessment, fetchAttempts]);
 
-  const fetchAssessment = async () => {
+  const fetchAssessment = useCallback(async () => {
     try {
       const response = await fetch(`/api/assessments/${params.id}`);
       if (response.ok) {
@@ -86,13 +86,12 @@ function AssessmentDetailContent({ params }: { params: { id: string } }) {
         setAssessment(data.assessment);
       }
     } catch (error) {
-      console.error('Error fetching assessment:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
 
-  const fetchAttempts = async () => {
+  const fetchAttempts = useCallback(async () => {
     try {
       const response = await fetch(`/api/assessments/${params.id}/attempts`);
       if (response.ok) {
@@ -100,11 +99,10 @@ function AssessmentDetailContent({ params }: { params: { id: string } }) {
         setAttempts(data.attempts);
       }
     } catch (error) {
-      console.error('Error fetching attempts:', error);
     } finally {
       setAttemptsLoading(false);
     }
-  };
+  }, [params.id]);
 
   const toggleAssessmentStatus = async () => {
     if (!assessment) return;
@@ -122,7 +120,6 @@ function AssessmentDetailContent({ params }: { params: { id: string } }) {
         setAssessment({ ...assessment, isActive: !assessment.isActive });
       }
     } catch (error) {
-      console.error('Error updating assessment status:', error);
     }
   };
 
@@ -140,7 +137,6 @@ function AssessmentDetailContent({ params }: { params: { id: string } }) {
         alert('Failed to delete assessment');
       }
     } catch (error) {
-      console.error('Error deleting assessment:', error);
       alert('Error deleting assessment');
     }
   };

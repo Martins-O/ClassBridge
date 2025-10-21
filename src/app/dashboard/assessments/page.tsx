@@ -47,7 +47,6 @@ function AssessmentDashboardContent() {
         setAssessments(data.assessments);
       }
     } catch (error) {
-      console.error('Error fetching assessments:', error);
     } finally {
       setLoading(false);
     }
@@ -67,7 +66,6 @@ function AssessmentDashboardContent() {
         alert('Failed to delete assessment');
       }
     } catch (error) {
-      console.error('Error deleting assessment:', error);
       alert('Error deleting assessment');
     }
   };
@@ -88,7 +86,6 @@ function AssessmentDashboardContent() {
         ));
       }
     } catch (error) {
-      console.error('Error updating assessment status:', error);
     }
   };
 

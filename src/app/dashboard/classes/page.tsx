@@ -52,7 +52,6 @@ export default function ClassManagement() {
         }
       }
     } catch (error) {
-      console.error('Error fetching schools:', error);
     }
   }, [formData.schoolId]);
 
@@ -64,7 +63,6 @@ export default function ClassManagement() {
         setClasses(data.classes || []);
       }
     } catch (error) {
-      console.error('Error fetching classes:', error);
     } finally {
       setLoading(false);
     }
@@ -102,7 +100,6 @@ export default function ClassManagement() {
         fetchClasses();
       }
     } catch (error) {
-      console.error('Error creating class:', error);
     }
   };
 
@@ -120,7 +117,6 @@ export default function ClassManagement() {
         fetchClasses();
       }
     } catch (error) {
-      console.error('Error updating class:', error);
     }
   };
 

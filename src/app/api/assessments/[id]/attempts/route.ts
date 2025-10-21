@@ -91,7 +91,7 @@ export async function POST(
       }
     });
   } catch (error) {
-    console.error('Error starting assessment attempt:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Failed to start assessment attempt' },
       { status: 500 }
@@ -136,7 +136,7 @@ export async function GET(
 
     return NextResponse.json({ attempts });
   } catch (error) {
-    console.error('Error fetching assessment attempts:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Failed to fetch assessment attempts' },
       { status: 500 }

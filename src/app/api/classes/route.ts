@@ -68,43 +68,34 @@ function formatClassDocument(classDoc: PopulatedClassDoc) {
 // POST /api/classes - Create a new class
 export async function POST(request: NextRequest) {
   try {
-    console.log('POST /api/classes - Starting class creation');
     await connectDB();
-    console.log('POST /api/classes - Database connected successfully');
 
     // Check authentication and user role
     const userId = getUserIdFromRequest(request);
     if (!userId) {
-      console.log('POST /api/classes - No userId in cookies');
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    console.log('POST /api/classes - User ID:', userId);
     const user = await User.findById(userId);
     if (!user) {
-      console.log('POST /api/classes - User not found');
       return NextResponse.json(
         { error: 'User not found' },
       );
     }
 
-    console.log('POST /api/classes - User found:', user.email, 'Role:', user.role);
 
     // Only school admins and super admins can create classes
     if (!['school_admin', 'super_admin'].includes(user.role)) {
-      console.log('POST /api/classes - User role not authorized:', user.role);
       return NextResponse.json(
         { error: 'Only school administrators can create classes' },
         { status: 403 }
       );
     }
 
-    console.log('POST /api/classes - User authorized, parsing request body');
     const body = await request.json();
-    console.log('POST /api/classes - Request body received:', Object.keys(body));
 
     const {
       name,
@@ -123,36 +114,30 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!name || !schoolId || !academicYear || !duration || !cohort) {
-      console.log('POST /api/classes - Validation failed:', { name, schoolId, academicYear, duration, cohort });
       return NextResponse.json(
         { error: 'Name, school ID, academic year, duration, and cohort are required' },
         { status: 400 }
       );
     }
 
-    console.log('POST /api/classes - Validation passed, checking school existence');
     // Verify school exists
     const school = await School.findById(schoolId);
     if (!school) {
-      console.log('POST /api/classes - School not found:', schoolId);
       return NextResponse.json(
         { error: 'School not found' },
         { status: 404 }
       );
     }
 
-    console.log('POST /api/classes - School found:', school.name);
 
     // For school admins, ensure they can only create classes for their own school
     if (user.role === 'school_admin' && user.schoolId?.toString() !== schoolId) {
-      console.log('POST /api/classes - School admin trying to create class for different school');
       return NextResponse.json(
         { error: 'You can only create classes for your own school' },
         { status: 403 }
       );
     }
 
-    console.log('POST /api/classes - Creating new class object');
     // Create new class
     const newClass = new Class({
       name,
@@ -169,9 +154,7 @@ export async function POST(request: NextRequest) {
       cohort
     });
 
-    console.log('POST /api/classes - Saving class to database');
     await newClass.save();
-    console.log('POST /api/classes - Class saved successfully:', newClass._id);
 
     // Populate references for response
     await newClass.populate(['mentorIds', 'studentIds']);
@@ -182,12 +165,6 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
   } catch (error) {
-    console.error('Error creating class:', error);
-    console.error('Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : 'No stack trace',
-      name: error instanceof Error ? error.name : 'Unknown error type'
-    });
 
     // Return more specific error messages based on the error type
     if (error instanceof Error) {
@@ -269,7 +246,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ classes: formattedClasses });
   } catch (error) {
-    console.error('Error fetching classes:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

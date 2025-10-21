@@ -44,7 +44,6 @@ export default function MentorInvitation() {
       }
     } catch (err) {
       setError('Failed to load invitation details');
-      console.error('Error fetching invitation:', err);
     } finally {
       setLoading(false);
     }
@@ -89,7 +88,6 @@ export default function MentorInvitation() {
       }
     } catch (err) {
       setError('An error occurred while accepting the invitation');
-      console.error('Error accepting invitation:', err);
     } finally {
       setAccepting(false);
     }

@@ -74,7 +74,6 @@ function MentorDashboardContent() {
         }
       }
     } catch (error) {
-      console.error('Error fetching user and school:', error);
     }
   }, [router]);
 
@@ -101,7 +100,6 @@ function MentorDashboardContent() {
                   return { ...cls, students: studentsData.students || [] };
                 }
               } catch (error) {
-                console.error(`Error fetching students for class ${cls._id}:`, error);
               }
             }
             return { ...cls, students: [] };
@@ -111,7 +109,6 @@ function MentorDashboardContent() {
         setAssignedClasses(classesWithStudents);
       }
     } catch (error) {
-      console.error('Error fetching assigned classes:', error);
     } finally {
       setLoading(false);
     }

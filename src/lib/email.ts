@@ -6,8 +6,6 @@ const apiInstance = new brevo.TransactionalEmailsApi();
 // Set API key from environment variable
 if (process.env.BREVO_API_KEY) {
   apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
-} else {
-  console.warn('BREVO_API_KEY environment variable is not set');
 }
 
 export interface EmailData {
@@ -57,10 +55,8 @@ export async function sendEmail(emailData: EmailData): Promise<boolean> {
     }
 
     const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    console.log('Email sent successfully:', result.response?.statusCode);
     return true;
   } catch (error) {
-    console.error('Error sending email:', error);
     return false;
   }
 }

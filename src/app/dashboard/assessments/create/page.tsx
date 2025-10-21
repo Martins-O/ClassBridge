@@ -106,7 +106,6 @@ function CreateAssessmentContent() {
         setClasses(classesData.classes);
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
     }
   };
 
@@ -199,7 +198,6 @@ function CreateAssessmentContent() {
         alert(errorData.error || 'Failed to create assessment');
       }
     } catch (error) {
-      console.error('Error creating assessment:', error);
       alert('An error occurred while creating the assessment');
     } finally {
       setLoading(false);

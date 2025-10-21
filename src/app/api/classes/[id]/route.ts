@@ -68,7 +68,7 @@ export async function GET(
 
     return NextResponse.json({ class: classData });
   } catch (error) {
-    console.error('Error fetching class:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -163,7 +163,7 @@ export async function PUT(
     });
 
   } catch (error) {
-    console.error('Error updating class:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

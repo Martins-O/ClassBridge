@@ -79,7 +79,6 @@ function TranscriptDashboardContent() {
         }
       }
     } catch (error) {
-      console.error('Error fetching transcript:', error);
       setError('Failed to load transcript');
     } finally {
       setLoading(false);
@@ -114,7 +113,6 @@ function TranscriptDashboardContent() {
       // This would typically generate a PDF or print-friendly view
       window.print();
     } catch (error) {
-      console.error('Error exporting transcript:', error);
       alert('Failed to export transcript');
     }
   };

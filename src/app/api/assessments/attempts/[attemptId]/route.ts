@@ -132,7 +132,7 @@ export async function PUT(
       attempt: updatedAttempt
     });
   } catch (error) {
-    console.error('Error updating assessment attempt:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Failed to update assessment attempt' },
       { status: 500 }
@@ -179,7 +179,7 @@ export async function GET(
 
     return NextResponse.json({ attempt });
   } catch (error) {
-    console.error('Error fetching assessment attempt:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Failed to fetch assessment attempt' },
       { status: 500 }

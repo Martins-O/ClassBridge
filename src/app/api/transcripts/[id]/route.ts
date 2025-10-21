@@ -72,7 +72,7 @@ export async function GET(
     return NextResponse.json({ transcript });
 
   } catch (error) {
-    console.error('Error fetching transcript:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -148,7 +148,7 @@ export async function PUT(
     });
 
   } catch (error) {
-    console.error('Error updating transcript:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -215,7 +215,7 @@ export async function DELETE(
     });
 
   } catch (error) {
-    console.error('Error deleting transcript:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

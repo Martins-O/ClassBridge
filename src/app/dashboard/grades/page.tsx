@@ -113,7 +113,6 @@ function GradesDashboardContent() {
         }
       }
     } catch (error) {
-      console.error('Error fetching user and classes:', error);
     } finally {
       setLoading(false);
     }
@@ -129,7 +128,6 @@ function GradesDashboardContent() {
         setGrades(data.grades || []);
       }
     } catch (error) {
-      console.error('Error fetching grades:', error);
     }
   }, [selectedClassId]);
 
@@ -149,7 +147,6 @@ function GradesDashboardContent() {
         );
       }
     } catch (error) {
-      console.error('Error fetching students:', error);
     }
   }, [selectedClassId]);
 
@@ -212,7 +209,6 @@ function GradesDashboardContent() {
         alert(`❌ Error: ${errorData.error}`);
       }
     } catch (error) {
-      console.error('Error creating grade:', error);
       alert('❌ Failed to create grade. Please try again.');
     }
   };

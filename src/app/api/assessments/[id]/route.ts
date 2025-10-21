@@ -34,7 +34,7 @@ export async function GET(
 
     return NextResponse.json({ assessment });
   } catch (error) {
-    console.error('Error fetching assessment:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Failed to fetch assessment' },
       { status: 500 }
@@ -79,7 +79,7 @@ export async function PUT(
       assessment
     });
   } catch (error) {
-    console.error('Error updating assessment:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Failed to update assessment' },
       { status: 500 }
@@ -121,7 +121,7 @@ export async function DELETE(
       message: 'Assessment deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting assessment:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Failed to delete assessment' },
       { status: 500 }

@@ -65,7 +65,7 @@ export async function GET(
     return NextResponse.json({ grade });
 
   } catch (error) {
-    console.error('Error fetching grade:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -149,7 +149,7 @@ export async function PUT(
     });
 
   } catch (error) {
-    console.error('Error updating grade:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -223,7 +223,7 @@ export async function DELETE(
     });
 
   } catch (error) {
-    console.error('Error deleting grade:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

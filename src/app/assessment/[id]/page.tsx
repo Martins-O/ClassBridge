@@ -69,7 +69,7 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
         setTimeRemaining(remaining);
 
         if (remaining === 0) {
-          handleSubmit(true); // Auto-submit when time runs out
+          handleSubmit(); // Auto-submit when time runs out
         }
       }, 1000);
 
@@ -90,14 +90,13 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
         setError('Assessment not found or not accessible');
       }
     } catch (error) {
-      console.error('Error fetching assessment:', error);
       setError('Failed to load assessment');
     } finally {
       setLoading(false);
     }
-  }, [params.id]);
+  }, [params.id, startNewAttempt]);
 
-  const startNewAttempt = async () => {
+  const startNewAttempt = useCallback(async () => {
     try {
       const response = await fetch(`/api/assessments/${params.id}/attempts`, {
         method: 'POST',
@@ -115,10 +114,9 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
         setError(errorData.error || 'Failed to start assessment');
       }
     } catch (error) {
-      console.error('Error starting assessment:', error);
       setError('Failed to start assessment');
     }
-  };
+  }, [params.id]);
 
   const updateAnswer = (questionId: string, answer: string | number | string[]) => {
     setAnswers(prev => {
@@ -131,7 +129,7 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
     });
   };
 
-  const handleSubmit = useCallback(async (autoSubmit = false) => {
+  const handleSubmit = useCallback(async () => {
     if (!attempt || submitting) return;
 
     setSubmitting(true);
@@ -149,13 +147,11 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
       });
 
       if (response.ok) {
-        const data = await response.json();
         router.push(`/assessment/${params.id}/result?attemptId=${attempt._id}`);
       } else {
         setError('Failed to submit assessment');
       }
     } catch (error) {
-      console.error('Error submitting assessment:', error);
       setError('Failed to submit assessment');
     } finally {
       setSubmitting(false);
@@ -177,7 +173,6 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
         }),
       });
     } catch (error) {
-      console.error('Error saving progress:', error);
     }
   };
 

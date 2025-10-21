@@ -57,7 +57,7 @@ export async function GET(
     return NextResponse.json({ school });
 
   } catch (error) {
-    console.error('Error fetching school:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -120,7 +120,7 @@ export async function PUT(
     });
 
   } catch (error) {
-    console.error('Error updating school:', error);
+    // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
