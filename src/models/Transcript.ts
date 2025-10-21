@@ -171,7 +171,7 @@ const TranscriptSchema = new Schema({
 });
 
 // Indexes for performance
-TranscriptSchema.index({ studentId: 1 });
+// Note: studentId already has unique index from schema definition
 TranscriptSchema.index({ schoolId: 1 });
 TranscriptSchema.index({ 'studentInfo.studentNumber': 1 });
 TranscriptSchema.index({ 'courseRecords.classId': 1 });

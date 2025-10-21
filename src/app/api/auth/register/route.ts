@@ -2,26 +2,40 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
+import {
+  ValidationResult,
+  validateString,
+  validateEmail,
+  validateEnum,
+  sanitizeString,
+  sanitizeEmail
+} from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const { name, email, password } = await request.json();
+    const userData = await request.json();
 
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { error: 'Name, email, and password are required' },
-        { status: 400 }
-      );
+    // Comprehensive validation
+    const validation = new ValidationResult();
+
+    validation.errors.push(...validateString(userData.name, 'name', { required: true, minLength: 2, maxLength: 100 }));
+    validation.errors.push(...validateEmail(userData.email, 'email'));
+    validation.errors.push(...validateString(userData.password, 'password', { required: true, minLength: 6, maxLength: 128 }));
+
+    if (userData.role) {
+      validation.errors.push(...validateEnum(userData.role, 'role', ['student', 'mentor', 'school_admin']));
     }
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'Password must be at least 6 characters long' },
-        { status: 400 }
-      );
+    if (!validation.isValid()) {
+      return validation.getResponse();
     }
+
+    // Sanitize inputs
+    const name = sanitizeString(userData.name);
+    const email = sanitizeEmail(userData.email);
+    const password = userData.password;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });

@@ -253,7 +253,7 @@ function CreateAssessmentContent() {
               </select>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   School *
@@ -301,7 +301,7 @@ function CreateAssessmentContent() {
       case 2:
         return (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Start Date (Optional)
@@ -327,7 +327,7 @@ function CreateAssessmentContent() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Max Attempts
@@ -460,18 +460,18 @@ function CreateAssessmentContent() {
                     </label>
                     <div className="space-y-2">
                       {(currentQuestion.options || []).map((option, index) => (
-                        <div key={index} className="flex gap-2">
+                        <div key={index} className="flex flex-col sm:flex-row gap-2">
                           <input
                             type="text"
                             value={option}
                             onChange={(e) => updateOption(index, e.target.value)}
-                            className="flex-1 px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
+                            className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500 min-h-11"
                             placeholder={`Option ${index + 1}`}
                           />
                           <button
                             type="button"
                             onClick={() => removeOption(index)}
-                            className="px-3 py-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200"
+                            className="w-full sm:w-auto px-3 py-3 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 active:bg-red-300 min-h-11 touch-manipulation"
                           >
                             Remove
                           </button>
@@ -480,7 +480,7 @@ function CreateAssessmentContent() {
                       <button
                         type="button"
                         onClick={addOption}
-                        className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-indigo-300 hover:text-indigo-600"
+                        className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-indigo-300 hover:text-indigo-600 min-h-11 touch-manipulation"
                       >
                         + Add Option
                       </button>
@@ -525,7 +525,7 @@ function CreateAssessmentContent() {
                 <button
                   type="button"
                   onClick={addQuestion}
-                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+                  className="w-full min-h-11 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 touch-manipulation"
                 >
                   Add Question
                 </button>
@@ -546,9 +546,9 @@ function CreateAssessmentContent() {
                 <div className="space-y-4">
                   {questions.map((question, index) => (
                     <div key={question.id} className="bg-white rounded-xl p-4 border border-gray-200">
-                      <div className="flex justify-between items-start">
+                      <div className="flex flex-col sm:flex-row justify-between gap-3">
                         <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
+                          <div className="flex items-center flex-wrap gap-2 mb-2">
                             <span className="text-sm font-medium text-indigo-600">Q{index + 1}</span>
                             <span className="text-xs px-2 py-1 bg-gray-100 rounded-full">{question.type}</span>
                             {question.category && (
@@ -573,7 +573,7 @@ function CreateAssessmentContent() {
                         </div>
                         <button
                           onClick={() => removeQuestion(question.id)}
-                          className="ml-4 px-3 py-1 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm"
+                          className="w-full sm:w-auto sm:ml-4 min-h-11 px-4 py-3 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 active:bg-red-300 text-sm touch-manipulation"
                         >
                           Remove
                         </button>
@@ -645,11 +645,11 @@ function CreateAssessmentContent() {
           {renderStep()}
 
           {/* Navigation */}
-          <div className="flex justify-between mt-8">
+          <div className="flex flex-col sm:flex-row justify-between gap-4 mt-8">
             <button
               onClick={() => setStep(Math.max(1, step - 1))}
               disabled={step === 1}
-              className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-11 touch-manipulation"
             >
               Previous
             </button>
@@ -657,7 +657,7 @@ function CreateAssessmentContent() {
             {step < 3 ? (
               <button
                 onClick={() => setStep(step + 1)}
-                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 min-h-11 touch-manipulation"
               >
                 Next
               </button>
@@ -665,7 +665,7 @@ function CreateAssessmentContent() {
               <button
                 onClick={handleSubmit}
                 disabled={loading || questions.length === 0}
-                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-h-11 touch-manipulation"
               >
                 {loading ? 'Creating...' : 'Create Assessment'}
               </button>

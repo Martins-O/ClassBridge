@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Assessment from '@/models/Assessment';
+import User from '@/models/User';
 import { getUserIdFromRequest } from '@/lib/session';
+import {
+  ValidationResult,
+  validateString,
+  validateArray,
+  validateObjectId,
+  validateEnum,
+  validateNumber
+} from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,17 +25,69 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const assessmentData = await request.json();
-
-    // Validate required fields
-    const { title, description, questions, schoolId, targetRole, assessorRole, assessmentType } = assessmentData;
-
-    if (!title || !description || !questions || questions.length === 0 || !schoolId || !targetRole || !assessorRole || !assessmentType) {
+    const user = await User.findById(userId);
+    if (!user) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
+        { error: 'User not found' },
+        { status: 404 }
       );
     }
+
+    // Only school admins, mentors, and super admins can create assessments
+    if (!['school_admin', 'mentor', 'super_admin'].includes(user.role)) {
+      return NextResponse.json(
+        { error: 'Only school administrators and mentors can create assessments' },
+        { status: 403 }
+      );
+    }
+
+    const assessmentData = await request.json();
+
+    // Comprehensive validation
+    const validation = new ValidationResult();
+
+    // Validate basic fields
+    validation.errors.push(...validateString(assessmentData.title, 'title', { required: true, minLength: 3, maxLength: 200 }));
+    validation.errors.push(...validateString(assessmentData.description, 'description', { required: true, minLength: 10, maxLength: 1000 }));
+    validation.errors.push(...validateObjectId(assessmentData.schoolId, 'schoolId'));
+    validation.errors.push(...validateEnum(assessmentData.targetRole, 'targetRole', ['mentor', 'student']));
+    validation.errors.push(...validateEnum(assessmentData.assessorRole, 'assessorRole', ['mentor', 'student', 'self']));
+    validation.errors.push(...validateEnum(assessmentData.assessmentType, 'assessmentType', ['peer', 'mentor_to_student', 'student_to_mentor', 'self']));
+
+    // Validate questions array
+    validation.errors.push(...validateArray(assessmentData.questions, 'questions', {
+      required: true,
+      minLength: 1,
+      maxLength: 50,
+      itemValidator: (question, index) => {
+        const questionErrors = [];
+        questionErrors.push(...validateString(question.question, 'question', { required: true, minLength: 5, maxLength: 500 }));
+        questionErrors.push(...validateEnum(question.type, 'type', ['multiple-choice', 'checkbox', 'text', 'rating', 'scale']));
+
+        if (question.type === 'multiple-choice' || question.type === 'checkbox') {
+          questionErrors.push(...validateArray(question.options, 'options', { required: true, minLength: 2, maxLength: 10 }));
+        }
+
+        return questionErrors;
+      }
+    }));
+
+    // Validate optional numeric fields
+    if (assessmentData.timeLimit !== undefined) {
+      validation.errors.push(...validateNumber(assessmentData.timeLimit, 'timeLimit', { min: 1, max: 480, integer: true }));
+    }
+    if (assessmentData.maxAttempts !== undefined) {
+      validation.errors.push(...validateNumber(assessmentData.maxAttempts, 'maxAttempts', { min: 1, max: 10, integer: true }));
+    }
+    if (assessmentData.passingScore !== undefined) {
+      validation.errors.push(...validateNumber(assessmentData.passingScore, 'passingScore', { min: 0, max: 100, integer: true }));
+    }
+
+    if (!validation.isValid()) {
+      return validation.getResponse();
+    }
+
+    const { title, description, questions, schoolId, targetRole, assessorRole, assessmentType } = assessmentData;
 
     // Create assessment
     const assessment = new Assessment({

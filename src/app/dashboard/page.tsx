@@ -45,10 +45,6 @@ function DashboardContent() {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchUserAndStats();
-  }, [fetchUserAndStats]);
-
   const fetchUserAndStats = useCallback(async () => {
     try {
       // Fetch user info
@@ -70,6 +66,10 @@ function DashboardContent() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    fetchUserAndStats();
+  }, [fetchUserAndStats]);
 
   const fetchStudentStats = async (userId: string) => {
     try {

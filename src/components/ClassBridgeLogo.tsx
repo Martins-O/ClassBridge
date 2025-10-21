@@ -18,48 +18,46 @@ export default function ClassBridgeLogo({
 
   const IconComponent = () => (
     <div className={`${sizes[size].icon} relative ${className}`}>
-      {/* Bridge SVG Icon */}
+      {/* Modern Education Hub Icon */}
       <svg viewBox="0 0 40 40" className="w-full h-full">
         {/* Gradient Definitions */}
         <defs>
-          <linearGradient id="bridgeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#6366f1" />
-            <stop offset="50%" stopColor="#8b5cf6" />
-            <stop offset="100%" stopColor="#a855f7" />
+          <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#3b82f6" />
+            <stop offset="50%" stopColor="#6366f1" />
+            <stop offset="100%" stopColor="#8b5cf6" />
           </linearGradient>
-          <linearGradient id="shadowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#7c3aed" stopOpacity="0.1" />
+          <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#06b6d4" />
+            <stop offset="100%" stopColor="#3b82f6" />
           </linearGradient>
+          <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.3" />
+          </radialGradient>
         </defs>
 
-        {/* Shadow/Depth */}
-        <path
-          d="M4 25 Q12 18, 20 20 Q28 22, 36 25 L36 28 Q28 25, 20 23 Q12 21, 4 28 Z"
-          fill="url(#shadowGradient)"
-          opacity="0.4"
-        />
+        {/* Central Hub Circle */}
+        <circle cx="20" cy="20" r="6" fill="url(#centerGlow)" className="drop-shadow-md" />
+        <circle cx="20" cy="20" r="4" fill="url(#primaryGradient)" />
 
-        {/* Main Bridge Arc */}
-        <path
-          d="M4 22 Q12 15, 20 17 Q28 19, 36 22 L36 25 Q28 22, 20 20 Q12 18, 4 25 Z"
-          fill="url(#bridgeGradient)"
-          className="drop-shadow-sm"
-        />
+        {/* Connected Nodes (Students/Mentors) */}
+        <circle cx="8" cy="12" r="3" fill="url(#accentGradient)" opacity="0.9" />
+        <circle cx="32" cy="12" r="3" fill="url(#accentGradient)" opacity="0.9" />
+        <circle cx="8" cy="28" r="3" fill="url(#accentGradient)" opacity="0.9" />
+        <circle cx="32" cy="28" r="3" fill="url(#accentGradient)" opacity="0.9" />
 
-        {/* Bridge Pillars */}
-        <rect x="3" y="22" width="2" height="8" fill="url(#bridgeGradient)" rx="1" />
-        <rect x="35" y="22" width="2" height="8" fill="url(#bridgeGradient)" rx="1" />
-        <rect x="19" y="17" width="2" height="13" fill="url(#bridgeGradient)" rx="1" />
+        {/* Connection Lines */}
+        <path d="M11 14 L17 18" stroke="url(#primaryGradient)" strokeWidth="2" opacity="0.7" strokeLinecap="round" />
+        <path d="M29 14 L23 18" stroke="url(#primaryGradient)" strokeWidth="2" opacity="0.7" strokeLinecap="round" />
+        <path d="M11 26 L17 22" stroke="url(#primaryGradient)" strokeWidth="2" opacity="0.7" strokeLinecap="round" />
+        <path d="M29 26 L23 22" stroke="url(#primaryGradient)" strokeWidth="2" opacity="0.7" strokeLinecap="round" />
 
-        {/* Connection Points (representing students/mentors) */}
-        <circle cx="8" cy="23" r="1.5" fill="#fbbf24" className="animate-pulse" />
-        <circle cx="20" cy="19" r="1.5" fill="#34d399" />
-        <circle cx="32" cy="23" r="1.5" fill="#60a5fa" className="animate-pulse" />
-
-        {/* Connecting Lines */}
-        <path d="M8 23 Q14 20, 20 19" stroke="#e5e7eb" strokeWidth="1" fill="none" opacity="0.6" />
-        <path d="M20 19 Q26 20, 32 23" stroke="#e5e7eb" strokeWidth="1" fill="none" opacity="0.6" />
+        {/* Knowledge Flow Particles */}
+        <circle cx="14" cy="16" r="0.8" fill="#34d399" className="animate-pulse" />
+        <circle cx="26" cy="16" r="0.8" fill="#f472b6" className="animate-pulse" style={{animationDelay: '0.5s'}} />
+        <circle cx="14" cy="24" r="0.8" fill="#60a5fa" className="animate-pulse" style={{animationDelay: '1s'}} />
+        <circle cx="26" cy="24" r="0.8" fill="#fbbf24" className="animate-pulse" style={{animationDelay: '1.5s'}} />
       </svg>
     </div>
   );

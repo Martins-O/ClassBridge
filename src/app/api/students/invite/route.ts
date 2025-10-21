@@ -28,10 +28,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check permissions - only mentors and school admins can invite students
-    if (!['mentor', 'school_admin'].includes(user.role)) {
+    // Check permissions - only school admins can invite students
+    if (!['school_admin', 'super_admin'].includes(user.role)) {
       return NextResponse.json(
-        { error: 'Insufficient permissions' },
+        { error: 'Only school administrators can invite students' },
         { status: 403 }
       );
     }
@@ -64,21 +64,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user has access to this class
-    let hasAccess = false;
+    // Check if school admin has access to this class
     if (user.role === 'school_admin') {
-      hasAccess = classData.schoolId._id.toString() === user.schoolId?.toString();
-    } else if (user.role === 'mentor') {
-      hasAccess = classData.mentorIds.some(
-        (mentorId: { toString(): string }) => mentorId.toString() === userId
-      );
-    }
-
-    if (!hasAccess) {
-      return NextResponse.json(
-        { error: 'Access denied to this class' },
-        { status: 403 }
-      );
+      const hasAccess = classData.schoolId._id.toString() === user.schoolId?.toString();
+      if (!hasAccess) {
+        return NextResponse.json(
+          { error: 'Access denied to this class' },
+          { status: 403 }
+        );
+      }
     }
 
     // Check if student is already registered

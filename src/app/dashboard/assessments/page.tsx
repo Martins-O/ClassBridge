@@ -178,29 +178,35 @@ function AssessmentDashboardContent() {
 
         {/* Filters and Search */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20 mb-8">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
               {['all', 'active', 'inactive', 'peer', 'mentor_to_student', 'student_to_mentor', 'self'].map((filterType) => (
                 <button
                   key={filterType}
                   onClick={() => setFilter(filterType)}
-                  className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
+                  className={`min-h-11 px-2 sm:px-4 py-2 rounded-xl font-medium transition-all duration-300 touch-manipulation text-xs sm:text-sm md:text-base text-center ${
                     filter === filterType
                       ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300'
                   }`}
                 >
-                  {filterType === 'all' ? 'All' : getAssessmentTypeLabel(filterType)}
+                  {filterType === 'all' ? 'All' :
+                   filterType === 'active' ? 'Active' :
+                   filterType === 'inactive' ? 'Inactive' :
+                   filterType === 'peer' ? 'Peer' :
+                   filterType === 'mentor_to_student' ? 'M→S' :
+                   filterType === 'student_to_mentor' ? 'S→M' :
+                   filterType === 'self' ? 'Self' : filterType}
                 </button>
               ))}
             </div>
-            <div className="relative">
+            <div className="relative w-full sm:w-auto sm:max-w-sm">
               <input
                 type="text"
                 placeholder="Search assessments..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500 bg-white/50"
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500 bg-white/50 text-sm sm:text-base"
               />
               <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -266,29 +272,31 @@ function AssessmentDashboardContent() {
                   )}
                 </div>
 
-                <div className="flex space-x-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Link
                     href={`/dashboard/assessments/${assessment._id}`}
-                    className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-xl font-medium hover:shadow-lg transition-all duration-300 text-center"
+                    className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3 rounded-xl font-medium hover:shadow-lg transition-all duration-300 text-center min-h-11 flex items-center justify-center touch-manipulation"
                   >
                     View Details
                   </Link>
-                  <button
-                    onClick={() => toggleAssessmentStatus(assessment._id, assessment.isActive)}
-                    className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
-                      assessment.isActive
-                        ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                        : 'bg-green-100 text-green-700 hover:bg-green-200'
-                    }`}
-                  >
-                    {assessment.isActive ? 'Pause' : 'Activate'}
-                  </button>
-                  <button
-                    onClick={() => deleteAssessment(assessment._id)}
-                    className="px-4 py-2 bg-red-100 text-red-700 rounded-xl font-medium hover:bg-red-200 transition-all duration-300"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex gap-2 sm:gap-1">
+                    <button
+                      onClick={() => toggleAssessmentStatus(assessment._id, assessment.isActive)}
+                      className={`flex-1 sm:flex-none px-3 sm:px-4 py-3 rounded-xl font-medium transition-all duration-300 min-h-11 touch-manipulation text-sm ${
+                        assessment.isActive
+                          ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 active:bg-yellow-300'
+                          : 'bg-green-100 text-green-700 hover:bg-green-200 active:bg-green-300'
+                      }`}
+                    >
+                      {assessment.isActive ? 'Pause' : 'Activate'}
+                    </button>
+                    <button
+                      onClick={() => deleteAssessment(assessment._id)}
+                      className="flex-1 sm:flex-none px-3 sm:px-4 py-3 bg-red-100 text-red-700 rounded-xl font-medium hover:bg-red-200 active:bg-red-300 transition-all duration-300 min-h-11 touch-manipulation text-sm"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

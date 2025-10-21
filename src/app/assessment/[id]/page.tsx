@@ -251,15 +251,15 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
               <span>{min}</span>
               <span>{max}</span>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex flex-wrap gap-2 justify-center">
               {Array.from({ length: max - min + 1 }, (_, i) => min + i).map((value) => (
                 <button
                   key={value}
                   onClick={() => updateAnswer(question.id, value)}
-                  className={`w-12 h-12 rounded-full border-2 font-medium ${
+                  className={`min-w-11 min-h-11 w-12 h-12 rounded-full border-2 font-medium touch-manipulation ${
                     currentAnswer === value
                       ? 'bg-indigo-600 text-white border-indigo-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-500'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-500 active:bg-gray-50'
                   }`}
                 >
                   {value}
@@ -367,19 +367,19 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
         </div>
 
         {/* Navigation */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
           <button
             onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
             disabled={currentQuestionIndex === 0}
-            className="px-6 py-3 bg-white/80 text-gray-700 rounded-xl font-medium border border-gray-200 hover:bg-white hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="min-h-11 px-6 py-3 bg-white/80 text-gray-700 rounded-xl font-medium border border-gray-200 hover:bg-white hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
           >
             Previous
           </button>
 
-          <div className="flex space-x-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <button
               onClick={saveProgress}
-              className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300"
+              className="min-h-11 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300 touch-manipulation"
             >
               Save Progress
             </button>
@@ -387,7 +387,7 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
             {currentQuestionIndex < assessment.questions.length - 1 ? (
               <button
                 onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
-                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300"
+                className="min-h-11 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 touch-manipulation"
               >
                 Next
               </button>
@@ -395,7 +395,7 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
               <button
                 onClick={() => handleSubmit()}
                 disabled={submitting}
-                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 disabled:opacity-50"
+                className="min-h-11 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 disabled:opacity-50 touch-manipulation"
               >
                 {submitting ? 'Submitting...' : 'Submit Assessment'}
               </button>
