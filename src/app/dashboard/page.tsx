@@ -235,11 +235,11 @@ function DashboardContent() {
         ),
         color: 'from-orange-500 to-red-500'
       });
-    } else {
-      // Non-student actions (admin, mentor, etc.)
+    } else if (user.role === 'school_admin') {
+      // School Admin actions
       actions.push({
-        title: 'My Classes',
-        description: 'View all your classes and activities',
+        title: 'Class Management',
+        description: 'Create and manage school classes',
         href: '/dashboard/classes',
         icon: (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,11 +249,86 @@ function DashboardContent() {
         color: 'from-blue-500 to-cyan-500'
       });
 
-      // School and class management for admins
+      actions.push({
+        title: 'Student Invitations',
+        description: 'Invite students to your classes',
+        href: '/dashboard/invitations',
+        icon: (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+          </svg>
+        ),
+        color: 'from-emerald-500 to-teal-500'
+      });
+
+      actions.push({
+        title: 'Assessment Management',
+        description: 'Create and manage school assessments',
+        href: '/dashboard/assessments',
+        icon: (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        ),
+        color: 'from-purple-500 to-pink-500'
+      });
+    } else if (user.role === 'mentor') {
+      // Mentor actions
+      actions.push({
+        title: 'Course Management',
+        description: 'Create and manage your courses',
+        href: '/dashboard/courses',
+        icon: (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        ),
+        color: 'from-blue-500 to-cyan-500'
+      });
+
+      actions.push({
+        title: 'Assessment Management',
+        description: 'Create and manage student assessments',
+        href: '/dashboard/assessments',
+        icon: (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        ),
+        color: 'from-orange-500 to-red-500'
+      });
+
+      actions.push({
+        title: 'Grade Management',
+        description: 'Create and manage student grades',
+        href: '/dashboard/grades',
+        icon: (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        ),
+        color: 'from-green-500 to-emerald-500'
+      });
+    } else {
+      // Super admin and other roles
+      actions.push({
+        title: 'Platform Management',
+        description: 'Manage the entire platform',
+        href: '/dashboard/admin',
+        icon: (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        ),
+        color: 'from-gray-600 to-gray-800'
+      });
+
+      // School management for admins
       if (['super_admin', 'school_admin'].includes(user.role)) {
         actions.push({
           title: 'School Management',
-          description: 'Manage school and classes',
+          description: 'Manage school settings and information',
           href: '/dashboard/school',
           icon: (
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,33 +336,6 @@ function DashboardContent() {
             </svg>
           ),
           color: 'from-indigo-500 to-purple-500'
-        });
-      }
-
-      // Mentor dashboard
-      if (user.role === 'mentor') {
-        actions.push({
-          title: 'Grade Management',
-          description: 'Create and manage student grades',
-          href: '/dashboard/grades',
-          icon: (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-          ),
-          color: 'from-green-500 to-emerald-500'
-        });
-
-        actions.push({
-          title: 'Assessment Management',
-          description: 'Create and manage student assessments',
-          href: '/dashboard/assessments',
-          icon: (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          ),
-          color: 'from-orange-500 to-red-500'
         });
       }
 
@@ -561,30 +609,74 @@ function DashboardContent() {
                   </div>
 
                   {user?.role === 'school_admin' && (
+                    <>
+                      <div className="flex items-start space-x-3">
+                        <div className="w-6 h-6 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900">Create Classes</h4>
+                          <p className="text-gray-600 text-sm">Set up classes for your school to organize students and mentors.</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start space-x-3">
+                        <div className="w-6 h-6 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900">Invite Students</h4>
+                          <p className="text-gray-600 text-sm">Send invitation emails to students to join your classes.</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {user?.role === 'mentor' && (
+                    <>
+                      <div className="flex items-start space-x-3">
+                        <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900">Create Courses</h4>
+                          <p className="text-gray-600 text-sm">Design and build courses for your assigned classes.</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start space-x-3">
+                        <div className="w-6 h-6 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900">Manage Assessments</h4>
+                          <p className="text-gray-600 text-sm">Create and evaluate student assessments and progress.</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {user?.role !== 'mentor' && (
                     <div className="flex items-start space-x-3">
-                      <div className="w-6 h-6 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                         <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-900">Set Up Your Classes</h4>
-                        <p className="text-gray-600 text-sm">Organize students and mentors into classes for better management.</p>
+                        <h4 className="font-semibold text-gray-900">Invite Team Members</h4>
+                        <p className="text-gray-600 text-sm">Add mentors and administrators to your platform.</p>
                       </div>
                     </div>
                   )}
-
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Invite Team Members</h4>
-                      <p className="text-gray-600 text-sm">Add mentors, students, and administrators to your platform.</p>
-                    </div>
-                  </div>
                 </>
               )}
             </div>
