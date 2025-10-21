@@ -225,7 +225,7 @@ function AssessmentDetailContent({ params }: { params: { id: string } }) {
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center">
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/20 text-center max-w-md">
           <h2 className="text-xl font-bold text-gray-900 mb-2">Assessment Not Found</h2>
-          <p className="text-gray-600 mb-6">The assessment you're looking for doesn't exist or you don't have access to it.</p>
+          <p className="text-gray-600 mb-6">The assessment you&apos;re looking for doesn&apos;t exist or you don&apos;t have access to it.</p>
           <Link
             href="/dashboard/assessments"
             className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2 rounded-xl font-medium hover:shadow-lg transition-all duration-300"
@@ -304,7 +304,7 @@ function AssessmentDetailContent({ params }: { params: { id: string } }) {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as 'overview' | 'questions' | 'attempts' | 'analytics')}
                 className={`px-6 py-4 font-medium transition-all duration-300 ${
                   activeTab === tab.id
                     ? 'border-b-2 border-indigo-600 text-indigo-600'
@@ -499,7 +499,7 @@ function AssessmentDetailContent({ params }: { params: { id: string } }) {
                       </svg>
                     </div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No attempts yet</h3>
-                    <p className="text-gray-600">This assessment hasn't been taken by anyone yet.</p>
+                    <p className="text-gray-600">This assessment hasn&apos;t been taken by anyone yet.</p>
                   </div>
                 )}
               </div>

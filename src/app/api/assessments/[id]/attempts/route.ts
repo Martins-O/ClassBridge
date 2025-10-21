@@ -6,10 +6,11 @@ import { getUserIdFromRequest } from '@/lib/session';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const resolvedParams = await params;
 
     // Check authentication
     const userId = getUserIdFromRequest(request);
@@ -23,7 +24,7 @@ export async function POST(
     const { respondentId, classId } = await request.json();
 
     // Get assessment
-    const assessment = await Assessment.findById(params.id);
+    const assessment = await Assessment.findById(resolvedParams.id);
     if (!assessment) {
       return NextResponse.json(
         { error: 'Assessment not found' },
@@ -55,7 +56,7 @@ export async function POST(
 
     // Check existing attempts
     const existingAttempts = await AssessmentAttempt.countDocuments({
-      assessmentId: params.id,
+      assessmentId: resolvedParams.id,
       respondentId: respondentId || userId
     });
 
@@ -68,7 +69,7 @@ export async function POST(
 
     // Create new attempt
     const attempt = new AssessmentAttempt({
-      assessmentId: params.id,
+      assessmentId: resolvedParams.id,
       respondentId: respondentId || userId,
       assessorId: userId,
       schoolId: assessment.schoolId,
@@ -100,10 +101,11 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const resolvedParams = await params;
 
     // Check authentication
     const userId = getUserIdFromRequest(request);
@@ -118,7 +120,7 @@ export async function GET(
     const respondentId = searchParams.get('respondentId');
 
     // Build query
-    let query: any = { assessmentId: params.id };
+    const query: { assessmentId: string; respondentId?: string; assessorId?: string } = { assessmentId: resolvedParams.id };
 
     if (respondentId) {
       query.respondentId = respondentId;

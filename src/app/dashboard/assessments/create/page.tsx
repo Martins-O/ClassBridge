@@ -245,7 +245,7 @@ function CreateAssessmentContent() {
               </label>
               <select
                 value={assessmentType}
-                onChange={(e) => setAssessmentType(e.target.value as any)}
+                onChange={(e) => setAssessmentType(e.target.value as 'peer' | 'mentor_to_student' | 'student_to_mentor' | 'self')}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
               >
                 <option value="mentor_to_student">Mentor evaluating Student</option>
@@ -392,7 +392,7 @@ function CreateAssessmentContent() {
                       value={currentQuestion.type}
                       onChange={(e) => setCurrentQuestion({
                         ...currentQuestion,
-                        type: e.target.value as any,
+                        type: e.target.value as 'multiple-choice' | 'checkbox' | 'text' | 'rating' | 'scale',
                         options: ['multiple-choice', 'checkbox'].includes(e.target.value) ? [''] : []
                       })}
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"

@@ -89,7 +89,7 @@ function DashboardContent() {
       if (classesRes.ok) {
         const classesData = await classesRes.json();
         const classes = classesData.classes || [];
-        myClasses = classes.filter((cls: any) =>
+        myClasses = classes.filter((cls: { studentIds?: string[] }) =>
           cls.studentIds && cls.studentIds.includes(userId)
         ).length;
       }
@@ -100,7 +100,7 @@ function DashboardContent() {
         const assessments = assessmentsData.assessments || [];
 
         // For now, count total assessments (in a real app, would filter by student's classes)
-        const activeAssessments = assessments.filter((a: any) => a.isActive);
+        const activeAssessments = assessments.filter((a: { isActive: boolean }) => a.isActive);
         pendingAssessments = activeAssessments.length;
         completedAssessments = 0; // Would need to check attempts
       }
@@ -109,10 +109,10 @@ function DashboardContent() {
       if (gradesRes.ok) {
         const gradesData = await gradesRes.json();
         const grades = gradesData.grades || [];
-        const studentGrades = grades.filter((g: any) => g.studentId === userId);
+        const studentGrades = grades.filter((g: { studentId: string }) => g.studentId === userId);
 
         if (studentGrades.length > 0) {
-          const total = studentGrades.reduce((sum: number, grade: any) => sum + (grade.score || 0), 0);
+          const total = studentGrades.reduce((sum: number, grade: { score?: number }) => sum + (grade.score || 0), 0);
           averageGrade = Math.round(total / studentGrades.length);
         }
       }

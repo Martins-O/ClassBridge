@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const assessmentData = await request.json();
 
     // Validate required fields
-    const { title, description, questions, schoolId, classIds, targetRole, assessorRole, assessmentType } = assessmentData;
+    const { title, description, questions, schoolId, targetRole, assessorRole, assessmentType } = assessmentData;
 
     if (!title || !description || !questions || questions.length === 0 || !schoolId || !targetRole || !assessorRole || !assessmentType) {
       return NextResponse.json(
@@ -78,7 +78,12 @@ export async function GET(request: NextRequest) {
     const assessmentType = searchParams.get('assessmentType');
 
     // Build query
-    let query: any = { createdBy: userId };
+    const query: {
+      createdBy: string;
+      schoolId?: string;
+      classIds?: { $in: string[] };
+      assessmentType?: string;
+    } = { createdBy: userId };
 
     if (schoolId) {
       query.schoolId = schoolId;

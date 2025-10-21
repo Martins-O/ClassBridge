@@ -5,7 +5,7 @@ import { getUserIdFromRequest } from '@/lib/session';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
@@ -19,7 +19,8 @@ export async function GET(
       );
     }
 
-    const assessment = await Assessment.findById(params.id)
+    const resolvedParams = await params;
+    const assessment = await Assessment.findById(resolvedParams.id)
       .populate('schoolId', 'name')
       .populate('classIds', 'name subject')
       .populate('createdBy', 'name email');
@@ -43,7 +44,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
@@ -57,10 +58,11 @@ export async function PUT(
       );
     }
 
+    const resolvedParams = await params;
     const updateData = await request.json();
 
     const assessment = await Assessment.findOneAndUpdate(
-      { _id: params.id, createdBy: userId },
+      { _id: resolvedParams.id, createdBy: userId },
       { ...updateData, updatedAt: new Date() },
       { new: true }
     );
@@ -87,7 +89,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
@@ -101,8 +103,9 @@ export async function DELETE(
       );
     }
 
+    const resolvedParams = await params;
     const assessment = await Assessment.findOneAndDelete({
-      _id: params.id,
+      _id: resolvedParams.id,
       createdBy: userId
     });
 

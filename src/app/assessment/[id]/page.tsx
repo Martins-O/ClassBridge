@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/AuthGuard';
 
@@ -54,7 +54,7 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     fetchAssessment();
-  }, [params.id]);
+  }, [params.id, fetchAssessment]);
 
   useEffect(() => {
     if (assessment?.timeLimit && attempt) {
@@ -75,9 +75,9 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
 
       return () => clearInterval(timer);
     }
-  }, [assessment, attempt]);
+  }, [assessment, attempt, handleSubmit]);
 
-  const fetchAssessment = async () => {
+  const fetchAssessment = useCallback(async () => {
     try {
       const response = await fetch(`/api/assessments/${params.id}`);
       if (response.ok) {
@@ -95,7 +95,7 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
 
   const startNewAttempt = async () => {
     try {
@@ -131,7 +131,7 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
     });
   };
 
-  const handleSubmit = async (autoSubmit = false) => {
+  const handleSubmit = useCallback(async (autoSubmit = false) => {
     if (!attempt || submitting) return;
 
     setSubmitting(true);
@@ -160,7 +160,7 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [attempt, submitting, answers, router, params.id]);
 
   const saveProgress = async () => {
     if (!attempt) return;

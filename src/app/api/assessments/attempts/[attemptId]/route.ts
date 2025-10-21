@@ -6,7 +6,7 @@ import { getUserIdFromRequest } from '@/lib/session';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { attemptId: string } }
+  { params }: { params: Promise<{ attemptId: string }> }
 ) {
   try {
     await connectDB();
@@ -20,10 +20,11 @@ export async function PUT(
       );
     }
 
+    const resolvedParams = await params;
     const { answers, isComplete = false } = await request.json();
 
     // Get attempt
-    const attempt = await AssessmentAttempt.findById(params.attemptId);
+    const attempt = await AssessmentAttempt.findById(resolvedParams.attemptId);
     if (!attempt) {
       return NextResponse.json(
         { error: 'Assessment attempt not found' },
@@ -60,7 +61,7 @@ export async function PUT(
         const weight = question.weight || 1;
         maxScore += weight;
 
-        const answer = answers.find((a: any) => a.questionId === question.id);
+        const answer = answers.find((a: { questionId: string; answer: string | number | string[] }) => a.questionId === question.id);
         if (answer) {
           // Score based on question type
           switch (question.type) {
@@ -97,7 +98,16 @@ export async function PUT(
     }
 
     // Update attempt
-    const updateData: any = {
+    const updateData: {
+      answers: typeof answers | typeof attempt.answers;
+      timeSpent: number;
+      isComplete?: boolean;
+      submittedAt?: Date;
+      score?: number;
+      maxScore?: number;
+      percentage?: number;
+      passed?: boolean;
+    } = {
       answers: answers || attempt.answers,
       timeSpent: Math.floor((new Date().getTime() - attempt.startedAt.getTime()) / 1000)
     };
@@ -112,7 +122,7 @@ export async function PUT(
     }
 
     const updatedAttempt = await AssessmentAttempt.findByIdAndUpdate(
-      params.attemptId,
+      resolvedParams.attemptId,
       updateData,
       { new: true }
     );
@@ -132,7 +142,7 @@ export async function PUT(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { attemptId: string } }
+  { params }: { params: Promise<{ attemptId: string }> }
 ) {
   try {
     await connectDB();
@@ -146,7 +156,8 @@ export async function GET(
       );
     }
 
-    const attempt = await AssessmentAttempt.findById(params.attemptId)
+    const resolvedParams = await params;
+    const attempt = await AssessmentAttempt.findById(resolvedParams.attemptId)
       .populate('assessmentId')
       .populate('respondentId', 'name email')
       .populate('assessorId', 'name email');
