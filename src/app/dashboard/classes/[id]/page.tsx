@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
+import Footer from '@/components/Footer';
 
 interface User {
   _id: string;
@@ -481,6 +482,7 @@ function ClassDashboardContent() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

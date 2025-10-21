@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Footer from '@/components/Footer';
 
 interface Class {
   _id: string;
@@ -568,6 +569,7 @@ export default function ClassManagement() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

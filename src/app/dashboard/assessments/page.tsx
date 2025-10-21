@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
+import Footer from '@/components/Footer';
 
 interface Assessment {
   _id: string;
@@ -303,6 +304,7 @@ function AssessmentDashboardContent() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

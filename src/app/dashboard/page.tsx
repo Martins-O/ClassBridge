@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
+import Footer from '@/components/Footer';
 
 interface User {
   id: string;
@@ -744,6 +745,7 @@ function DashboardContent() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

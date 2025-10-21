@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/AuthGuard';
+import Footer from '@/components/Footer';
 
 interface Course {
   _id: string;
@@ -518,6 +519,7 @@ function CourseManagementContent() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 }
