@@ -139,6 +139,19 @@ export default function ClassManagement() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
       {/* Header */}
       <div className="max-w-7xl mx-auto p-6">
+        {/* Navigation */}
+        <div className="flex items-center space-x-4 mb-6">
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="flex items-center space-x-2 text-indigo-600 hover:text-indigo-700 transition-colors font-medium group"
+          >
+            <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Back to Dashboard</span>
+          </button>
+        </div>
+
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
@@ -167,8 +180,8 @@ export default function ClassManagement() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {classes.map((classItem) => (
-              <div key={classItem._id} className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20">
+            {classes.map((classItem, index) => (
+              <div key={classItem._id || `class-${index}`} className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h3 className="text-xl font-bold text-gray-900 mb-1">{classItem.name}</h3>
@@ -325,37 +338,31 @@ export default function ClassManagement() {
                       <label className="block text-sm font-semibold text-gray-700 mb-3">
                         Class Name *
                       </label>
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                        <input
-                          type="text"
-                          value={formData.name}
-                          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                          required
-                          className="relative w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:border-gray-300"
-                          placeholder="Mathematics 101"
-                        />
-                      </div>
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                        required
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:border-gray-300 bg-white text-gray-900 placeholder-gray-500"
+                        placeholder="Mathematics 101"
+                      />
                     </div>
 
                     <div className="group">
                       <label className="block text-sm font-semibold text-gray-700 mb-3">
                         School *
                       </label>
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                        <select
-                          value={formData.schoolId}
-                          onChange={(e) => setFormData(prev => ({ ...prev, schoolId: e.target.value }))}
-                          required
-                          className="relative w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:border-gray-300"
-                        >
-                          <option value="">Select School</option>
-                          {schools.map(school => (
-                            <option key={school._id} value={school._id}>{school.name}</option>
-                          ))}
-                        </select>
-                      </div>
+                      <select
+                        value={formData.schoolId}
+                        onChange={(e) => setFormData(prev => ({ ...prev, schoolId: e.target.value }))}
+                        required
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:border-gray-300 bg-white text-gray-900"
+                      >
+                        <option value="">Select School</option>
+                        {schools.map(school => (
+                          <option key={school._id} value={school._id}>{school.name}</option>
+                        ))}
+                      </select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -363,38 +370,32 @@ export default function ClassManagement() {
                         <label className="block text-sm font-semibold text-gray-700 mb-3">
                           Academic Year *
                         </label>
-                        <div className="relative">
-                          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                          <input
-                            type="text"
-                            value={formData.academicYear}
-                            onChange={(e) => setFormData(prev => ({ ...prev, academicYear: e.target.value }))}
-                            required
-                            className="relative w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:border-gray-300"
-                            placeholder="2024-2025"
-                          />
-                        </div>
+                        <input
+                          type="text"
+                          value={formData.academicYear}
+                          onChange={(e) => setFormData(prev => ({ ...prev, academicYear: e.target.value }))}
+                          required
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:border-gray-300 bg-white text-gray-900 placeholder-gray-500"
+                          placeholder="2024-2025"
+                        />
                       </div>
 
                       <div className="group">
                         <label className="block text-sm font-semibold text-gray-700 mb-3">
                           Semester *
                         </label>
-                        <div className="relative">
-                          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                          <select
-                            value={formData.semester}
-                            onChange={(e) => setFormData(prev => ({ ...prev, semester: e.target.value }))}
-                            required
-                            className="relative w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:border-gray-300"
-                          >
-                            <option value="">Select</option>
-                            <option value="Fall">Fall</option>
-                            <option value="Spring">Spring</option>
-                            <option value="Summer">Summer</option>
-                            <option value="Winter">Winter</option>
-                          </select>
-                        </div>
+                        <select
+                          value={formData.semester}
+                          onChange={(e) => setFormData(prev => ({ ...prev, semester: e.target.value }))}
+                          required
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:border-gray-300 bg-white text-gray-900"
+                        >
+                          <option value="">Select</option>
+                          <option value="Fall">Fall</option>
+                          <option value="Spring">Spring</option>
+                          <option value="Summer">Summer</option>
+                          <option value="Winter">Winter</option>
+                        </select>
                       </div>
                     </div>
 
@@ -403,40 +404,34 @@ export default function ClassManagement() {
                         <label className="block text-sm font-semibold text-gray-700 mb-3">
                           Duration *
                         </label>
-                        <div className="relative">
-                          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                          <select
-                            value={formData.duration}
-                            onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-                            required
-                            className="relative w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:border-gray-300"
-                          >
-                            <option value="">Select</option>
-                            <option value="1 month">1 Month</option>
-                            <option value="2 months">2 Months</option>
-                            <option value="3 months">3 Months</option>
-                            <option value="4 months">4 Months</option>
-                            <option value="6 months">6 Months</option>
-                            <option value="1 year">1 Year</option>
-                          </select>
-                        </div>
+                        <select
+                          value={formData.duration}
+                          onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
+                          required
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:border-gray-300 bg-white text-gray-900"
+                        >
+                          <option value="">Select</option>
+                          <option value="1 month">1 Month</option>
+                          <option value="2 months">2 Months</option>
+                          <option value="3 months">3 Months</option>
+                          <option value="4 months">4 Months</option>
+                          <option value="6 months">6 Months</option>
+                          <option value="1 year">1 Year</option>
+                        </select>
                       </div>
 
                       <div className="group">
                         <label className="block text-sm font-semibold text-gray-700 mb-3">
                           Cohort *
                         </label>
-                        <div className="relative">
-                          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                          <input
-                            type="text"
-                            value={formData.cohort}
-                            onChange={(e) => setFormData(prev => ({ ...prev, cohort: e.target.value }))}
-                            required
-                            className="relative w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:border-gray-300"
-                            placeholder="Group A"
-                          />
-                        </div>
+                        <input
+                          type="text"
+                          value={formData.cohort}
+                          onChange={(e) => setFormData(prev => ({ ...prev, cohort: e.target.value }))}
+                          required
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:border-gray-300 bg-white text-gray-900 placeholder-gray-500"
+                          placeholder="Group A"
+                        />
                       </div>
                     </div>
 
@@ -444,16 +439,13 @@ export default function ClassManagement() {
                       <label className="block text-sm font-semibold text-gray-700 mb-3">
                         Description
                       </label>
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                        <textarea
-                          value={formData.description}
-                          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                          rows={3}
-                          className="relative w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:border-gray-300 resize-none"
-                          placeholder="Brief description of the class..."
-                        />
-                      </div>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                        rows={3}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:border-gray-300 resize-none bg-white text-gray-900 placeholder-gray-500"
+                        placeholder="Brief description of the class..."
+                      />
                     </div>
 
                     <button
@@ -519,8 +511,8 @@ export default function ClassManagement() {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Mentors ({selectedClass.mentorIds.length})</h3>
                     <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {selectedClass.mentorIds.map(mentor => (
-                        <div key={mentor._id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
+                      {selectedClass.mentorIds.map((mentor, index) => (
+                        <div key={mentor._id || `mentor-${index}`} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
                           <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
                             <span className="text-indigo-600 font-semibold text-sm">
                               {mentor.name.charAt(0).toUpperCase()}
@@ -538,8 +530,8 @@ export default function ClassManagement() {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Students ({selectedClass.studentIds.length})</h3>
                     <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {selectedClass.studentIds.map(student => (
-                        <div key={student._id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
+                      {selectedClass.studentIds.map((student, index) => (
+                        <div key={student._id || `student-${index}`} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
                           <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                             <span className="text-purple-600 font-semibold text-sm">
                               {student.name.charAt(0).toUpperCase()}

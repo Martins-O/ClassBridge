@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
 
@@ -30,11 +30,80 @@ function ClassDashboardContent() {
   const [classData, setClassData] = useState<Class | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteData, setInviteData] = useState({ studentName: '', studentEmail: '' });
+  const [submitting, setSubmitting] = useState(false);
   const params = useParams();
+  const router = useRouter();
   const classId = params.id as string;
 
   useEffect(() => {
     const fetchClassDetails = async () => {
+      if (!classId || classId === 'undefined') {
+        setError('Invalid class ID');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/classes/${classId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setClassData(data.class);
+        } else {
+          setError('Failed to fetch class details');
+        }
+      } catch (error) {
+        setError('An error occurred while fetching class details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClassDetails();
+  }, [classId]);
+
+  const handleInviteStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const response = await fetch('/api/students/invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentEmail: inviteData.studentEmail,
+          studentName: inviteData.studentName,
+          classId: classId
+        }),
+      });
+
+      if (response.ok) {
+        setShowInviteModal(false);
+        setInviteData({ studentName: '', studentEmail: '' });
+        alert('Student invitation sent successfully!');
+        // Refresh class data to show updated student count
+        fetchClassDetails();
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to send invitation');
+      }
+    } catch (error) {
+      alert('Failed to send invitation');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const fetchClassDetails = async () => {
+    if (!classId || classId === 'undefined') {
+      setError('Invalid class ID');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch(`/api/classes/${classId}`);
       if (response.ok) {
@@ -48,10 +117,7 @@ function ClassDashboardContent() {
     } finally {
       setLoading(false);
     }
-    };
-
-    fetchClassDetails();
-  }, [classId]);
+  };
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -105,12 +171,22 @@ function ClassDashboardContent() {
       <nav className="bg-white/80 backdrop-blur-sm border-b border-white/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/dashboard/classes" className="flex items-center space-x-2 text-indigo-600 hover:text-indigo-700 transition-colors font-medium">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              <span>Back to Classes</span>
-            </Link>
+            <div className="flex items-center space-x-6">
+              <Link href="/dashboard" className="flex items-center space-x-2 text-gray-600 hover:text-indigo-600 transition-colors font-medium">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
+                </svg>
+                <span>Dashboard</span>
+              </Link>
+              <span className="text-gray-300">•</span>
+              <Link href="/dashboard/classes" className="flex items-center space-x-2 text-indigo-600 hover:text-indigo-700 transition-colors font-medium">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span>Back to Classes</span>
+              </Link>
+            </div>
 
             <div className="flex items-center space-x-4">
               <div className={`w-3 h-3 rounded-full ${classData.isActive ? 'bg-green-500' : 'bg-gray-300'}`}></div>
@@ -143,18 +219,34 @@ function ClassDashboardContent() {
 
             {/* Quick Actions */}
             <div className="flex flex-wrap gap-3">
-              <button className="flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300">
+              <button
+                onClick={() => setShowInviteModal(true)}
+                className="flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+              >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
                 <span>Add Student</span>
               </button>
 
-              <button className="flex items-center space-x-2 bg-white border-2 border-indigo-200 text-indigo-600 px-6 py-3 rounded-xl font-semibold hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-300">
+              <button
+                onClick={() => router.push('/dashboard/assessments/create')}
+                className="flex items-center space-x-2 bg-white border-2 border-indigo-200 text-indigo-600 px-6 py-3 rounded-xl font-semibold hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-300"
+              >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
                 <span>Create Assessment</span>
+              </button>
+
+              <button
+                onClick={() => router.push('/dashboard/invitations')}
+                className="flex items-center space-x-2 bg-white border-2 border-purple-200 text-purple-600 px-6 py-3 rounded-xl font-semibold hover:bg-purple-50 hover:border-purple-300 transition-all duration-300"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                <span>Assign Mentor</span>
               </button>
             </div>
           </div>
@@ -313,6 +405,81 @@ function ClassDashboardContent() {
             )}
           </div>
         </div>
+
+        {/* Invite Student Modal */}
+        {showInviteModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-3xl p-8 max-w-md w-full">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Invite Student</h2>
+                <button
+                  onClick={() => setShowInviteModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <form onSubmit={handleInviteStudent} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Student Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={inviteData.studentName}
+                    onChange={(e) => setInviteData(prev => ({ ...prev, studentName: e.target.value }))}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="Enter student's full name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Student Email *
+                  </label>
+                  <input
+                    type="email"
+                    value={inviteData.studentEmail}
+                    onChange={(e) => setInviteData(prev => ({ ...prev, studentEmail: e.target.value }))}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="student@example.com"
+                  />
+                </div>
+
+                <div className="bg-blue-50 p-4 rounded-xl">
+                  <p className="text-sm text-blue-800">
+                    <strong>Class:</strong> {classData?.name} ({classData?.academicYear})
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    The student will be invited to join this specific class.
+                  </p>
+                </div>
+
+                <div className="flex space-x-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowInviteModal(false)}
+                    className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50"
+                  >
+                    {submitting ? 'Sending...' : 'Send Invitation'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

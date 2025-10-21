@@ -750,7 +750,7 @@ function DashboardContent() {
 
 export default function Dashboard() {
   return (
-    <AuthGuard>
+    <AuthGuard requireSchool={true}>
       <DashboardContent />
     </AuthGuard>
   );

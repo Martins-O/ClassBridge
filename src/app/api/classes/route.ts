@@ -34,6 +34,7 @@ type PopulatedClassDoc = {
 
 function formatClassDocument(classDoc: PopulatedClassDoc) {
   return {
+    _id: classDoc._id.toString(),
     id: classDoc._id.toString(),
     name: classDoc.name,
     description: classDoc.description,
@@ -46,12 +47,14 @@ function formatClassDocument(classDoc: PopulatedClassDoc) {
     schoolId: classDoc.schoolId?.toString(),
     mentorIds: (classDoc.mentorIds || []).map((mentor) => mentor._id.toString()),
     mentors: (classDoc.mentorIds || []).map((mentor) => ({
+      _id: mentor._id.toString(),
       id: mentor._id.toString(),
       name: mentor.name,
       email: mentor.email,
     })),
     studentIds: (classDoc.studentIds || []).map((student) => student._id.toString()),
     students: (classDoc.studentIds || []).map((student) => ({
+      _id: student._id.toString(),
       id: student._id.toString(),
       name: student.name,
       email: student.email,

@@ -186,6 +186,19 @@ function CourseManagementContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
       <div className="max-w-7xl mx-auto p-6">
+        {/* Navigation */}
+        <div className="flex items-center space-x-4 mb-6">
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="flex items-center space-x-2 text-indigo-600 hover:text-indigo-700 transition-colors font-medium group"
+          >
+            <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Back to Dashboard</span>
+          </button>
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">

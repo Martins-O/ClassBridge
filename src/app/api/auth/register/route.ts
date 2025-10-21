@@ -54,7 +54,8 @@ export async function POST(request: NextRequest) {
     const user = new User({
       name,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      role: 'school_admin' // Direct registration creates school administrators
     });
 
     await user.save();
