@@ -14,7 +14,7 @@ export async function getCurrentUser(request: NextRequest) {
 
     const user = await User.findById(userId).select('-password');
     return user;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

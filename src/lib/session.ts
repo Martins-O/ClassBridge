@@ -44,7 +44,7 @@ export function verifySessionToken(token: string | undefined) {
     if (timingSafeEqual(provided, expected)) {
       return userId;
     }
-  } catch (error) {
+  } catch {
     // Silent failure for security
   }
 

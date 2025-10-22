@@ -62,7 +62,7 @@ function DashboardContent() {
           await fetchAdminStats();
         }
       }
-    } catch (error) {
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -123,7 +123,7 @@ function DashboardContent() {
         completedAssessments,
         averageGrade
       });
-    } catch (error) {
+    } catch {
     }
   };
 
@@ -161,7 +161,7 @@ function DashboardContent() {
         totalStudents,
         totalMentors
       });
-    } catch (error) {
+    } catch {
     }
   };
 

@@ -56,7 +56,7 @@ export default function AuthGuard({ children, requiredRoles = [], requireSchool 
         // Not authenticated, redirect to login
         router.push('/login');
       }
-    } catch (error) {
+    } catch {
       router.push('/login');
     } finally {
       setLoading(false);

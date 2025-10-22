@@ -54,9 +54,9 @@ export async function sendEmail(emailData: EmailData): Promise<boolean> {
       sendSmtpEmail.textContent = emailData.textContent;
     }
 
-    const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    await apiInstance.sendTransacEmail(sendSmtpEmail);
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }

@@ -113,7 +113,7 @@ function SchoolManagementContent() {
           }
         }
       }
-    } catch (error) {
+    } catch {
     }
   }, []);
 
@@ -124,7 +124,7 @@ function SchoolManagementContent() {
         const data = await response.json();
         setClasses(data.classes || []);
       }
-    } catch (error) {
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -137,7 +137,7 @@ function SchoolManagementContent() {
         const data = await response.json();
         setMentors(data.mentors || []);
       }
-    } catch (error) {
+    } catch {
     }
   }, [user?.schoolId]);
 
@@ -177,7 +177,7 @@ function SchoolManagementContent() {
         });
         fetchClasses();
       }
-    } catch (error) {
+    } catch {
     }
   };
 
@@ -194,7 +194,7 @@ function SchoolManagementContent() {
       if (response.ok) {
         fetchClasses();
       }
-    } catch (error) {
+    } catch {
     }
   };
 
@@ -252,7 +252,7 @@ function SchoolManagementContent() {
         const errors = failedResults.filter(error => error !== null);
         setInviteError(errors.join(', '));
       }
-    } catch (error) {
+    } catch {
       setInviteError('Failed to send invitation. Please try again.');
     } finally {
       setIsSubmittingInvite(false);
@@ -297,7 +297,7 @@ function SchoolManagementContent() {
         const errorData = await response.json();
         setMentorError(errorData.error || 'Failed to invite mentor');
       }
-    } catch (error) {
+    } catch {
       setMentorError('Failed to invite mentor. Please try again.');
     } finally {
       setIsSubmittingMentor(false);
@@ -342,7 +342,7 @@ function SchoolManagementContent() {
         const errorData = await response.json();
         setMentorClassError(errorData.error || 'Failed to update mentor class assignments');
       }
-    } catch (error) {
+    } catch {
       setMentorClassError('Failed to update mentor class assignments. Please try again.');
     } finally {
       setIsSubmittingMentorClasses(false);

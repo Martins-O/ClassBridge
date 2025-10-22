@@ -78,7 +78,7 @@ function TranscriptDashboardContent() {
           }
         }
       }
-    } catch (error) {
+    } catch {
       setError('Failed to load transcript');
     } finally {
       setLoading(false);
@@ -112,7 +112,7 @@ function TranscriptDashboardContent() {
     try {
       // This would typically generate a PDF or print-friendly view
       window.print();
-    } catch (error) {
+    } catch {
       alert('Failed to export transcript');
     }
   };

@@ -42,7 +42,7 @@ export default function MentorInvitation() {
         const errorData = await response.json();
         setError(errorData.error || 'Invalid or expired invitation');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load invitation details');
     } finally {
       setLoading(false);
@@ -86,7 +86,7 @@ export default function MentorInvitation() {
         const errorData = await response.json();
         setError(errorData.error || 'Failed to accept invitation');
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred while accepting the invitation');
     } finally {
       setAccepting(false);
