@@ -71,7 +71,7 @@ export async function GET(
 
     return NextResponse.json({ transcript });
 
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -147,7 +147,7 @@ export async function PUT(
       transcript
     });
 
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -214,7 +214,7 @@ export async function DELETE(
       message: 'Transcript deleted successfully'
     });
 
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },

@@ -112,7 +112,7 @@ function GradesDashboardContent() {
           }
         }
       }
-    } catch (error) {
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -127,7 +127,7 @@ function GradesDashboardContent() {
         const data = await response.json();
         setGrades(data.grades || []);
       }
-    } catch (error) {
+    } catch {
     }
   }, [selectedClassId]);
 
@@ -146,7 +146,7 @@ function GradesDashboardContent() {
           )
         );
       }
-    } catch (error) {
+    } catch {
     }
   }, [selectedClassId]);
 
@@ -208,7 +208,7 @@ function GradesDashboardContent() {
         const errorData = await response.json();
         alert(`❌ Error: ${errorData.error}`);
       }
-    } catch (error) {
+    } catch {
       alert('❌ Failed to create grade. Please try again.');
     }
   };

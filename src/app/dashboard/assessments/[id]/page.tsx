@@ -85,7 +85,7 @@ function AssessmentDetailContent({ params }: { params: { id: string } }) {
         const data = await response.json();
         setAssessment(data.assessment);
       }
-    } catch (error) {
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -98,7 +98,7 @@ function AssessmentDetailContent({ params }: { params: { id: string } }) {
         const data = await response.json();
         setAttempts(data.attempts);
       }
-    } catch (error) {
+    } catch {
     } finally {
       setAttemptsLoading(false);
     }
@@ -119,7 +119,7 @@ function AssessmentDetailContent({ params }: { params: { id: string } }) {
       if (response.ok) {
         setAssessment({ ...assessment, isActive: !assessment.isActive });
       }
-    } catch (error) {
+    } catch {
     }
   };
 
@@ -136,7 +136,7 @@ function AssessmentDetailContent({ params }: { params: { id: string } }) {
       } else {
         alert('Failed to delete assessment');
       }
-    } catch (error) {
+    } catch {
       alert('Error deleting assessment');
     }
   };

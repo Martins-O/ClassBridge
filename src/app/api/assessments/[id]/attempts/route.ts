@@ -90,7 +90,7 @@ export async function POST(
         startedAt: attempt.startedAt
       }
     });
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Failed to start assessment attempt' },
@@ -135,7 +135,7 @@ export async function GET(
       .sort({ startedAt: -1 });
 
     return NextResponse.json({ attempts });
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Failed to fetch assessment attempts' },

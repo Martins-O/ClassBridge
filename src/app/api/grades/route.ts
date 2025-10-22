@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ grades });
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
       grade: newGrade
     }, { status: 201 });
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -239,7 +239,7 @@ async function updateTranscriptWithFinalGrade(studentId: string, classId: string
     }
 
     await transcript.save();
-  } catch (error) {
+  } catch {
     // Silently fail transcript update to not disrupt grade creation
   }
 }

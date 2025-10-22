@@ -248,7 +248,7 @@ export async function GET(request: NextRequest) {
     const formattedClasses = classes.map((classDoc) => formatClassDocument(classDoc as PopulatedClassDoc));
 
     return NextResponse.json({ classes: formattedClasses });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

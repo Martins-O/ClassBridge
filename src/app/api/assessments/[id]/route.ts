@@ -33,7 +33,7 @@ export async function GET(
     }
 
     return NextResponse.json({ assessment });
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Failed to fetch assessment' },
@@ -78,7 +78,7 @@ export async function PUT(
       success: true,
       assessment
     });
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Failed to update assessment' },
@@ -120,7 +120,7 @@ export async function DELETE(
       success: true,
       message: 'Assessment deleted successfully'
     });
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Failed to delete assessment' },

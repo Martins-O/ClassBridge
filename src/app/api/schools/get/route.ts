@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ schools });
 
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },

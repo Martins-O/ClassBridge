@@ -108,7 +108,7 @@ export async function PUT(
       }
     });
 
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -183,7 +183,7 @@ export async function DELETE(
       message: 'Mentor deactivated successfully'
     });
 
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },

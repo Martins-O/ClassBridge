@@ -195,7 +195,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ courses });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

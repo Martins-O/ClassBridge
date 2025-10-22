@@ -59,7 +59,7 @@ function AssessmentResultContent() {
       } else {
         setError('Assessment result not found');
       }
-    } catch (error) {
+    } catch {
       setError('Failed to load assessment result');
     } finally {
       setLoading(false);

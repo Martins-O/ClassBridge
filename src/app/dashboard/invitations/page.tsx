@@ -91,7 +91,7 @@ function StudentInvitationsContent() {
         const errorData = await response.json();
         alert(errorData.error || 'Failed to send invitation');
       }
-    } catch (error) {
+    } catch {
       alert('Failed to send invitation');
     } finally {
       setSubmitting(false);

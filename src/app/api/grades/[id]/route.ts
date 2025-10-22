@@ -64,7 +64,7 @@ export async function GET(
 
     return NextResponse.json({ grade });
 
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -148,7 +148,7 @@ export async function PUT(
       grade
     });
 
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -222,7 +222,7 @@ export async function DELETE(
       message: 'Grade deleted successfully'
     });
 
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },

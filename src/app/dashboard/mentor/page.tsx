@@ -73,7 +73,7 @@ function MentorDashboardContent() {
           }
         }
       }
-    } catch (error) {
+    } catch {
     }
   }, [router]);
 
@@ -99,7 +99,7 @@ function MentorDashboardContent() {
                   const studentsData = await studentsResponse.json();
                   return { ...cls, students: studentsData.students || [] };
                 }
-              } catch (error) {
+              } catch {
               }
             }
             return { ...cls, students: [] };
@@ -108,7 +108,7 @@ function MentorDashboardContent() {
 
         setAssignedClasses(classesWithStudents);
       }
-    } catch (error) {
+    } catch {
     } finally {
       setLoading(false);
     }

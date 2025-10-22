@@ -53,7 +53,7 @@ export default function ClassManagement() {
           setFormData(prev => ({ ...prev, schoolId: data.schools[0]._id }));
         }
       }
-    } catch (error) {
+    } catch {
     }
   }, [formData.schoolId]);
 
@@ -64,7 +64,7 @@ export default function ClassManagement() {
         const data = await response.json();
         setClasses(data.classes || []);
       }
-    } catch (error) {
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -102,7 +102,7 @@ export default function ClassManagement() {
         });
         fetchClasses();
       }
-    } catch (error) {
+    } catch {
     } finally {
       setSubmitting(false);
     }
@@ -121,7 +121,7 @@ export default function ClassManagement() {
       if (response.ok) {
         fetchClasses();
       }
-    } catch (error) {
+    } catch {
     }
   };
 

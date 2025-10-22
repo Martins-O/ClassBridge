@@ -44,18 +44,11 @@ interface Class {
   name: string;
   academicYear: string;
   schoolId: string;
-}
-
-interface User {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
+  mentorIds?: string[];
 }
 
 function CourseManagementContent() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,7 +81,6 @@ function CourseManagementContent() {
       const userResponse = await fetch('/api/auth/me');
       if (userResponse.ok) {
         const userData = await userResponse.json();
-        setUser(userData.user);
 
         // Check if user is mentor
         if (userData.user.role !== 'mentor' && userData.user.role !== 'super_admin') {
@@ -107,10 +99,10 @@ function CourseManagementContent() {
         const classesResponse = await fetch('/api/classes');
         if (classesResponse.ok) {
           const classesData = await classesResponse.json();
-          const allClasses = classesData.classes || [];
+          const allClasses: Class[] = classesData.classes || [];
 
           // Filter classes where this mentor is assigned
-          const mentorClasses = allClasses.filter((cls: any) =>
+          const mentorClasses = allClasses.filter((cls) =>
             cls.mentorIds?.includes(userData.user._id)
           );
           setClasses(mentorClasses);
@@ -158,7 +150,7 @@ function CourseManagementContent() {
         const errorData = await response.json();
         alert(errorData.error || 'Failed to create course');
       }
-    } catch (error) {
+    } catch {
       alert('Failed to create course');
     } finally {
       setSubmitting(false);

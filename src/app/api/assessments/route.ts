@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       required: true,
       minLength: 1,
       maxLength: 50,
-      itemValidator: (question, index) => {
+      itemValidator: (question) => {
         const questionErrors = [];
         questionErrors.push(...validateString(question.question, 'question', { required: true, minLength: 5, maxLength: 500 }));
         questionErrors.push(...validateEnum(question.type, 'type', ['multiple-choice', 'checkbox', 'text', 'rating', 'scale']));
@@ -87,8 +87,6 @@ export async function POST(request: NextRequest) {
       return validation.getResponse();
     }
 
-    const { title, description, questions, schoolId, targetRole, assessorRole, assessmentType } = assessmentData;
-
     // Create assessment
     const assessment = new Assessment({
       ...assessmentData,
@@ -111,7 +109,7 @@ export async function POST(request: NextRequest) {
         createdAt: assessment.createdAt
       }
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to create assessment' },
       { status: 500 }
@@ -164,7 +162,7 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 });
 
     return NextResponse.json({ assessments });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch assessments' },
       { status: 500 }

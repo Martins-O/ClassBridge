@@ -47,7 +47,7 @@ function AssessmentDashboardContent() {
         const data = await response.json();
         setAssessments(data.assessments);
       }
-    } catch (error) {
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -66,7 +66,7 @@ function AssessmentDashboardContent() {
       } else {
         alert('Failed to delete assessment');
       }
-    } catch (error) {
+    } catch {
       alert('Error deleting assessment');
     }
   };
@@ -86,7 +86,7 @@ function AssessmentDashboardContent() {
           a._id === id ? { ...a, isActive: !currentStatus } : a
         ));
       }
-    } catch (error) {
+    } catch {
     }
   };
 

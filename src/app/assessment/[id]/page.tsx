@@ -89,7 +89,7 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
       } else {
         setError('Assessment not found or not accessible');
       }
-    } catch (error) {
+    } catch {
       setError('Failed to load assessment');
     } finally {
       setLoading(false);
@@ -113,7 +113,7 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
         const errorData = await response.json();
         setError(errorData.error || 'Failed to start assessment');
       }
-    } catch (error) {
+    } catch {
       setError('Failed to start assessment');
     }
   }, [params.id]);
@@ -151,7 +151,7 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
       } else {
         setError('Failed to submit assessment');
       }
-    } catch (error) {
+    } catch {
       setError('Failed to submit assessment');
     } finally {
       setSubmitting(false);
@@ -172,7 +172,7 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
           isComplete: false,
         }),
       });
-    } catch (error) {
+    } catch {
     }
   };
 

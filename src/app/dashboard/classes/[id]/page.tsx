@@ -54,7 +54,7 @@ function ClassDashboardContent() {
         } else {
           setError('Failed to fetch class details');
         }
-      } catch (error) {
+      } catch {
         setError('An error occurred while fetching class details');
       } finally {
         setLoading(false);
@@ -91,7 +91,7 @@ function ClassDashboardContent() {
         const errorData = await response.json();
         alert(errorData.error || 'Failed to send invitation');
       }
-    } catch (error) {
+    } catch {
       alert('Failed to send invitation');
     } finally {
       setSubmitting(false);
@@ -113,7 +113,7 @@ function ClassDashboardContent() {
       } else {
         setError('Failed to fetch class details');
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred while fetching class details');
     } finally {
       setLoading(false);

@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         createdAt: user.createdAt
       }
     });
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Failed to fetch user' },

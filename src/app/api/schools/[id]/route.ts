@@ -56,7 +56,7 @@ export async function GET(
 
     return NextResponse.json({ school });
 
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -119,7 +119,7 @@ export async function PUT(
       }
     });
 
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },

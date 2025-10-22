@@ -67,7 +67,7 @@ export async function GET(
     }
 
     return NextResponse.json({ class: classData });
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -162,7 +162,7 @@ export async function PUT(
       class: updatedClass
     });
 
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },

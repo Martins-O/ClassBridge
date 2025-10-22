@@ -43,7 +43,7 @@ export async function GET(
       }
     });
 
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -127,7 +127,7 @@ export async function POST(
       }
     }, { status: 201 });
 
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },

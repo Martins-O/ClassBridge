@@ -77,7 +77,7 @@ export async function GET(
     }));
 
     return NextResponse.json({ students });
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Internal server error' },

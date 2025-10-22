@@ -105,7 +105,7 @@ function CreateAssessmentContent() {
         const classesData = await classesRes.json();
         setClasses(classesData.classes);
       }
-    } catch (error) {
+    } catch {
     }
   };
 
@@ -197,7 +197,7 @@ function CreateAssessmentContent() {
         const errorData = await response.json();
         alert(errorData.error || 'Failed to create assessment');
       }
-    } catch (error) {
+    } catch {
       alert('An error occurred while creating the assessment');
     } finally {
       setLoading(false);

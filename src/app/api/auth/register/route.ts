@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
         createdAt: user.createdAt
       }
     });
-  } catch (error) {
+  } catch {
     // Error handling removed for production
     return NextResponse.json(
       { error: 'Failed to register user' },
