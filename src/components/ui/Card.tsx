@@ -15,7 +15,7 @@ export function Card({
   return (
     <div
       className={cn(
-        'rounded-2xl bg-surface-elevated/95 backdrop-blur-xl shadow-soft transition-transform duration-300 hover:-translate-y-0.5',
+        'rounded-2xl bg-surface-elevated shadow-soft transition-transform duration-300 hover:-translate-y-0.5',
         withBorder && 'border border-white/40',
         withGlow && 'shadow-glass',
         className

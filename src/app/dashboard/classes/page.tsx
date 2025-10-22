@@ -177,12 +177,12 @@ export default function ClassManagement() {
                 <p className="text-xs text-ink-400">Mentors</p>
               </div>
               <div className="text-center">
-                <p className="text-lg font-semibold text-accent-purple">{classItem.studentIds.length}</p>
+                <p className="text-lg font-semibold text-accent-emerald">{classItem.studentIds.length}</p>
                 <p className="text-xs text-ink-400">Students</p>
               </div>
               {classItem.maxStudents ? (
                 <div className="text-center">
-                  <p className="text-lg font-semibold text-mint-500">{classItem.maxStudents}</p>
+                <p className="text-lg font-semibold text-accent-emerald">{classItem.maxStudents}</p>
                   <p className="text-xs text-ink-400">Capacity</p>
                 </div>
               ) : null}

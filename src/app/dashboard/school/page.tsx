@@ -51,24 +51,24 @@ interface MentorSummary {
   assignedClasses: Array<{ _id: string; name: string }>;
 }
 
-type TabKey = 'overview' | 'classes' | 'students' | 'mentors';
-
-type InviteForm = {
+interface InviteForm {
   studentName: string;
   studentEmail: string;
   selectedClasses: string[];
   personalMessage: string;
-};
+}
 
-type MentorForm = {
+interface MentorForm {
   name: string;
   email: string;
-};
+}
 
-type MentorClassForm = {
+interface MentorClassForm {
   selectedClasses: string[];
   action: 'assign' | 'remove';
-};
+}
+
+type TabKey = 'overview' | 'classes' | 'students' | 'mentors';
 
 const EMPTY_CLASS_FORM = {
   name: '',
@@ -78,6 +78,9 @@ const EMPTY_CLASS_FORM = {
   academicYear: '',
   duration: '',
   cohort: '',
+  semester: '',
+  subject: '',
+  maxStudents: undefined as number | undefined,
 };
 
 const EMPTY_INVITE_FORM: InviteForm = {
@@ -125,8 +128,8 @@ function SchoolManagementContent() {
   const [showMentorClassModal, setShowMentorClassModal] = useState(false);
   const [selectedMentor, setSelectedMentor] = useState<MentorSummary | null>(null);
   const [mentorClassForm, setMentorClassForm] = useState<MentorClassForm>({ ...INITIAL_MENTOR_CLASS_FORM });
-  const [updatingMentorAssignments, setUpdatingMentorAssignments] = useState(false);
   const [mentorClassError, setMentorClassError] = useState('');
+  const [updatingMentorAssignments, setUpdatingMentorAssignments] = useState(false);
 
   const fetchUserProfile = useCallback(async () => {
     try {
@@ -145,7 +148,7 @@ function SchoolManagementContent() {
     }
   }, [pushToast, router]);
 
-  const fetchSchoolDetails = useCallback(async (schoolId?: string) => {
+  const fetchSchool = useCallback(async (schoolId?: string) => {
     if (!schoolId) return;
     try {
       const response = await fetch(`/api/schools/${schoolId}`);
@@ -190,10 +193,10 @@ function SchoolManagementContent() {
         setLoading(false);
         return;
       }
-      await Promise.all([fetchSchoolDetails(fetchedUser.schoolId), fetchClasses(), fetchMentors()]);
+      await Promise.all([fetchSchool(fetchedUser.schoolId), fetchClasses(), fetchMentors()]);
       setLoading(false);
     })();
-  }, [fetchClasses, fetchMentors, fetchSchoolDetails, fetchUserProfile]);
+  }, [fetchClasses, fetchMentors, fetchSchool, fetchUserProfile]);
 
   const handleCreateClass = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -251,7 +254,7 @@ function SchoolManagementContent() {
 
       if (results.every((res) => res.ok)) {
         pushToast({ title: `Invitation sent to ${inviteForm.studentEmail}`, intent: 'success' });
-        setInviteForm({ ...EMPTY_INVITE_FORM, selectedClasses: [] });
+        setInviteForm({ ...EMPTY_INVITE_FORM });
         setShowInviteModal(false);
         fetchClasses();
       } else {
@@ -336,17 +339,12 @@ function SchoolManagementContent() {
     }
   };
 
-  const summaryMetrics = useMemo(() => {
-    return [
-      { label: 'Classes', value: classes.length },
-      {
-        label: 'Active classes',
-        value: classes.filter((cls) => cls.isActive).length,
-      },
-      { label: 'Students', value: classes.reduce((count, cls) => count + cls.studentIds.length, 0) },
-      { label: 'Mentors', value: mentors.length },
-    ];
-  }, [classes, mentors]);
+  const summaryMetrics = useMemo(() => [
+    { label: 'Classes', value: classes.length },
+    { label: 'Active classes', value: classes.filter((cls) => cls.isActive).length },
+    { label: 'Students', value: classes.reduce((sum, cls) => sum + cls.studentIds.length, 0) },
+    { label: 'Mentors', value: mentors.length },
+  ], [classes, mentors]);
 
   if (loading) {
     return (
@@ -419,7 +417,7 @@ function SchoolManagementContent() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             {classes.map((cls) => (
-              <Card key={cls._id} className="border border-white/40 p-6 shadow-soft">
+              <Card key={cls._id} className="border border-brand-100 p-6 shadow-soft">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="text-lg font-semibold text-ink-900">{cls.name}</h3>
@@ -436,11 +434,11 @@ function SchoolManagementContent() {
                     <p>Mentors</p>
                   </div>
                   <div>
-                    <p className="text-lg font-semibold text-accent-purple">{cls.studentIds.length}</p>
+                    <p className="text-lg font-semibold text-accent-emerald">{cls.studentIds.length}</p>
                     <p>Students</p>
                   </div>
                   <div>
-                    <p className="text-lg font-semibold text-mint-500">{cls.maxStudents ?? '—'}</p>
+                    <p className="text-lg font-semibold text-accent-emerald">{cls.maxStudents ?? '—'}</p>
                     <p>Capacity</p>
                   </div>
                 </div>
@@ -462,14 +460,14 @@ function SchoolManagementContent() {
           </div>
 
           <Card className="border border-white/40 p-6 shadow-soft">
-            <h3 className="text-lg font-semibold text-ink-900">Recent classes</h3>
+            <h3 className="text-lg font-semibold text-ink-900">Recently active classes</h3>
             <div className="mt-4 flex flex-wrap gap-2 text-xs text-ink-400">
               {classes.map((cls) => (
                 <span key={cls._id} className="rounded-xl border border-white/30 bg-white/80 px-3 py-1">
                   {cls.name}
                 </span>
               ))}
-              {classes.length === 0 ? <p>No classes yet.</p> : null}
+              {classes.length === 0 ? <span>No classes yet.</span> : null}
             </div>
           </Card>
         </section>
@@ -479,7 +477,7 @@ function SchoolManagementContent() {
         <section className="mt-8 space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p the="text-sm font-semibold uppercase tracking-wider text-brand-300">Mentor management</p>
+              <p className="text-sm font-semibold uppercase tracking-wider text-brand-300">Mentor management</p>
               <h2 className="text-xl font-semibold text-ink-900">{mentors.length} mentors</h2>
             </div>
             <Button onClick={() => setShowMentorModal(true)}>Invite mentor</Button>
@@ -487,7 +485,7 @@ function SchoolManagementContent() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             {mentors.map((mentor) => (
-              <Card key={mentor._id} className="border border-white/40 p-6 shadow-soft">
+              <Card key={mentor._id} className="border border-brand-100 p-6 shadow-soft">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="text-lg font-semibold text-ink-900">{mentor.name}</h3>
@@ -593,5 +591,235 @@ function SchoolManagementContent() {
             <input
               className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
               value={classForm.duration}
-              onChange={(event) => setClassForm((prev) => ({ ...prev, duration: event.target.value }))
-*** End Patch
+              onChange={(event) => setClassForm((prev) => ({ ...prev, duration: event.target.value }))}
+              required
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-ink-500">Semester</label>
+              <input
+                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                value={classForm.semester}
+                onChange={(event) => setClassForm((prev) => ({ ...prev, semester: event.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-ink-500">Subject</label>
+              <input
+                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                value={classForm.subject}
+                onChange={(event) => setClassForm((prev) => ({ ...prev, subject: event.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-ink-500">Grade</label>
+              <input
+                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                value={classForm.grade}
+                onChange={(event) => setClassForm((prev) => ({ ...prev, grade: event.target.value }))}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-500">Max students</label>
+            <input
+              type="number"
+              min={1}
+              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              value={classForm.maxStudents ?? ''}
+              onChange={(event) =>
+                setClassForm((prev) => ({
+                  ...prev,
+                  maxStudents: event.target.value ? Number(event.target.value) : undefined,
+                }))
+              }
+            />
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        open={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        title="Invite a student"
+        description="Send personalised invitations to join classes."
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setShowInviteModal(false)} disabled={sendingInvites}>
+              Cancel
+            </Button>
+            <Button type="submit" form="school-invite-form" disabled={sendingInvites}>
+              {sendingInvites ? 'Sending…' : 'Send invitation'}
+            </Button>
+          </>
+        }
+      >
+        <form id="school-invite-form" className="space-y-3" onSubmit={handleInviteStudents}>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-500">Student name *</label>
+            <input
+              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              value={inviteForm.studentName}
+              onChange={(event) => setInviteForm((prev) => ({ ...prev, studentName: event.target.value }))}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-500">Student email *</label>
+            <input
+              type="email"
+              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              value={inviteForm.studentEmail}
+              onChange={(event) => setInviteForm((prev) => ({ ...prev, studentEmail: event.target.value }))}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-500">Assign to classes *</label>
+            <div className="flex flex-wrap gap-2">
+              {classes.map((cls) => (
+                <button
+                  type="button"
+                  key={cls._id}
+                  onClick={() =>
+                    setInviteForm((prev) => ({
+                      ...prev,
+                      selectedClasses: prev.selectedClasses.includes(cls._id)
+                        ? prev.selectedClasses.filter((id) => id !== cls._id)
+                        : [...prev.selectedClasses, cls._id],
+                    }))
+                  }
+                  className={buttonClasses({
+                    variant: inviteForm.selectedClasses.includes(cls._id) ? 'primary' : 'secondary',
+                    size: 'sm',
+                  })}
+                >
+                  {cls.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-500">Personal message</label>
+            <textarea
+              rows={3}
+              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              value={inviteForm.personalMessage}
+              onChange={(event) => setInviteForm((prev) => ({ ...prev, personalMessage: event.target.value }))}
+            />
+          </div>
+          {inviteError ? <p className="text-sm text-danger">{inviteError}</p> : null}
+        </form>
+      </Modal>
+
+      <Modal
+        open={showMentorModal}
+        onClose={() => setShowMentorModal(false)}
+        title="Invite a mentor"
+        description="Invite mentors to join your school and assign them to classes."
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setShowMentorModal(false)} disabled={creatingMentor}>
+              Cancel
+            </Button>
+            <Button type="submit" form="school-mentor-form" disabled={creatingMentor}>
+              {creatingMentor ? 'Sending…' : 'Send invite'}
+            </Button>
+          </>
+        }
+      >
+        <form id="school-mentor-form" className="space-y-3" onSubmit={handleCreateMentor}>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-500">Mentor name *</label>
+            <input
+              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              value={mentorForm.name}
+              onChange={(event) => setMentorForm((prev) => ({ ...prev, name: event.target.value }))}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-500">Mentor email *</label>
+            <input
+              type="email"
+              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              value={mentorForm.email}
+              onChange={(event) => setMentorForm((prev) => ({ ...prev, email: event.target.value }))}
+              required
+            />
+          </div>
+          {mentorError ? <p className="text-sm text-danger">{mentorError}</p> : null}
+        </form>
+      </Modal>
+
+      <Modal
+        open={showMentorClassModal}
+        onClose={() => {
+          setShowMentorClassModal(false);
+          setSelectedMentor(null);
+        }}
+        title={selectedMentor ? `Manage ${selectedMentor.name}'s classes` : 'Manage mentor classes'}
+        description="Assign or remove classes from the selected mentor."
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setShowMentorClassModal(false)} disabled={updatingMentorAssignments}>
+              Cancel
+            </Button>
+            <Button type="submit" form="mentor-class-form" disabled={updatingMentorAssignments}>
+              {updatingMentorAssignments ? 'Updating…' : 'Save changes'}
+            </Button>
+          </>
+        }
+      >
+        <form id="mentor-class-form" className="space-y-3" onSubmit={handleMentorClassSubmit}>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-500">Action</label>
+            <select
+              value={mentorClassForm.action}
+              onChange={(event) => setMentorClassForm((prev) => ({ ...prev, action: event.target.value as MentorClassForm['action'] }))}
+              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+            >
+              <option value="assign">Assign classes</option>
+              <option value="remove">Remove classes</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-500">Classes</label>
+            <div className="flex flex-wrap gap-2">
+              {classes.map((cls) => (
+                <button
+                  type="button"
+                  key={cls._id}
+                  onClick={() =>
+                    setMentorClassForm((prev) => ({
+                      ...prev,
+                      selectedClasses: prev.selectedClasses.includes(cls._id)
+                        ? prev.selectedClasses.filter((id) => id !== cls._id)
+                        : [...prev.selectedClasses, cls._id],
+                    }))
+                  }
+                  className={buttonClasses({
+                    variant: mentorClassForm.selectedClasses.includes(cls._id) ? 'primary' : 'secondary',
+                    size: 'sm',
+                  })}
+                >
+                  {cls.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          {mentorClassError ? <p className="text-sm text-danger">{mentorClassError}</p> : null}
+        </form>
+      </Modal>
+    </PageShell>
+  );
+}
+
+export default function SchoolDashboardPage() {
+  return (
+    <AuthGuard requiredRoles={['school_admin', 'super_admin']}>
+      <SchoolManagementContent />
+    </AuthGuard>
+  );
+}

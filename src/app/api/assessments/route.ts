@@ -59,13 +59,23 @@ export async function POST(request: NextRequest) {
       required: true,
       minLength: 1,
       maxLength: 50,
-      itemValidator: (question) => {
-        const questionErrors = [];
-        questionErrors.push(...validateString(question.question, 'question', { required: true, minLength: 5, maxLength: 500 }));
-        questionErrors.push(...validateEnum(question.type, 'type', ['multiple-choice', 'checkbox', 'text', 'rating', 'scale']));
+      itemValidator: (question: { question: unknown; type: unknown; options?: unknown }) => {
+        const questionErrors: string[] = [];
 
-        if (question.type === 'multiple-choice' || question.type === 'checkbox') {
-          questionErrors.push(...validateArray(question.options, 'options', { required: true, minLength: 2, maxLength: 10 }));
+        const questionText = question.question;
+        const questionType = question.type;
+
+        questionErrors.push(
+          ...validateString(questionText, 'question', { required: true, minLength: 5, maxLength: 500 })
+        );
+        questionErrors.push(
+          ...validateEnum(questionType, 'type', ['multiple-choice', 'checkbox', 'text', 'rating', 'scale'])
+        );
+
+        if (questionType === 'multiple-choice' || questionType === 'checkbox') {
+          questionErrors.push(
+            ...validateArray(question.options, 'options', { required: true, minLength: 2, maxLength: 10 })
+          );
         }
 
         return questionErrors;

@@ -270,7 +270,7 @@ function DashboardContent() {
   if (loading) {
     return (
       <PageShell>
-        <GradientHeader title="Loading your workspace" description="Please hold while we bring everything together." />
+        <GradientHeader tone="light" title="Loading your workspace" description="Please hold while we bring everything together." />
         <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className="h-32 animate-pulse rounded-2xl bg-white/50" />
@@ -292,6 +292,7 @@ function DashboardContent() {
             </Link>
           ) : null
         }
+        tone="light"
       />
 
       <section className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">

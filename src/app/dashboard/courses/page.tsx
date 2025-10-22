@@ -195,11 +195,11 @@ function CourseManagementContent() {
                 <p className="text-xs text-ink-400">Enrolled</p>
               </div>
               <div>
-                <p className="text-lg font-semibold text-mint-500">{course.availableSpots}</p>
+                <p className="text-lg font-semibold text-accent-emerald">{course.availableSpots}</p>
                 <p className="text-xs text-ink-400">Spots left</p>
               </div>
               <div>
-                <p className="text-lg font-semibold text-accent-purple">{course.materials?.length ?? 0}</p>
+                <p className="text-lg font-semibold text-accent-emerald">{course.materials?.length ?? 0}</p>
                 <p className="text-xs text-ink-400">Resources</p>
               </div>
             </div>

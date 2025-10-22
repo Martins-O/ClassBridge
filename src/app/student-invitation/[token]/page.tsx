@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useToast } from '@/components/ui/Toast';
+import { buttonClasses } from '@/components/ui/Button';
 
 interface InvitationDetails {
   email: string;
@@ -44,14 +45,13 @@ export default function StudentInvitationPage() {
     const fetchInvitationDetails = async () => {
       try {
         const response = await fetch(`/api/students/invitation/${token}`);
-
-        if (response.ok) {
-          const data = await response.json();
-          setInvitationDetails(data.invitation);
-        } else {
+        if (!response.ok) {
           const errorData = await response.json();
           setError(errorData.error || 'Failed to load invitation details');
+          return;
         }
+        const data = await response.json();
+        setInvitationDetails(data.invitation);
       } catch {
         setError('An error occurred while loading the invitation');
       } finally {
@@ -62,12 +62,10 @@ export default function StudentInvitationPage() {
     fetchInvitationDetails();
   }, [token]);
 
-
-  const handleAcceptInvitation = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAcceptInvitation = async (event: React.FormEvent) => {
+    event.preventDefault();
     setAcceptError('');
 
-    // Validate passwords
     if (password.length < 6) {
       setAcceptError('Password must be at least 6 characters long');
       return;
@@ -79,27 +77,21 @@ export default function StudentInvitationPage() {
     }
 
     setIsAccepting(true);
-
     try {
       const response = await fetch('/api/students/accept-invitation', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: token,
-          password: password
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password }),
       });
 
-      if (response.ok) {
-        // Show success message and redirect to login
-        pushToast({ title: 'Welcome aboard!', description: 'Your student account is ready.', intent: 'success' });
-        router.push('/login');
-      } else {
+      if (!response.ok) {
         const errorData = await response.json();
         setAcceptError(errorData.error || 'Failed to accept invitation');
+        return;
       }
+
+      pushToast({ title: 'Welcome aboard!', description: 'Your student account is ready.', intent: 'success' });
+      router.push('/login');
     } catch {
       setAcceptError('An error occurred while accepting the invitation');
     } finally {
@@ -107,30 +99,12 @@ export default function StudentInvitationPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case 'school_admin': return 'School Administrator';
-      case 'mentor': return 'Mentor';
-      default: return role;
-    }
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-surface-base">
         <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading invitation details...</p>
+          <div className="mx-auto h-14 w-14 rounded-full border-4 border-brand-100 border-t-brand-600 animate-spin" />
+          <p className="mt-4 text-sm text-ink-500">Loading invitation details…</p>
         </div>
       </div>
     );
@@ -138,161 +112,89 @@ export default function StudentInvitationPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center">
-        <div className="max-w-md w-full mx-4">
-          <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
-            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Invitation Error</h2>
-            <p className="text-gray-600 mb-8">{error}</p>
-            <Link
-              href="/login"
-              className="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
-            >
-              Go to Login
-            </Link>
+      <div className="flex min-h-screen items-center justify-center bg-surface-base px-4 py-16">
+        <div className="w-full max-w-md rounded-3xl border border-brand-100 bg-white p-10 text-center shadow-soft">
+          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-danger/15 text-danger">
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
+          <h2 className="text-2xl font-semibold text-ink-900">Invitation unavailable</h2>
+          <p className="mt-2 text-sm text-ink-500">{error}</p>
+          <Link href="/" className={buttonClasses({ variant: 'primary', size: 'md' }) + ' mt-6 inline-flex'}>
+            Go to login
+          </Link>
         </div>
       </div>
     );
   }
 
-  if (!invitationDetails) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <div className="max-w-2xl w-full">
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 text-white text-center">
-              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <h1 className="text-3xl font-bold mb-2">You&apos;re Invited!</h1>
-              <p className="text-indigo-100">Join your class and start learning</p>
-            </div>
-
-            {/* Content */}
-            <div className="p-8">
-              {/* Invitation Details */}
-              <div className="bg-gray-50 rounded-2xl p-6 mb-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Invitation Details</h2>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Student Name:</span>
-                    <span className="font-semibold text-gray-900">{invitationDetails.name}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Email:</span>
-                    <span className="font-semibold text-gray-900">{invitationDetails.email}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">School:</span>
-                    <span className="font-semibold text-gray-900">{invitationDetails.school.name}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Class:</span>
-                    <span className="font-semibold text-gray-900">
-                      {invitationDetails.class.name}
-                      {invitationDetails.class.subject && ` (${invitationDetails.class.subject})`}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Invited by:</span>
-                    <span className="font-semibold text-gray-900">
-                      {invitationDetails.inviter.name} ({getRoleDisplayName(invitationDetails.inviter.role)})
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Expires:</span>
-                    <span className="font-semibold text-red-600">{formatDate(invitationDetails.expiresAt)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Account Creation Form */}
-              <form onSubmit={handleAcceptInvitation} className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Create Your Student Account</h3>
-                  <p className="text-gray-600 mb-6">
-                    Set up your password to create your student account and join the class.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Password *
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="Enter your password (min. 6 characters)"
-                    minLength={6}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Confirm Password *
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="Confirm your password"
-                    minLength={6}
-                  />
-                </div>
-
-                {acceptError && (
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                    <div className="flex items-center space-x-2">
-                      <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <p className="text-red-700 text-sm">{acceptError}</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link
-                    href="/login"
-                    className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 transition-colors text-center"
-                  >
-                    Cancel
-                  </Link>
-                  <button
-                    type="submit"
-                    disabled={isAccepting}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:transform-none"
-                  >
-                    {isAccepting ? 'Creating Account...' : 'Accept Invitation & Create Account'}
-                  </button>
-                </div>
-              </form>
-            </div>
+    <div className="flex min-h-screen items-center justify-center bg-surface-base px-4 py-16">
+      <div className="w-full max-w-2xl rounded-3xl border border-brand-100 bg-white p-10 shadow-glass">
+        <div className="text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-accent-emerald/15 text-accent-emerald">
+            <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v4m0 0v4m0-4h4m-4 0H8m-2 7h12a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2a2 2 0 012-2z" />
+            </svg>
           </div>
+          <h1 className="text-3xl font-semibold text-ink-900">Join your ClassBridge community</h1>
+          <p className="mt-2 text-sm text-ink-500">Set a password to activate your student account and access course materials instantly.</p>
         </div>
+
+        <div className="mt-8 rounded-2xl border border-brand-100 bg-surface-subtle px-6 py-5">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-400">Invitation summary</h3>
+          <dl className="mt-4 space-y-2 text-sm text-ink-600">
+            <div className="flex justify-between">
+              <dt>School</dt>
+              <dd className="font-medium text-ink-800">{invitationDetails?.school.name}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt>Class</dt>
+              <dd className="font-medium text-ink-800">{invitationDetails?.class.name}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt>Invited by</dt>
+              <dd className="font-medium text-ink-800">{invitationDetails?.inviter.name}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt>Expires</dt>
+              <dd className="font-medium text-ink-800">{new Date(invitationDetails?.expiresAt ?? '').toLocaleString()}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <form className="mt-8 space-y-4" onSubmit={handleAcceptInvitation}>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-600">Create password</label>
+            <input
+              type="password"
+              className="w-full rounded-xl border border-brand-100 bg-white px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Minimum 6 characters"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-600">Confirm password</label>
+            <input
+              type="password"
+              className="w-full rounded-xl border border-brand-100 bg-white px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              required
+            />
+          </div>
+          {acceptError ? <p className="text-sm text-danger">{acceptError}</p> : null}
+          <button type="submit" disabled={isAccepting} className={buttonClasses({ variant: 'primary', size: 'lg', className: 'w-full justify-center' })}>
+            {isAccepting ? 'Creating account…' : 'Accept invitation'}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-xs text-ink-400">
+          Need support? <Link href="/" className="text-brand-600 underline">Contact the help desk</Link>
+        </p>
       </div>
     </div>
   );

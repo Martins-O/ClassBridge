@@ -15,7 +15,12 @@ const containerMap: Record<Exclude<PageShellProps['maxWidth'], undefined>, strin
 
 export function PageShell({ className, children, maxWidth = 'xl' }: PageShellProps) {
   return (
-    <div className={cn('min-h-screen bg-brand-gradient/40 px-4 pb-20 pt-16 sm:px-6 lg:px-10', className)}>
+    <div
+      className={cn(
+        'min-h-screen bg-surface-base px-4 pb-20 pt-16 sm:px-6 lg:px-10',
+        className
+      )}
+    >
       <div className={cn('mx-auto w-full', containerMap[maxWidth])}>{children}</div>
     </div>
   );
