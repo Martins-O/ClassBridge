@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useToast } from '@/components/ui/Toast';
 
 interface InvitationDetails {
   email: string;
@@ -29,6 +30,7 @@ export default function StudentInvitationPage() {
   const params = useParams();
   const router = useRouter();
   const token = params.token as string;
+  const { pushToast } = useToast();
 
   const [invitationDetails, setInvitationDetails] = useState<InvitationDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,7 +94,7 @@ export default function StudentInvitationPage() {
 
       if (response.ok) {
         // Show success message and redirect to login
-        alert('Account created successfully! Please log in with your new credentials.');
+        pushToast({ title: 'Welcome aboard!', description: 'Your student account is ready.', intent: 'success' });
         router.push('/login');
       } else {
         const errorData = await response.json();

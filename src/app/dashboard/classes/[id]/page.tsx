@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
 import Footer from '@/components/Footer';
@@ -37,7 +37,6 @@ const INITIAL_INVITE = { studentName: '', studentEmail: '' };
 
 function ClassDashboardContent() {
   const params = useParams<{ id: string }>();
-  const router = useRouter();
   const { pushToast } = useToast();
 
   const [classData, setClassData] = useState<ClassDetail | null>(null);

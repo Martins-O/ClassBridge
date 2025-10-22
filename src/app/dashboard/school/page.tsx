@@ -1,19 +1,34 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/AuthGuard';
 import Footer from '@/components/Footer';
+import { PageShell } from '@/components/ui/PageShell';
+import { GradientHeader } from '@/components/ui/GradientHeader';
+import { Card } from '@/components/ui/Card';
+import { Button, buttonClasses } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { useToast } from '@/components/ui/Toast';
 
 interface User {
   _id: string;
-  name: string;
-  email: string;
   role: string;
   schoolId?: string;
 }
 
-interface Class {
+interface SchoolSummary {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  website?: string;
+  description?: string;
+}
+
+interface ClassSummary {
   _id: string;
   name: string;
   description?: string;
@@ -28,94 +43,121 @@ interface Class {
   createdAt: string;
 }
 
-interface School {
+interface MentorSummary {
   _id: string;
   name: string;
   email: string;
-  phone?: string;
-  address?: string;
-  website?: string;
-  description?: string;
-  adminId: string;
+  isActive: boolean;
+  assignedClasses: Array<{ _id: string; name: string }>;
 }
 
-interface Mentor {
-  _id: string;
+type TabKey = 'overview' | 'classes' | 'students' | 'mentors';
+
+type InviteForm = {
+  studentName: string;
+  studentEmail: string;
+  selectedClasses: string[];
+  personalMessage: string;
+};
+
+type MentorForm = {
   name: string;
   email: string;
-  schoolId: string;
-  classIds: string[];
-  isActive: boolean;
-  createdAt: string;
-  assignedClasses: Array<{
-    _id: string;
-    name: string;
-  }>;
-}
+};
+
+type MentorClassForm = {
+  selectedClasses: string[];
+  action: 'assign' | 'remove';
+};
+
+const EMPTY_CLASS_FORM = {
+  name: '',
+  description: '',
+  schoolId: '',
+  grade: '',
+  academicYear: '',
+  duration: '',
+  cohort: '',
+};
+
+const EMPTY_INVITE_FORM: InviteForm = {
+  studentName: '',
+  studentEmail: '',
+  selectedClasses: [],
+  personalMessage: '',
+};
+
+const EMPTY_MENTOR_FORM: MentorForm = {
+  name: '',
+  email: '',
+};
+
+const INITIAL_MENTOR_CLASS_FORM: MentorClassForm = {
+  selectedClasses: [],
+  action: 'assign',
+};
 
 function SchoolManagementContent() {
   const router = useRouter();
+  const { pushToast } = useToast();
+
   const [user, setUser] = useState<User | null>(null);
-  const [school, setSchool] = useState<School | null>(null);
+  const [school, setSchool] = useState<SchoolSummary | null>(null);
+  const [classes, setClasses] = useState<ClassSummary[]>([]);
+  const [mentors, setMentors] = useState<MentorSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabKey>('overview');
+
+  const [showCreateClassModal, setShowCreateClassModal] = useState(false);
+  const [classForm, setClassForm] = useState({ ...EMPTY_CLASS_FORM });
+  const [creatingClass, setCreatingClass] = useState(false);
+
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'classes' | 'students' | 'mentors'>('overview');
-  const [classes, setClasses] = useState<Class[]>([]);
-  const [mentors, setMentors] = useState<Mentor[]>([]);
-  const [showMentorModal, setShowMentorModal] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    schoolId: '',
-    grade: '',
-    academicYear: '',
-    duration: '',
-    cohort: ''
-  });
-  const [inviteFormData, setInviteFormData] = useState({
-    studentName: '',
-    studentEmail: '',
-    selectedClasses: [] as string[],
-    personalMessage: ''
-  });
-  const [mentorFormData, setMentorFormData] = useState({
-    name: '',
-    email: ''
-  });
-  const [showMentorClassModal, setShowMentorClassModal] = useState(false);
-  const [selectedMentorForClasses, setSelectedMentorForClasses] = useState<Mentor | null>(null);
-  const [mentorClassFormData, setMentorClassFormData] = useState({
-    selectedClasses: [] as string[],
-    action: 'assign' as 'assign' | 'remove'
-  });
-  const [isSubmittingMentorClasses, setIsSubmittingMentorClasses] = useState(false);
-  const [mentorClassError, setMentorClassError] = useState('');
-  const [isSubmittingInvite, setIsSubmittingInvite] = useState(false);
+  const [inviteForm, setInviteForm] = useState<InviteForm>({ ...EMPTY_INVITE_FORM });
   const [inviteError, setInviteError] = useState('');
-  const [isSubmittingMentor, setIsSubmittingMentor] = useState(false);
+  const [sendingInvites, setSendingInvites] = useState(false);
+
+  const [showMentorModal, setShowMentorModal] = useState(false);
+  const [mentorForm, setMentorForm] = useState<MentorForm>({ ...EMPTY_MENTOR_FORM });
   const [mentorError, setMentorError] = useState('');
-  const [focusedField, setFocusedField] = useState('');
+  const [creatingMentor, setCreatingMentor] = useState(false);
 
-  const fetchUserAndSchool = useCallback(async () => {
+  const [showMentorClassModal, setShowMentorClassModal] = useState(false);
+  const [selectedMentor, setSelectedMentor] = useState<MentorSummary | null>(null);
+  const [mentorClassForm, setMentorClassForm] = useState<MentorClassForm>({ ...INITIAL_MENTOR_CLASS_FORM });
+  const [updatingMentorAssignments, setUpdatingMentorAssignments] = useState(false);
+  const [mentorClassError, setMentorClassError] = useState('');
+
+  const fetchUserProfile = useCallback(async () => {
     try {
-      const userResponse = await fetch('/api/auth/me');
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        setUser(userData.user);
+      const response = await fetch('/api/auth/me');
+      if (!response.ok) return;
+      const data = await response.json();
+      if (!['school_admin', 'super_admin'].includes(data.user.role)) {
+        router.push('/dashboard');
+        return;
+      }
+      setUser(data.user);
+      return data.user as User;
+    } catch {
+      pushToast({ title: 'Unable to load profile', intent: 'warning' });
+      return undefined;
+    }
+  }, [pushToast, router]);
 
-        if (userData.user.schoolId) {
-          const schoolResponse = await fetch(`/api/schools/${userData.user.schoolId}`);
-          if (schoolResponse.ok) {
-            const schoolData = await schoolResponse.json();
-            setSchool(schoolData.school);
-            setFormData(prev => ({ ...prev, schoolId: userData.user.schoolId }));
-          }
-        }
+  const fetchSchoolDetails = useCallback(async (schoolId?: string) => {
+    if (!schoolId) return;
+    try {
+      const response = await fetch(`/api/schools/${schoolId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSchool(data.school);
+        setClassForm((prev) => ({ ...prev, schoolId }));
       }
     } catch {
+      pushToast({ title: 'Unable to load school details', intent: 'warning' });
     }
-  }, []);
+  }, [pushToast]);
 
   const fetchClasses = useCallback(async () => {
     try {
@@ -125,174 +167,127 @@ function SchoolManagementContent() {
         setClasses(data.classes || []);
       }
     } catch {
-    } finally {
-      setLoading(false);
+      pushToast({ title: 'Unable to load classes', intent: 'warning' });
     }
-  }, []);
+  }, [pushToast]);
 
   const fetchMentors = useCallback(async () => {
     try {
-      const response = await fetch(`/api/mentors?schoolId=${user?.schoolId}`);
+      const response = await fetch('/api/mentors');
       if (response.ok) {
         const data = await response.json();
         setMentors(data.mentors || []);
       }
     } catch {
+      pushToast({ title: 'Unable to load mentors', intent: 'warning' });
     }
-  }, [user?.schoolId]);
+  }, [pushToast]);
 
   useEffect(() => {
-    fetchUserAndSchool();
-    fetchClasses();
-  }, [fetchUserAndSchool, fetchClasses]);
+    (async () => {
+      const fetchedUser = await fetchUserProfile();
+      if (!fetchedUser) {
+        setLoading(false);
+        return;
+      }
+      await Promise.all([fetchSchoolDetails(fetchedUser.schoolId), fetchClasses(), fetchMentors()]);
+      setLoading(false);
+    })();
+  }, [fetchClasses, fetchMentors, fetchSchoolDetails, fetchUserProfile]);
 
-  useEffect(() => {
-    if (user?.schoolId && activeTab === 'mentors') {
-      fetchMentors();
+  const handleCreateClass = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!classForm.schoolId) {
+      pushToast({ title: 'Select a school before creating a class', intent: 'warning' });
+      return;
     }
-  }, [user?.schoolId, activeTab, fetchMentors]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+    setCreatingClass(true);
     try {
       const response = await fetch('/api/classes', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(classForm),
       });
-
       if (response.ok) {
-        setShowCreateModal(false);
-        setFormData({
-          name: '',
-          description: '',
-          schoolId: user?.schoolId || '',
-          grade: '',
-          academicYear: '',
-          duration: '',
-          cohort: ''
-        });
+        pushToast({ title: 'Class created successfully', intent: 'success' });
+        setShowCreateClassModal(false);
+        setClassForm((prev) => ({ ...EMPTY_CLASS_FORM, schoolId: prev.schoolId }));
         fetchClasses();
+      } else {
+        const errorData = await response.json();
+        pushToast({ title: errorData.error || 'Failed to create class', intent: 'danger' });
       }
     } catch {
+      pushToast({ title: 'Failed to create class', description: 'Please try again later.', intent: 'danger' });
+    } finally {
+      setCreatingClass(false);
     }
   };
 
-  const toggleClassStatus = async (classId: string, isActive: boolean) => {
-    try {
-      const response = await fetch(`/api/classes/${classId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isActive }),
-      });
-
-      if (response.ok) {
-        fetchClasses();
-      }
-    } catch {
+  const handleInviteStudents = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!inviteForm.studentEmail || !inviteForm.studentName || inviteForm.selectedClasses.length === 0) {
+      setInviteError('Fill in the student details and select at least one class.');
+      return;
     }
-  };
 
-  const handleInviteSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmittingInvite(true);
+    setSendingInvites(true);
     setInviteError('');
-
     try {
-      // Send invitation for each selected class
-      const invitePromises = inviteFormData.selectedClasses.map(classId =>
-        fetch('/api/students/invite', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            studentEmail: inviteFormData.studentEmail,
-            studentName: inviteFormData.studentName,
-            classId: classId
-          }),
-        })
+      const results = await Promise.all(
+        inviteForm.selectedClasses.map((classId) =>
+          fetch('/api/students/invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              studentEmail: inviteForm.studentEmail,
+              studentName: inviteForm.studentName,
+              classId,
+            }),
+          })
+        )
       );
 
-      const results = await Promise.all(invitePromises);
-
-      // Check if all invitations were successful
-      const allSuccessful = results.every(response => response.ok);
-
-      if (allSuccessful) {
-        // Reset form and close modal
-        setInviteFormData({
-          studentName: '',
-          studentEmail: '',
-          selectedClasses: [],
-          personalMessage: ''
-        });
+      if (results.every((res) => res.ok)) {
+        pushToast({ title: `Invitation sent to ${inviteForm.studentEmail}`, intent: 'success' });
+        setInviteForm({ ...EMPTY_INVITE_FORM, selectedClasses: [] });
         setShowInviteModal(false);
-
-        // Show success message (could be replaced with a toast notification)
-        const successMessage = `🎉 Invitation sent successfully to ${inviteFormData.studentEmail}! They will receive an email with instructions to join the selected classes.`;
-        alert(successMessage);
+        fetchClasses();
       } else {
-        // Handle partial or complete failure
-        const failedResults = await Promise.all(
-          results.map(async (response) => {
-            if (!response.ok) {
-              const errorData = await response.json();
-              return errorData.error || 'Failed to send invitation';
-            }
-            return null;
-          })
+        const messages = await Promise.all(
+          results.map(async (response) => (response.ok ? null : (await response.json()).error || 'Failed to send invitation'))
         );
-
-        const errors = failedResults.filter(error => error !== null);
-        setInviteError(errors.join(', '));
+        setInviteError(messages.filter(Boolean).join(', '));
       }
     } catch {
       setInviteError('Failed to send invitation. Please try again.');
     } finally {
-      setIsSubmittingInvite(false);
+      setSendingInvites(false);
     }
   };
 
-  const handleMentorSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmittingMentor(true);
+  const handleCreateMentor = async (event: React.FormEvent) => {
+    event.preventDefault();
     setMentorError('');
-
+    setCreatingMentor(true);
     try {
       const response = await fetch('/api/mentors', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...mentorFormData,
-          schoolId: user?.schoolId
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...mentorForm, schoolId: user?.schoolId }),
       });
-
       if (response.ok) {
         const data = await response.json();
-        // Reset form and close modal
-        setMentorFormData({
-          name: '',
-          email: ''
+        pushToast({
+          title: data.isExistingUser
+            ? `Mentor ${mentorForm.name} added to your school`
+            : `Invitation sent to ${mentorForm.email}`,
+          intent: 'success',
         });
+        setMentorForm({ ...EMPTY_MENTOR_FORM });
         setShowMentorModal(false);
-
-        // Refresh mentors list
         fetchMentors();
-
-        // Show success message
-        const successMessage = data.isExistingUser
-          ? `✅ Mentor ${mentorFormData.name} has been added to your school!`
-          : `🎉 Invitation sent successfully to ${mentorFormData.email}! They will receive instructions to set up their mentor account.`;
-        alert(successMessage);
       } else {
         const errorData = await response.json();
         setMentorError(errorData.error || 'Failed to invite mentor');
@@ -300,1314 +295,303 @@ function SchoolManagementContent() {
     } catch {
       setMentorError('Failed to invite mentor. Please try again.');
     } finally {
-      setIsSubmittingMentor(false);
+      setCreatingMentor(false);
     }
   };
 
-  const handleMentorClassSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmittingMentorClasses(true);
-    setMentorClassError('');
+  const handleMentorClassSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!selectedMentor) return;
 
+    setUpdatingMentorAssignments(true);
+    setMentorClassError('');
     try {
       const response = await fetch('/api/mentors', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          mentorId: selectedMentorForClasses?._id,
-          classIds: mentorClassFormData.selectedClasses,
-          action: mentorClassFormData.action
+          mentorId: selectedMentor._id,
+          classIds: mentorClassForm.selectedClasses,
+          action: mentorClassForm.action,
         }),
       });
-
       if (response.ok) {
         const data = await response.json();
-        // Reset form and close modal
-        setMentorClassFormData({
-          selectedClasses: [],
-          action: 'assign'
+        pushToast({
+          title: `Mentor ${data.mentor.name} ${mentorClassForm.action === 'assign' ? 'assigned to' : 'removed from'} classes`,
+          intent: 'success',
         });
         setShowMentorClassModal(false);
-        setSelectedMentorForClasses(null);
-
-        // Refresh mentors list
+        setSelectedMentor(null);
+        setMentorClassForm({ ...INITIAL_MENTOR_CLASS_FORM });
         fetchMentors();
-
-        // Show success message
-        const actionText = mentorClassFormData.action === 'assign' ? 'assigned to' : 'removed from';
-        alert(`✅ Mentor ${data.mentor.name} has been ${actionText} the selected classes!`);
       } else {
         const errorData = await response.json();
-        setMentorClassError(errorData.error || 'Failed to update mentor class assignments');
+        setMentorClassError(errorData.error || 'Failed to update mentor');
       }
     } catch {
-      setMentorClassError('Failed to update mentor class assignments. Please try again.');
+      setMentorClassError('Failed to update mentor assignments. Please try again.');
     } finally {
-      setIsSubmittingMentorClasses(false);
+      setUpdatingMentorAssignments(false);
     }
   };
 
-  const openMentorClassModal = (mentor: Mentor, defaultAction: 'assign' | 'remove' = 'assign') => {
-    setSelectedMentorForClasses(mentor);
-    setMentorClassFormData({
-      selectedClasses: mentor.assignedClasses.map(cls => cls._id),
-      action: defaultAction
-    });
-    setShowMentorClassModal(true);
-  };
-
-  const handleClassSelection = (classId: string, checked: boolean) => {
-    setInviteFormData(prev => ({
-      ...prev,
-      selectedClasses: checked
-        ? [...prev.selectedClasses, classId]
-        : prev.selectedClasses.filter(id => id !== classId)
-    }));
-  };
-
-  const handleMentorClassSelection = (classId: string, checked: boolean) => {
-    setMentorClassFormData(prev => ({
-      ...prev,
-      selectedClasses: checked
-        ? [...prev.selectedClasses, classId]
-        : prev.selectedClasses.filter(id => id !== classId)
-    }));
-  };
+  const summaryMetrics = useMemo(() => {
+    return [
+      { label: 'Classes', value: classes.length },
+      {
+        label: 'Active classes',
+        value: classes.filter((cls) => cls.isActive).length,
+      },
+      { label: 'Students', value: classes.reduce((count, cls) => count + cls.studentIds.length, 0) },
+      { label: 'Mentors', value: mentors.length },
+    ];
+  }, [classes, mentors]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading school dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Check if user has access to school management
-  if (!user || !['school_admin', 'super_admin'].includes(user.role)) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
-          <p className="text-gray-600 mb-8">Only school administrators can access this page.</p>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
-          >
-            Return to Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
-      {/* Header */}
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
-              School Management
-            </h1>
-            <p className="text-xl text-gray-600">
-              {school ? `Manage ${school.name}` : 'Manage your school'}
-            </p>
-          </div>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="bg-white/80 text-gray-700 px-4 py-2 rounded-xl font-medium hover:bg-white hover:shadow-lg transition-all duration-300 border border-gray-200"
-          >
-            ← Back to Dashboard
-          </button>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="flex space-x-1 bg-white/50 backdrop-blur-sm rounded-2xl p-2 mb-8 border border-white/20">
-          {[
-            { id: 'overview', label: 'Overview' },
-            { id: 'classes', label: 'Classes' },
-            { id: 'students', label: 'Students' },
-            { id: 'mentors', label: 'Mentors' }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as 'overview' | 'classes' | 'students' | 'mentors')}
-              className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
-                activeTab === tab.id
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-              }`}
-            >
-              {tab.label}
-            </button>
+      <PageShell>
+        <GradientHeader title="Loading school workspace" description="Preparing the admin view." />
+        <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="h-48 animate-pulse rounded-2xl bg-white/50" />
           ))}
         </div>
+      </PageShell>
+    );
+  }
 
-        {/* School Overview */}
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            {school && (
-              <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/20">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">School Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="font-semibold text-gray-700 mb-2">School Name</h3>
-                    <p className="text-gray-900">{school.name}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-700 mb-2">Email</h3>
-                    <p className="text-gray-900">{school.email}</p>
-                  </div>
-                  {school.phone && (
-                    <div>
-                      <h3 className="font-semibold text-gray-700 mb-2">Phone</h3>
-                      <p className="text-gray-900">{school.phone}</p>
-                    </div>
-                  )}
-                  {school.address && (
-                    <div>
-                      <h3 className="font-semibold text-gray-700 mb-2">Address</h3>
-                      <p className="text-gray-900">{school.address}</p>
-                    </div>
-                  )}
-                  {school.website && (
-                    <div>
-                      <h3 className="font-semibold text-gray-700 mb-2">Website</h3>
-                      <a
-                        href={school.website.startsWith('http') ? school.website : `https://${school.website}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-indigo-600 hover:text-indigo-800 hover:underline font-medium transition-colors duration-200 inline-flex items-center space-x-1"
-                      >
-                        <span>{school.website}</span>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
-                    </div>
-                  )}
-                  {school.description && (
-                    <div className="md:col-span-2">
-                      <h3 className="font-semibold text-gray-700 mb-2">Description</h3>
-                      <p className="text-gray-900">{school.description}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{classes.length}</p>
-                    <p className="text-gray-600">Total Classes</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {classes.reduce((total, cls) => total + cls.studentIds.length, 0)}
-                    </p>
-                    <p className="text-gray-600">Total Students</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {classes.reduce((total, cls) => total + cls.mentorIds.length, 0)}
-                    </p>
-                    <p className="text-gray-600">Total Mentors</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Classes Tab */}
-        {activeTab === 'classes' && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Manage Classes</h2>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
-              >
-                Create New Class
-              </button>
-            </div>
-
-            {classes.length === 0 ? (
-              <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-white/20 p-12 text-center">
-                <div className="w-20 h-20 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">No classes yet</h3>
-                <p className="text-gray-600 mb-8 text-lg">Create your first class to start organizing students and mentors.</p>
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
-                >
-                  Create First Class
-                </button>
-              </div>
-            ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {classes.map((classItem) => (
-                  <div key={classItem._id} className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900 mb-1">{classItem.name}</h3>
-                        {classItem.description && (
-                          <p className="text-gray-600 text-sm mb-2">{classItem.description}</p>
-                        )}
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          {classItem.subject && <span>Subject: {classItem.subject}</span>}
-                          {classItem.grade && <span>Grade: {classItem.grade}</span>}
-                        </div>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {classItem.academicYear} {classItem.semester && `• ${classItem.semester}`}
-                        </p>
-                      </div>
-                      <div className={`w-3 h-3 rounded-full ${classItem.isActive ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-gray-50/50 rounded-xl">
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-indigo-600">{classItem.mentorIds.length}</p>
-                        <p className="text-xs text-gray-500">Mentors</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-purple-600">{classItem.studentIds.length}</p>
-                        <p className="text-xs text-gray-500">Students</p>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => router.push(`/dashboard/classes/${classItem._id}`)}
-                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-xl font-medium hover:shadow-lg transition-all duration-300"
-                      >
-                        View Class Dashboard
-                      </button>
-                      <button
-                        onClick={() => toggleClassStatus(classItem._id, !classItem.isActive)}
-                        className={`w-full px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
-                          classItem.isActive
-                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                        }`}
-                      >
-                        {classItem.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Students Tab */}
-        {activeTab === 'students' && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Student Management</h2>
-              <button
-                onClick={() => setShowInviteModal(true)}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
-              >
-                Invite Student
-              </button>
-            </div>
-
-            {/* Student Invitation Info */}
-            <div className="bg-blue-50 border border-blue-200 rounded-3xl p-6 mb-8">
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-blue-900 mb-2">Student Invitation Process</h3>
-                  <p className="text-blue-800 mb-3">Students can only join your school through invitation. Once invited:</p>
-                  <ul className="space-y-1 text-blue-800">
-                    <li>• Students receive an email invitation to join your school</li>
-                    <li>• They create an account or link their existing account</li>
-                    <li>• Students can then be added to specific classes</li>
-                    <li>• Students can only access classes they are enrolled in</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* Students List */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-white/20 overflow-hidden">
-              <div className="px-8 py-6 border-b border-gray-200">
-                <h3 className="text-xl font-bold text-gray-900">Enrolled Students</h3>
-                <p className="text-gray-600 mt-1">Students who have joined your school</p>
-              </div>
-
-              <div className="p-8">
-                {/* Student count summary */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 border border-green-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-green-900">
-                          {classes.reduce((total, cls) => total + cls.studentIds.length, 0)}
-                        </p>
-                        <p className="text-green-700 font-medium">Total Enrolled</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-4 border border-blue-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-blue-900">{classes.length}</p>
-                        <p className="text-blue-700 font-medium">Active Classes</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-4 border border-purple-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-purple-900">
-                          {classes.length > 0 ? Math.round(classes.reduce((total, cls) => total + cls.studentIds.length, 0) / classes.length) : 0}
-                        </p>
-                        <p className="text-purple-700 font-medium">Avg per Class</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Students Table */}
-                {classes.reduce((total, cls) => total + cls.studentIds.length, 0) === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Students Enrolled</h3>
-                    <p className="text-gray-600 mb-6">Start by inviting students to join your classes.</p>
-                    <button
-                      onClick={() => setShowInviteModal(true)}
-                      className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
-                    >
-                      Invite Your First Student
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Students by Class */}
-                    {classes.filter(cls => cls.studentIds.length > 0).map((classItem) => (
-                      <div key={classItem._id} className="bg-gradient-to-r from-white to-gray-50/50 rounded-2xl p-6 border border-gray-200">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h4 className="text-lg font-bold text-gray-900">{classItem.name}</h4>
-                            <p className="text-sm text-gray-600">{classItem.academicYear} • {classItem.studentIds.length} student{classItem.studentIds.length !== 1 ? 's' : ''}</p>
-                          </div>
-                          <button
-                            onClick={() => router.push(`/dashboard/classes/${classItem._id}`)}
-                            className="text-indigo-600 hover:text-indigo-800 font-medium text-sm hover:underline transition-colors"
-                          >
-                            View Class →
-                          </button>
-                        </div>
-
-                        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                          {classItem.studentIds.map((student, index) => (
-                            <div key={student._id || index} className="bg-white rounded-xl p-4 border border-gray-100 hover:border-indigo-200 hover:shadow-sm transition-all duration-200">
-                              <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center">
-                                  <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                  </svg>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-semibold text-gray-900 truncate">{student.name}</p>
-                                  <p className="text-sm text-gray-600 truncate">{student.email}</p>
-                                </div>
-                              </div>
-
-                              <div className="mt-3 flex justify-between items-center">
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></div>
-                                  Active
-                                </span>
-                                <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                  </svg>
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {classItem.studentIds.length > 6 && (
-                          <div className="mt-4 text-center">
-                            <button
-                              onClick={() => router.push(`/dashboard/classes/${classItem._id}`)}
-                              className="text-indigo-600 hover:text-indigo-800 font-medium text-sm hover:underline transition-colors"
-                            >
-                              View all {classItem.studentIds.length} students in this class
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-
-                    {/* Quick Actions */}
-                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-200">
-                      <h4 className="text-lg font-bold text-gray-900 mb-4">Student Management Actions</h4>
-                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        <button
-                          onClick={() => setShowInviteModal(true)}
-                          className="flex items-center space-x-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-200 text-left"
-                        >
-                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="font-semibold text-gray-900">Invite New Student</p>
-                            <p className="text-sm text-gray-600">Send invitation to join classes</p>
-                          </div>
-                        </button>
-
-                        <button
-                          onClick={() => router.push('/dashboard/invitations')}
-                          className="flex items-center space-x-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-200 text-left"
-                        >
-                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="font-semibold text-gray-900">View Invitations</p>
-                            <p className="text-sm text-gray-600">Track invitation status</p>
-                          </div>
-                        </button>
-
-                        <button
-                          onClick={() => router.push('/dashboard/classes')}
-                          className="flex items-center space-x-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-200 text-left"
-                        >
-                          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="font-semibold text-gray-900">Manage Classes</p>
-                            <p className="text-sm text-gray-600">View and edit class details</p>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Mentors Tab */}
-        {activeTab === 'mentors' && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Mentor Management</h2>
-              <button
-                onClick={() => setShowMentorModal(true)}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
-              >
-                Invite Mentor
-              </button>
-            </div>
-
-            {/* Mentor Invitation Info */}
-            <div className="bg-purple-50 border border-purple-200 rounded-3xl p-6 mb-8">
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-purple-900 mb-2">Mentor Invitation Process</h3>
-                  <p className="text-purple-800 mb-3">Mentors help guide and support students in their learning journey:</p>
-                  <ul className="space-y-1 text-purple-800">
-                    <li>• Mentors receive an email invitation to join your school</li>
-                    <li>• They can be assigned to specific classes as instructors or guides</li>
-                    <li>• Mentors can track student progress and provide feedback</li>
-                    <li>• Multiple mentors can collaborate on the same class</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* Mentors List */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-white/20 overflow-hidden">
-              <div className="px-8 py-6 border-b border-gray-200">
-                <h3 className="text-xl font-bold text-gray-900">School Mentors</h3>
-                <p className="text-gray-600 mt-1">Mentors who have joined your school</p>
-              </div>
-
-              <div className="p-8">
-                {mentors.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No mentors yet</h3>
-                    <p className="text-gray-600 mb-6">Invite your first mentor to start building your educational team.</p>
-                    <button
-                      onClick={() => setShowMentorModal(true)}
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
-                    >
-                      Invite Your First Mentor
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {mentors.map((mentor) => (
-                      <div key={mentor._id} className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/30">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1">
-                            <h3 className="text-lg font-bold text-gray-900 mb-1">{mentor.name}</h3>
-                            <p className="text-gray-600 text-sm mb-2">{mentor.email}</p>
-                            <p className="text-xs text-gray-500">
-                              Joined {new Date(mentor.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div className={`w-3 h-3 rounded-full ${mentor.isActive ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                        </div>
-
-                        {/* Class Assignments */}
-                        <div className="mb-4">
-                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Assigned Classes:</h4>
-                          {mentor.assignedClasses.length > 0 ? (
-                            <div className="space-y-2">
-                              {mentor.assignedClasses.map((classItem) => (
-                                <div key={classItem._id} className="bg-purple-50 text-purple-700 px-3 py-1 rounded-lg text-sm">
-                                  {classItem.name}
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-gray-500 text-sm italic">No class assignments yet</p>
-                          )}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="space-y-2">
-                          <button
-                            onClick={() => openMentorClassModal(mentor, 'assign')}
-                            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-xl font-medium hover:shadow-lg transition-all duration-300 text-sm"
-                          >
-                            Manage Classes
-                          </button>
-                          <button
-                            onClick={() => {/* TODO: Edit mentor */}}
-                            className="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-medium hover:bg-gray-200 transition-colors text-sm"
-                          >
-                            Edit Details
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Create Class Modal */}
-        {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Create New Class</h2>
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Class Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                        required
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                        placeholder="Mathematics 101"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Duration *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.duration}
-                        onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-                        required
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                        placeholder="3 months, 1 semester, 6 weeks"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Grade
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.grade}
-                        onChange={(e) => setFormData(prev => ({ ...prev, grade: e.target.value }))}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                        placeholder="9th Grade"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Academic Year *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.academicYear}
-                        onChange={(e) => setFormData(prev => ({ ...prev, academicYear: e.target.value }))}
-                        required
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                        placeholder="2024-2025"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Cohort *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.cohort}
-                        onChange={(e) => setFormData(prev => ({ ...prev, cohort: e.target.value }))}
-                        required
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                        placeholder="Spring 2024, Cohort A, Batch 1"
-                      />
-                    </div>
-
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Description
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      rows={3}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500 resize-none"
-                      placeholder="Brief description of the class..."
-                    />
-                  </div>
-
-                  <div className="flex justify-end space-x-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowCreateModal(false)}
-                      className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
-                    >
-                      Create Class
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Student Invitation Modal */}
-        {showInviteModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Invite Student to School</h2>
-
-                <form onSubmit={handleInviteSubmit} className="space-y-6">
-                  <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl p-6 mb-2">
-                    <div className="flex items-start space-x-4">
-                      <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-indigo-900 mb-2 text-lg">How Student Invitations Work</h3>
-                        <div className="space-y-2">
-                          <div className="flex items-center space-x-2">
-                            <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
-                            <p className="text-indigo-800 text-sm">Students receive a professional email invitation</p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                            <p className="text-indigo-800 text-sm">They create an account using the secure invitation link</p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
-                            <p className="text-indigo-800 text-sm">Automatic enrollment in selected classes upon acceptance</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div>
-                      <label className={`block text-sm font-semibold mb-3 transition-colors duration-300 ${focusedField === 'studentName' ? 'text-indigo-600' : 'text-gray-700'}`}>
-                        Student Name *
-                      </label>
-                      <div className="relative group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                        <input
-                          type="text"
-                          required
-                          value={inviteFormData.studentName}
-                          onChange={(e) => setInviteFormData(prev => ({ ...prev, studentName: e.target.value }))}
-                          onFocus={() => setFocusedField('studentName')}
-                          onBlur={() => setFocusedField('')}
-                          className={`relative w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all duration-300 text-gray-900 font-medium ${
-                            focusedField === 'studentName'
-                              ? 'border-indigo-500 ring-2 ring-indigo-200 scale-[1.02] shadow-lg'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          placeholder="Enter student's full name"
-                        />
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <svg className={`w-5 h-5 transition-all duration-300 ${focusedField === 'studentName' ? 'text-indigo-500 scale-110' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className={`block text-sm font-semibold mb-3 transition-colors duration-300 ${focusedField === 'studentEmail' ? 'text-indigo-600' : 'text-gray-700'}`}>
-                        Student Email *
-                      </label>
-                      <div className="relative group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                        <input
-                          type="email"
-                          required
-                          value={inviteFormData.studentEmail}
-                          onChange={(e) => setInviteFormData(prev => ({ ...prev, studentEmail: e.target.value }))}
-                          onFocus={() => setFocusedField('studentEmail')}
-                          onBlur={() => setFocusedField('')}
-                          className={`relative w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all duration-300 text-gray-900 font-medium ${
-                            focusedField === 'studentEmail'
-                              ? 'border-indigo-500 ring-2 ring-indigo-200 scale-[1.02] shadow-lg'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          placeholder="student@example.com"
-                        />
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <svg className={`w-5 h-5 transition-all duration-300 ${focusedField === 'studentEmail' ? 'text-indigo-500 scale-110' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
-
-                  <div>
-                    <label className={`block text-sm font-semibold mb-3 transition-colors duration-300 ${focusedField === 'classes' ? 'text-indigo-600' : 'text-gray-700'}`}>
-                      Assign to Classes (Optional)
-                    </label>
-                    <div className={`bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-5 border-2 transition-all duration-300 ${
-                      focusedField === 'classes' ? 'border-indigo-200 ring-2 ring-indigo-100' : 'border-gray-200'
-                    }`}>
-                      <p className="text-sm text-gray-600 mb-4 font-medium">Select classes to enroll this student in:</p>
-                      <div className="space-y-3 max-h-40 overflow-y-auto custom-scrollbar">
-                        {classes.map((classItem) => (
-                          <label key={classItem._id} className="group flex items-center space-x-4 p-3 bg-white rounded-lg cursor-pointer hover:bg-indigo-50 transition-all duration-200 border border-gray-100 hover:border-indigo-200 hover:shadow-md">
-                            <input
-                              type="checkbox"
-                              checked={inviteFormData.selectedClasses.includes(classItem._id)}
-                              onChange={(e) => handleClassSelection(classItem._id, e.target.checked)}
-                              onFocus={() => setFocusedField('classes')}
-                              onBlur={() => setFocusedField('')}
-                              className="w-5 h-5 text-indigo-600 bg-white border-2 border-gray-300 rounded focus:ring-indigo-500 focus:ring-2 transition-all duration-200"
-                            />
-                            <div className="flex-1">
-                              <p className="font-semibold text-gray-900 group-hover:text-indigo-900 transition-colors duration-200">{classItem.name}</p>
-                              <p className="text-sm text-gray-600 group-hover:text-indigo-600 transition-colors duration-200">
-                                {classItem.subject} • {classItem.academicYear}
-                              </p>
-                            </div>
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                              <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                              </svg>
-                            </div>
-                          </label>
-                        ))}
-                      </div>
-                      {classes.length === 0 && (
-                        <div className="text-center py-8">
-                          <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                            </svg>
-                          </div>
-                          <p className="text-sm text-gray-500 font-medium">No classes available</p>
-                          <p className="text-xs text-gray-400 mt-1">Create classes first to assign students</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className={`block text-sm font-semibold mb-3 transition-colors duration-300 ${focusedField === 'personalMessage' ? 'text-indigo-600' : 'text-gray-700'}`}>
-                      Personal Message (Optional)
-                    </label>
-                    <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                      <textarea
-                        rows={4}
-                        value={inviteFormData.personalMessage}
-                        onChange={(e) => setInviteFormData(prev => ({ ...prev, personalMessage: e.target.value }))}
-                        onFocus={() => setFocusedField('personalMessage')}
-                        onBlur={() => setFocusedField('')}
-                        className={`relative w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-all duration-300 text-gray-900 font-medium resize-none ${
-                          focusedField === 'personalMessage'
-                            ? 'border-indigo-500 ring-2 ring-indigo-200 shadow-lg'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                        placeholder="Add a personal welcome message for the student..."
-                      />
-                      <div className="absolute bottom-3 right-3">
-                        <svg className={`w-5 h-5 transition-all duration-300 ${focusedField === 'personalMessage' ? 'text-indigo-500 scale-110' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-
-                  {inviteError && (
-                    <div className="bg-red-50/90 border border-red-200 rounded-xl p-4 animate-in slide-in-from-top-2 duration-300 backdrop-blur-sm">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-red-800 text-sm font-semibold">Error</p>
-                          <p className="text-red-700 text-sm">{inviteError}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowInviteModal(false);
-                        setInviteError('');
-                        setFocusedField('');
-                        setInviteFormData({
-                          studentName: '',
-                          studentEmail: '',
-                          selectedClasses: [],
-                          personalMessage: ''
-                        });
-                      }}
-                      disabled={isSubmittingInvite}
-                      className="flex-1 sm:flex-none px-8 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmittingInvite || inviteFormData.selectedClasses.length === 0}
-                      className="flex-1 sm:flex-none px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:transform-none disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                    >
-                      {isSubmittingInvite ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span>Sending Invitation...</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                          </svg>
-                          <span>Send Invitation</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Mentor Invitation Modal */}
-        {showMentorModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Invite Mentor to School</h2>
-
-                <form onSubmit={handleMentorSubmit} className="space-y-6">
-                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-6 mb-2">
-                    <div className="flex items-start space-x-4">
-                      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-purple-900 mb-2 text-lg">How Mentor Invitations Work</h3>
-                        <div className="space-y-2">
-                          <div className="flex items-center space-x-2">
-                            <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                            <p className="text-purple-800 text-sm">Mentors receive a professional email invitation</p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <div className="w-2 h-2 bg-pink-400 rounded-full"></div>
-                            <p className="text-purple-800 text-sm">They create an account or link their existing account</p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                            <p className="text-purple-800 text-sm">You can then assign them to specific classes</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Mentor Name *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={mentorFormData.name}
-                        onChange={(e) => setMentorFormData(prev => ({ ...prev, name: e.target.value }))}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-purple-500"
-                        placeholder="John Smith"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Email Address *
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={mentorFormData.email}
-                        onChange={(e) => setMentorFormData(prev => ({ ...prev, email: e.target.value }))}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-purple-500"
-                        placeholder="john.smith@example.com"
-                      />
-                    </div>
-                  </div>
-
-                  {mentorError && (
-                    <div className="bg-red-50/90 border border-red-200 rounded-xl p-4 animate-in slide-in-from-top-2 duration-300 backdrop-blur-sm">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-red-800 text-sm font-semibold">Error</p>
-                          <p className="text-red-700 text-sm">{mentorError}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-end space-x-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowMentorModal(false);
-                        setMentorError('');
-                        setMentorFormData({
-                          name: '',
-                          email: ''
-                        });
-                      }}
-                      className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmittingMentor}
-                      className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:transform-none disabled:cursor-not-allowed flex items-center space-x-2"
-                    >
-                      {isSubmittingMentor ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span>Inviting...</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                          </svg>
-                          <span>Send Invitation</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Mentor Class Assignment Modal */}
-        {showMentorClassModal && selectedMentorForClasses && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  Manage {selectedMentorForClasses.name}&apos;s Classes
-                </h2>
-
-                <form onSubmit={handleMentorClassSubmit} className="space-y-6">
-                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-6 mb-6">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-purple-900 text-lg">{selectedMentorForClasses.name}</h3>
-                        <p className="text-purple-800">{selectedMentorForClasses.email}</p>
-                        <p className="text-purple-700 text-sm">
-                          Currently assigned to {selectedMentorForClasses.assignedClasses.length} class(es)
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Toggle */}
-                  <div className="flex justify-center mb-6">
-                    <div className="bg-gray-100 p-1 rounded-xl inline-flex">
-                      <button
-                        type="button"
-                        onClick={() => setMentorClassFormData(prev => ({ ...prev, action: 'assign' }))}
-                        className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
-                          mentorClassFormData.action === 'assign'
-                            ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg'
-                            : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                      >
-                        Assign to Classes
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setMentorClassFormData(prev => ({ ...prev, action: 'remove' }))}
-                        className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
-                          mentorClassFormData.action === 'remove'
-                            ? 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg'
-                            : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                      >
-                        Remove from Classes
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">
-                      Select Classes ({mentorClassFormData.action === 'assign' ? 'to assign mentor to' : 'to remove mentor from'})
-                    </label>
-                    <div className="bg-gray-50 rounded-xl p-5 border-2 border-gray-200 max-h-64 overflow-y-auto">
-                      <div className="space-y-3">
-                        {classes.map((classItem) => (
-                          <label key={classItem._id} className="group flex items-center space-x-4 p-3 bg-white rounded-lg cursor-pointer hover:bg-purple-50 transition-all duration-200 border border-gray-100 hover:border-purple-200">
-                            <input
-                              type="checkbox"
-                              checked={mentorClassFormData.selectedClasses.includes(classItem._id)}
-                              onChange={(e) => handleMentorClassSelection(classItem._id, e.target.checked)}
-                              className="w-5 h-5 text-purple-600 bg-white border-2 border-gray-300 rounded focus:ring-purple-500 focus:ring-2 transition-all duration-200"
-                            />
-                            <div className="flex-1">
-                              <p className="font-semibold text-gray-900 group-hover:text-purple-900 transition-colors duration-200">{classItem.name}</p>
-                              <p className="text-sm text-gray-600 group-hover:text-purple-600 transition-colors duration-200">
-                                {classItem.subject} • {classItem.academicYear}
-                              </p>
-                            </div>
-                          </label>
-                        ))}
-                      </div>
-                      {classes.length === 0 && (
-                        <div className="text-center py-8">
-                          <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                            </svg>
-                          </div>
-                          <p className="text-sm text-gray-500 font-medium">No classes available</p>
-                          <p className="text-xs text-gray-400 mt-1">Create classes first to assign mentors</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {mentorClassError && (
-                    <div className="bg-red-50/90 border border-red-200 rounded-xl p-4 animate-in slide-in-from-top-2 duration-300 backdrop-blur-sm">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-red-800 text-sm font-semibold">Error</p>
-                          <p className="text-red-700 text-sm">{mentorClassError}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-end space-x-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowMentorClassModal(false);
-                        setMentorClassError('');
-                        setMentorClassFormData({
-                          selectedClasses: [],
-                          action: 'assign'
-                        });
-                        setSelectedMentorForClasses(null);
-                      }}
-                      className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmittingMentorClasses || mentorClassFormData.selectedClasses.length === 0}
-                      className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:transform-none disabled:cursor-not-allowed flex items-center space-x-2"
-                    >
-                      {isSubmittingMentorClasses ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span>Updating...</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                          </svg>
-                          <span>{mentorClassFormData.action === 'assign' ? 'Assign' : 'Remove'} Mentor</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-      <Footer />
-    </div>
-  );
-}
-
-export default function SchoolManagement() {
   return (
-    <AuthGuard>
-      <SchoolManagementContent />
-    </AuthGuard>
-  );
-}
+    <PageShell>
+      <GradientHeader
+        title={school ? school.name : 'School workspace'}
+        description="Manage classes, mentors, and student invitations from a single view."
+        action={<Link href="/dashboard" className={buttonClasses({ variant: 'ghost' })}>Back to dashboard</Link>}
+      />
+
+      <section className="mt-10 flex flex-wrap gap-3">
+        {(['overview', 'classes', 'students', 'mentors'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={buttonClasses({ variant: activeTab === tab ? 'primary' : 'secondary', size: 'sm' })}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
+      </section>
+
+      {activeTab === 'overview' && (
+        <section className="mt-8 grid gap-6 lg:grid-cols-2">
+          <Card className="border border-white/40 p-6 shadow-soft">
+            <h2 className="text-lg font-semibold text-ink-900">At a glance</h2>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              {summaryMetrics.map((metric) => (
+                <div key={metric.label} className="rounded-xl border border-white/30 bg-white/80 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">{metric.label}</p>
+                  <p className="mt-2 text-2xl font-semibold text-ink-800">{metric.value}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="border border-white/40 p-6 shadow-soft">
+            <h2 className="text-lg font-semibold text-ink-900">School contact</h2>
+            <div className="mt-4 space-y-3 text-sm text-ink-600">
+              <p><strong>Email:</strong> {school?.email ?? 'N/A'}</p>
+              <p><strong>Phone:</strong> {school?.phone ?? 'N/A'}</p>
+              <p><strong>Address:</strong> {school?.address ?? 'N/A'}</p>
+              <p><strong>Website:</strong> {school?.website ?? 'N/A'}</p>
+            </div>
+          </Card>
+        </section>
+      )}
+
+      {activeTab === 'classes' && (
+        <section className="mt-8 space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wider text-brand-300">Classes</p>
+              <h2 className="text-xl font-semibold text-ink-900">{classes.length} total</h2>
+            </div>
+            <Button onClick={() => setShowCreateClassModal(true)}>Create class</Button>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            {classes.map((cls) => (
+              <Card key={cls._id} className="border border-white/40 p-6 shadow-soft">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-ink-900">{cls.name}</h3>
+                    <p className="text-sm text-ink-400">{cls.academicYear}</p>
+                    <p className="mt-2 text-xs text-ink-400">{cls.description ?? 'No description provided.'}</p>
+                  </div>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${cls.isActive ? 'bg-success/15 text-success' : 'bg-ink-100 text-ink-400'}`}>
+                    {cls.isActive ? 'Active' : 'Paused'}
+                  </span>
+                </div>
+                <div className="mt-4 grid grid-cols-3 gap-3 rounded-xl border border-white/30 bg-white/80 px-4 py-3 text-center text-xs text-ink-400">
+                  <div>
+                    <p className="text-lg font-semibold text-brand-600">{cls.mentorIds.length}</p>
+                    <p>Mentors</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-accent-purple">{cls.studentIds.length}</p>
+                    <p>Students</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-mint-500">{cls.maxStudents ?? '—'}</p>
+                    <p>Capacity</p>
+                  </div>
+                </div>
+              </Card>
+            ))}
+            {classes.length === 0 ? <p className="text-sm text-ink-400">No classes created yet.</p> : null}
+          </div>
+        </section>
+      )}
+
+      {activeTab === 'students' && (
+        <section className="mt-8 space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wider text-brand-300">Student invitations</p>
+              <h2 className="text-xl font-semibold text-ink-900">Invite learners to join classes</h2>
+            </div>
+            <Button onClick={() => setShowInviteModal(true)}>Invite student</Button>
+          </div>
+
+          <Card className="border border-white/40 p-6 shadow-soft">
+            <h3 className="text-lg font-semibold text-ink-900">Recent classes</h3>
+            <div className="mt-4 flex flex-wrap gap-2 text-xs text-ink-400">
+              {classes.map((cls) => (
+                <span key={cls._id} className="rounded-xl border border-white/30 bg-white/80 px-3 py-1">
+                  {cls.name}
+                </span>
+              ))}
+              {classes.length === 0 ? <p>No classes yet.</p> : null}
+            </div>
+          </Card>
+        </section>
+      )}
+
+      {activeTab === 'mentors' && (
+        <section className="mt-8 space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p the="text-sm font-semibold uppercase tracking-wider text-brand-300">Mentor management</p>
+              <h2 className="text-xl font-semibold text-ink-900">{mentors.length} mentors</h2>
+            </div>
+            <Button onClick={() => setShowMentorModal(true)}>Invite mentor</Button>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            {mentors.map((mentor) => (
+              <Card key={mentor._id} className="border border-white/40 p-6 shadow-soft">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-ink-900">{mentor.name}</h3>
+                    <p className="text-sm text-ink-400">{mentor.email}</p>
+                  </div>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${mentor.isActive ? 'bg-success/15 text-success' : 'bg-ink-100 text-ink-400'}`}>
+                    {mentor.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs text-ink-400">
+                  {mentor.assignedClasses.length === 0 ? (
+                    <span>No classes yet.</span>
+                  ) : (
+                    mentor.assignedClasses.map((cls) => (
+                      <span key={cls._id} className="rounded-xl border border-white/30 bg-white/80 px-3 py-1">
+                        {cls.name}
+                      </span>
+                    ))
+                  )}
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      setSelectedMentor(mentor);
+                      setMentorClassForm({
+                        action: 'assign',
+                        selectedClasses: mentor.assignedClasses.map((cls) => cls._id),
+                      });
+                      setShowMentorClassModal(true);
+                    }}
+                  >
+                    Manage classes
+                  </Button>
+                </div>
+              </Card>
+            ))}
+            {mentors.length === 0 ? <p className="text-sm text-ink-400">No mentors invited yet.</p> : null}
+          </div>
+        </section>
+      )}
+
+      <Footer />
+
+      <Modal
+        open={showCreateClassModal}
+        onClose={() => setShowCreateClassModal(false)}
+        title="Create a class"
+        description="Define cohort details and set expectations."
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setShowCreateClassModal(false)} disabled={creatingClass}>
+              Cancel
+            </Button>
+            <Button type="submit" form="school-create-class-form" disabled={creatingClass}>
+              {creatingClass ? 'Creating…' : 'Create class'}
+            </Button>
+          </>
+        }
+      >
+        <form id="school-create-class-form" className="space-y-3" onSubmit={handleCreateClass}>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-500">Class name *</label>
+            <input
+              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              value={classForm.name}
+              onChange={(event) => setClassForm((prev) => ({ ...prev, name: event.target.value }))}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-500">Description</label>
+            <textarea
+              rows={3}
+              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              value={classForm.description}
+              onChange={(event) => setClassForm((prev) => ({ ...prev, description: event.target.value }))}
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-ink-500">Academic year *</label>
+              <input
+                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                value={classForm.academicYear}
+                onChange={(event) => setClassForm((prev) => ({ ...prev, academicYear: event.target.value }))}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-ink-500">Cohort *</label>
+              <input
+                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                value={classForm.cohort}
+                onChange={(event) => setClassForm((prev) => ({ ...prev, cohort: event.target.value }))}
+                required
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-500">Duration *</label>
+            <input
+              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              value={classForm.duration}
+              onChange={(event) => setClassForm((prev) => ({ ...prev, duration: event.target.value }))
+*** End Patch

@@ -1,13 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/AuthGuard';
 import Footer from '@/components/Footer';
 import { PageShell } from '@/components/ui/PageShell';
 import { GradientHeader } from '@/components/ui/GradientHeader';
 import { Card } from '@/components/ui/Card';
-import { Button, buttonClasses } from '@/components/ui/Button';
+import { buttonClasses } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 
 interface User {

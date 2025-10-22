@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useToast } from '@/components/ui/Toast';
 
 interface InvitationData {
   _id: string;
@@ -17,6 +18,7 @@ interface InvitationData {
 export default function MentorInvitation() {
   const params = useParams();
   const router = useRouter();
+  const { pushToast } = useToast();
   const [invitation, setInvitation] = useState<InvitationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
@@ -78,7 +80,7 @@ export default function MentorInvitation() {
 
       if (response.ok) {
         // Show success message and redirect
-        alert('✅ Welcome to ClassBridge! Your mentor account has been created successfully.');
+        pushToast({ title: 'Welcome to ClassBridge!', description: 'Your mentor account is ready.', intent: 'success' });
 
         // Redirect to login or dashboard
         router.push('/login');
@@ -88,6 +90,7 @@ export default function MentorInvitation() {
       }
     } catch {
       setError('An error occurred while accepting the invitation');
+      pushToast({ title: 'Failed to accept invitation', intent: 'danger' });
     } finally {
       setAccepting(false);
     }
