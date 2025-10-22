@@ -1,9 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
+import Footer from '@/components/Footer';
+import { PageShell } from '@/components/ui/PageShell';
+import { GradientHeader } from '@/components/ui/GradientHeader';
+import { Card } from '@/components/ui/Card';
+import { Button, buttonClasses } from '@/components/ui/Button';
+import { useToast } from '@/components/ui/Toast';
 
 interface Question {
   id: string;
@@ -21,20 +27,32 @@ interface School {
   name: string;
 }
 
-interface Class {
+interface ClassSummary {
   _id: string;
   name: string;
   subject?: string;
 }
 
+const INITIAL_QUESTION: Question = {
+  id: '',
+  type: 'rating',
+  question: '',
+  description: '',
+  options: [],
+  required: true,
+  weight: 1,
+  category: '',
+};
+
 function CreateAssessmentContent() {
   const router = useRouter();
+  const { pushToast } = useToast();
+
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [schools, setSchools] = useState<School[]>([]);
-  const [classes, setClasses] = useState<Class[]>([]);
+  const [classes, setClasses] = useState<ClassSummary[]>([]);
 
-  // Assessment basic info
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [schoolId, setSchoolId] = useState('');
@@ -43,32 +61,35 @@ function CreateAssessmentContent() {
   const [targetRole, setTargetRole] = useState<'mentor' | 'student'>('student');
   const [assessorRole, setAssessorRole] = useState<'mentor' | 'student' | 'self'>('mentor');
 
-  // Assessment settings
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [maxAttempts, setMaxAttempts] = useState(1);
   const [timeLimit, setTimeLimit] = useState('');
   const [passingScore, setPassingScore] = useState('');
 
-  // Questions
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentQuestion, setCurrentQuestion] = useState<Question>({
-    id: '',
-    type: 'rating',
-    question: '',
-    description: '',
-    options: [],
-    required: true,
-    weight: 1,
-    category: ''
-  });
+  const [currentQuestion, setCurrentQuestion] = useState<Question>(INITIAL_QUESTION);
 
   useEffect(() => {
-    fetchSchoolsAndClasses();
-  }, []);
+    const fetchLookups = async () => {
+      try {
+        const [schoolsRes, classesRes] = await Promise.all([fetch('/api/schools'), fetch('/api/classes')]);
+        if (schoolsRes.ok) {
+          const schoolsData = await schoolsRes.json();
+          setSchools(schoolsData.schools || []);
+        }
+        if (classesRes.ok) {
+          const classesData = await classesRes.json();
+          setClasses(classesData.classes || []);
+        }
+      } catch {
+        pushToast({ title: 'Unable to load options', intent: 'warning' });
+      }
+    };
+    fetchLookups();
+  }, [pushToast]);
 
   useEffect(() => {
-    // Update roles based on assessment type
     switch (assessmentType) {
       case 'mentor_to_student':
         setTargetRole('student');
@@ -89,85 +110,59 @@ function CreateAssessmentContent() {
     }
   }, [assessmentType]);
 
-  const fetchSchoolsAndClasses = async () => {
-    try {
-      const [schoolsRes, classesRes] = await Promise.all([
-        fetch('/api/schools'),
-        fetch('/api/classes')
-      ]);
-
-      if (schoolsRes.ok) {
-        const schoolsData = await schoolsRes.json();
-        setSchools(schoolsData.schools);
-      }
-
-      if (classesRes.ok) {
-        const classesData = await classesRes.json();
-        setClasses(classesData.classes);
-      }
-    } catch {
-    }
-  };
-
   const addQuestion = () => {
-    if (!currentQuestion.question.trim()) return;
+    if (!currentQuestion.question.trim()) {
+      pushToast({ title: 'Question text is required', intent: 'warning' });
+      return;
+    }
+    if ((currentQuestion.type === 'multiple-choice' || currentQuestion.type === 'checkbox') && (!currentQuestion.options || currentQuestion.options.filter(Boolean).length < 2)) {
+      pushToast({ title: 'Add at least two options', intent: 'warning' });
+      return;
+    }
 
-    const question: Question = {
-      ...currentQuestion,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-    };
-
-    setQuestions([...questions, question]);
-    setCurrentQuestion({
-      id: '',
-      type: 'rating',
-      question: '',
-      description: '',
-      options: [],
-      required: true,
-      weight: 1,
-      category: ''
-    });
+    setQuestions((prev) => [
+      ...prev,
+      {
+        ...currentQuestion,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        options: currentQuestion.options?.filter(Boolean),
+      },
+    ]);
+    setCurrentQuestion(INITIAL_QUESTION);
   };
 
   const removeQuestion = (id: string) => {
-    setQuestions(questions.filter(q => q.id !== id));
+    setQuestions((prev) => prev.filter((question) => question.id !== id));
+  };
+
+  const updateCurrentOption = (index: number, value: string) => {
+    const options = [...(currentQuestion.options || [])];
+    options[index] = value;
+    setCurrentQuestion((prev) => ({ ...prev, options }));
   };
 
   const addOption = () => {
-    setCurrentQuestion({
-      ...currentQuestion,
-      options: [...(currentQuestion.options || []), '']
-    });
-  };
-
-  const updateOption = (index: number, value: string) => {
-    const newOptions = [...(currentQuestion.options || [])];
-    newOptions[index] = value;
-    setCurrentQuestion({
-      ...currentQuestion,
-      options: newOptions
-    });
+    setCurrentQuestion((prev) => ({ ...prev, options: [...(prev.options || []), ''] }));
   };
 
   const removeOption = (index: number) => {
-    const newOptions = (currentQuestion.options || []).filter((_, i) => i !== index);
-    setCurrentQuestion({
-      ...currentQuestion,
-      options: newOptions
-    });
+    setCurrentQuestion((prev) => ({
+      ...prev,
+      options: (prev.options || []).filter((_, idx) => idx !== index),
+    }));
   };
 
+  const canPreview = useMemo(() => title && description && questions.length > 0 && schoolId, [title, description, questions, schoolId]);
+
   const handleSubmit = async () => {
-    if (!title || !description || questions.length === 0 || !schoolId) {
-      alert('Please fill in all required fields and add at least one question');
+    if (!canPreview) {
+      pushToast({ title: 'Complete required fields and questions', intent: 'warning' });
       return;
     }
 
     setLoading(true);
-
     try {
-      const assessmentData = {
+      const payload = {
         title,
         description,
         questions,
@@ -180,504 +175,337 @@ function CreateAssessmentContent() {
         endDate: endDate ? new Date(endDate) : undefined,
         maxAttempts: maxAttempts || 1,
         timeLimit: timeLimit ? parseInt(timeLimit) : undefined,
-        passingScore: passingScore ? parseFloat(passingScore) : undefined
+        passingScore: passingScore ? parseFloat(passingScore) : undefined,
       };
-
       const response = await fetch('/api/assessments', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(assessmentData),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
+        pushToast({ title: 'Assessment created', intent: 'success' });
         router.push('/dashboard/assessments');
       } else {
         const errorData = await response.json();
-        alert(errorData.error || 'Failed to create assessment');
+        pushToast({ title: errorData.error || 'Failed to create assessment', intent: 'danger' });
       }
     } catch {
-      alert('An error occurred while creating the assessment');
+      pushToast({ title: 'Failed to create assessment', description: 'Please try again later.', intent: 'danger' });
     } finally {
       setLoading(false);
     }
   };
 
-  const renderStep = () => {
+  const stepHeader = useMemo(() => {
     switch (step) {
       case 1:
-        return (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Assessment Title *
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                placeholder="Enter assessment title"
-                required
-              />
-            </div>
+        return 'Describe your assessment';
+      case 2:
+        return 'Configure settings';
+      case 3:
+        return 'Design questions';
+      default:
+        return 'Review assessment';
+    }
+  }, [step]);
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Description *
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                placeholder="Describe the purpose and instructions for this assessment"
-                required
-              />
-            </div>
+  return (
+    <PageShell>
+      <GradientHeader
+        title="Create assessment"
+        description="Design targeted assessments in a few guided steps."
+        action={<Link href="/dashboard/assessments" className={buttonClasses({ variant: 'ghost' })}>Back to assessments</Link>}
+      />
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Assessment Type *
-              </label>
-              <select
-                value={assessmentType}
-                onChange={(e) => setAssessmentType(e.target.value as 'peer' | 'mentor_to_student' | 'student_to_mentor' | 'self')}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
+      <section className="mt-10 grid gap-6 lg:grid-cols-[1fr,2fr]">
+        <Card className="border border-white/40 p-6">
+          <h2 className="text-lg font-semibold text-ink-900">Progress</h2>
+          <div className="mt-4 space-y-2 text-sm">
+            {[1, 2, 3, 4].map((value) => (
+              <button
+                key={value}
+                onClick={() => setStep(value)}
+                className={`flex w-full items-center justify-between rounded-xl border border-white/30 px-4 py-3 text-left transition ${
+                  step === value ? 'bg-brand-500/10 text-brand-700 shadow-glass' : 'bg-white/80 text-ink-500'
+                }`}
               >
-                <option value="mentor_to_student">Mentor evaluating Student</option>
-                <option value="student_to_mentor">Student evaluating Mentor</option>
-                <option value="peer">Peer Assessment (Student to Student)</option>
-                <option value="self">Self Assessment</option>
-              </select>
-            </div>
+                <span>Step {value}</span>
+                <span className="text-xs uppercase tracking-wide">{value < step ? 'Completed' : value === step ? 'Current' : 'Pending'}</span>
+              </button>
+            ))}
+          </div>
+        </Card>
 
-            <div className="grid grid-cols-1 gap-4 sm:gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  School *
-                </label>
-                <select
-                  value={schoolId}
-                  onChange={(e) => setSchoolId(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                  required
-                >
-                  <option value="">Select a school</option>
-                  {schools.map((school) => (
-                    <option key={school._id} value={school._id}>
-                      {school.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+        <Card className="border border-white/40 p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-ink-900">{stepHeader}</h2>
+            <span className="text-sm text-ink-400">Step {step} of 4</span>
+          </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Classes (Optional)
-                </label>
-                <select
-                  multiple
-                  value={selectedClassIds}
-                  onChange={(e) => setSelectedClassIds(Array.from(e.target.selectedOptions, option => option.value))}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                  size={4}
-                >
-                  {classes
-                    .filter(cls => !schoolId || cls._id === schoolId)
-                    .map((cls) => (
-                      <option key={cls._id} value={cls._id}>
-                        {cls.name} {cls.subject && `(${cls.subject})`}
+          <div className="mt-6 space-y-6">
+            {step === 1 && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-ink-500">Title *</label>
+                  <input
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    placeholder="Leadership feedback"
+                    className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-ink-500">Description *</label>
+                  <textarea
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    rows={4}
+                    placeholder="Explain the purpose and expectations for participants."
+                    className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-ink-500">School *</label>
+                  <select
+                    value={schoolId}
+                    onChange={(event) => setSchoolId(event.target.value)}
+                    className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                  >
+                    <option value="">Select school</option>
+                    {schools.map((school) => (
+                      <option key={school._id} value={school._id}>
+                        {school.name}
                       </option>
                     ))}
-                </select>
-                <p className="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple classes</p>
-              </div>
-            </div>
-          </div>
-        );
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-ink-500">Attach classes</label>
+                  <div className="flex flex-wrap gap-2">
+                    {classes.map((cls) => {
+                      const selected = selectedClassIds.includes(cls._id);
+                      return (
+                        <button
+                          key={cls._id}
+                          onClick={() =>
+                            setSelectedClassIds((prev) =>
+                              selected ? prev.filter((id) => id !== cls._id) : [...prev, cls._id]
+                            )
+                          }
+                          className={buttonClasses({
+                            variant: selected ? 'primary' : 'secondary',
+                            size: 'sm',
+                          })}
+                          type="button"
+                        >
+                          {cls.name}
+                        </button>
+                      );
+                    })}
+                    {classes.length === 0 ? <p className="text-sm text-ink-400">No classes available.</p> : null}
+                  </div>
+                </div>
+              </>
+            )}
 
-      case 2:
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-4 sm:gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Start Date (Optional)
-                </label>
-                <input
-                  type="datetime-local"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  End Date (Optional)
-                </label>
-                <input
-                  type="datetime-local"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Max Attempts
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={maxAttempts}
-                  onChange={(e) => setMaxAttempts(parseInt(e.target.value) || 1)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Time Limit (minutes)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={timeLimit}
-                  onChange={(e) => setTimeLimit(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                  placeholder="No limit"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Passing Score (%)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={passingScore}
-                  onChange={(e) => setPassingScore(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                  placeholder="No requirement"
-                />
-              </div>
-            </div>
-          </div>
-        );
-
-      case 3:
-        return (
-          <div className="space-y-6">
-            {/* Add Question Form */}
-            <div className="bg-gray-50 rounded-2xl p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Add New Question</h3>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Question Type
-                    </label>
+            {step === 2 && (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-ink-500">Assessment type</label>
                     <select
-                      value={currentQuestion.type}
-                      onChange={(e) => setCurrentQuestion({
-                        ...currentQuestion,
-                        type: e.target.value as 'multiple-choice' | 'checkbox' | 'text' | 'rating' | 'scale',
-                        options: ['multiple-choice', 'checkbox'].includes(e.target.value) ? [''] : []
-                      })}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
+                      value={assessmentType}
+                      onChange={(event) => setAssessmentType(event.target.value as typeof assessmentType)}
+                      className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
                     >
-                      <option value="rating">Rating Scale</option>
-                      <option value="scale">Numeric Scale</option>
-                      <option value="multiple-choice">Multiple Choice</option>
-                      <option value="checkbox">Checkbox (Multiple Select)</option>
-                      <option value="text">Text Response</option>
+                      <option value="mentor_to_student">Mentor → student</option>
+                      <option value="student_to_mentor">Student → mentor</option>
+                      <option value="peer">Peer</option>
+                      <option value="self">Self</option>
                     </select>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Category (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={currentQuestion.category || ''}
-                      onChange={(e) => setCurrentQuestion({
-                        ...currentQuestion,
-                        category: e.target.value
-                      })}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                      placeholder="e.g., Communication, Technical Skills"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Question Text *
-                  </label>
-                  <textarea
-                    value={currentQuestion.question}
-                    onChange={(e) => setCurrentQuestion({
-                      ...currentQuestion,
-                      question: e.target.value
-                    })}
-                    rows={3}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="Enter your question"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Description (Optional)
-                  </label>
-                  <textarea
-                    value={currentQuestion.description || ''}
-                    onChange={(e) => setCurrentQuestion({
-                      ...currentQuestion,
-                      description: e.target.value
-                    })}
-                    rows={2}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="Additional instructions or context"
-                  />
-                </div>
-
-                {['multiple-choice', 'checkbox'].includes(currentQuestion.type) && (
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Options *
-                    </label>
-                    <div className="space-y-2">
-                      {(currentQuestion.options || []).map((option, index) => (
-                        <div key={index} className="flex flex-col sm:flex-row gap-2">
-                          <input
-                            type="text"
-                            value={option}
-                            onChange={(e) => updateOption(index, e.target.value)}
-                            className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500 min-h-11"
-                            placeholder={`Option ${index + 1}`}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeOption(index)}
-                            className="w-full sm:w-auto px-3 py-3 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 active:bg-red-300 min-h-11 touch-manipulation"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={addOption}
-                        className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-indigo-300 hover:text-indigo-600 min-h-11 touch-manipulation"
-                      >
-                        + Add Option
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={currentQuestion.required}
-                        onChange={(e) => setCurrentQuestion({
-                          ...currentQuestion,
-                          required: e.target.checked
-                        })}
-                        className="rounded"
-                      />
-                      <span className="text-sm font-semibold text-gray-700">Required Question</span>
-                    </label>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Weight
-                    </label>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-ink-500">Max attempts</label>
                     <input
                       type="number"
-                      min="0.1"
-                      step="0.1"
-                      value={currentQuestion.weight || 1}
-                      onChange={(e) => setCurrentQuestion({
-                        ...currentQuestion,
-                        weight: parseFloat(e.target.value) || 1
-                      })}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-indigo-500"
+                      min={1}
+                      value={maxAttempts}
+                      onChange={(event) => setMaxAttempts(Number(event.target.value))}
+                      className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
                     />
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={addQuestion}
-                  className="w-full min-h-11 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 touch-manipulation"
-                >
-                  Add Question
-                </button>
-              </div>
-            </div>
-
-            {/* Questions List */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-4">
-                Questions ({questions.length})
-              </h3>
-
-              {questions.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  No questions added yet. Add your first question above.
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-ink-500">Start date</label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(event) => setStartDate(event.target.value)}
+                      className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-ink-500">End date</label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(event) => setEndDate(event.target.value)}
+                      className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-ink-500">Time limit (minutes)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={timeLimit}
+                      onChange={(event) => setTimeLimit(event.target.value)}
+                      className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                    />
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {questions.map((question, index) => (
-                    <div key={question.id} className="bg-white rounded-xl p-4 border border-gray-200">
-                      <div className="flex flex-col sm:flex-row justify-between gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center flex-wrap gap-2 mb-2">
-                            <span className="text-sm font-medium text-indigo-600">Q{index + 1}</span>
-                            <span className="text-xs px-2 py-1 bg-gray-100 rounded-full">{question.type}</span>
-                            {question.category && (
-                              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
-                                {question.category}
-                              </span>
-                            )}
-                            {question.required && (
-                              <span className="text-xs text-red-600">Required</span>
-                            )}
-                            <span className="text-xs text-gray-500">Weight: {question.weight}</span>
-                          </div>
-                          <p className="font-medium text-gray-900 mb-1">{question.question}</p>
-                          {question.description && (
-                            <p className="text-sm text-gray-600 mb-2">{question.description}</p>
-                          )}
-                          {question.options && question.options.length > 0 && (
-                            <div className="text-sm text-gray-600">
-                              Options: {question.options.join(', ')}
-                            </div>
-                          )}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-ink-500">Passing score (%)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={passingScore}
+                    onChange={(event) => setPassingScore(event.target.value)}
+                    className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                  />
+                </div>
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-ink-500">Question *</label>
+                  <input
+                    value={currentQuestion.question}
+                    onChange={(event) => setCurrentQuestion((prev) => ({ ...prev, question: event.target.value }))}
+                    placeholder="How would you rate the session?"
+                    className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                  />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-ink-500">Question type</label>
+                    <select
+                      value={currentQuestion.type}
+                      onChange={(event) => setCurrentQuestion((prev) => ({ ...prev, type: event.target.value as Question['type'], options: event.target.value === 'multiple-choice' || event.target.value === 'checkbox' ? prev.options : [] }))}
+                      className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                    >
+                      <option value="rating">Rating scale</option>
+                      <option value="text">Open text</option>
+                      <option value="multiple-choice">Multiple choice</option>
+                      <option value="checkbox">Checkbox</option>
+                      <option value="scale">Linear scale</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-ink-500">Required</label>
+                    <select
+                      value={currentQuestion.required ? 'yes' : 'no'}
+                      onChange={(event) => setCurrentQuestion((prev) => ({ ...prev, required: event.target.value === 'yes' }))}
+                      className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                    >
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </select>
+                  </div>
+                </div>
+                {(currentQuestion.type === 'multiple-choice' || currentQuestion.type === 'checkbox') && (
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium text-ink-500">Options</p>
+                    {(currentQuestion.options || []).map((option, index) => (
+                      <div key={`${currentQuestion.id}-option-${index}`} className="flex items-center gap-2">
+                        <input
+                          value={option}
+                          onChange={(event) => updateCurrentOption(index, event.target.value)}
+                          placeholder={`Option ${index + 1}`}
+                          className="flex-1 rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeOption(index)}
+                          className={buttonClasses({ variant: 'ghost', size: 'sm' })}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                    <Button variant="secondary" size="sm" onClick={addOption}>
+                      Add option
+                    </Button>
+                  </div>
+                )}
+                <div className="flex items-center gap-3">
+                  <Button onClick={addQuestion}>Add question</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setCurrentQuestion(INITIAL_QUESTION)}>
+                    Reset
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {questions.map((question) => (
+                    <div key={question.id} className="rounded-xl border border-white/30 bg-white/80 px-4 py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-ink-800">{question.question}</p>
+                          <p className="text-xs text-ink-400 capitalize">{question.type.replace('-', ' ')}</p>
                         </div>
                         <button
+                          type="button"
                           onClick={() => removeQuestion(question.id)}
-                          className="w-full sm:w-auto sm:ml-4 min-h-11 px-4 py-3 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 active:bg-red-300 text-sm touch-manipulation"
+                          className={buttonClasses({ variant: 'ghost', size: 'sm' })}
                         >
                           Remove
                         </button>
                       </div>
                     </div>
                   ))}
+                  {questions.length === 0 ? <p className="text-sm text-ink-400">No questions yet.</p> : null}
                 </div>
-              )}
-            </div>
-          </div>
-        );
+              </>
+            )}
 
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
-      <div className="max-w-4xl mx-auto p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
-              Create Assessment
-            </h1>
-            <p className="text-xl text-gray-600">Build a new assessment for your students</p>
-          </div>
-          <Link
-            href="/dashboard/assessments"
-            className="bg-white/80 text-gray-700 px-4 py-2 rounded-xl font-medium hover:bg-white hover:shadow-lg transition-all duration-300 border border-gray-200"
-          >
-            ← Back to Assessments
-          </Link>
-        </div>
-
-        {/* Progress Steps */}
-        <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center space-x-4">
-            {[1, 2, 3].map((stepNumber) => (
-              <div key={stepNumber} className="flex items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                  step >= stepNumber
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'
-                    : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {stepNumber}
+            {step === 4 && (
+              <>
+                <p className="text-sm text-ink-500">Take a final look before publishing.</p>
+                <div className="space-y-3 text-sm text-ink-600">
+                  <p><strong>Title:</strong> {title}</p>
+                  <p><strong>Description:</strong> {description}</p>
+                  <p><strong>Type:</strong> {assessmentType}</p>
+                  <p><strong>Questions:</strong> {questions.length}</p>
                 </div>
-                {stepNumber < 3 && (
-                  <div className={`w-16 h-1 ${
-                    step > stepNumber ? 'bg-gradient-to-r from-indigo-600 to-purple-600' : 'bg-gray-200'
-                  }`} />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex justify-center mb-4">
-          <div className="text-sm text-gray-600">
-            {step === 1 && 'Basic Information'}
-            {step === 2 && 'Assessment Settings'}
-            {step === 3 && 'Questions'}
-          </div>
-        </div>
-
-        {/* Form */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/20">
-          {renderStep()}
-
-          {/* Navigation */}
-          <div className="flex flex-col sm:flex-row justify-between gap-4 mt-8">
-            <button
-              onClick={() => setStep(Math.max(1, step - 1))}
-              disabled={step === 1}
-              className="w-full sm:w-auto px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-11 touch-manipulation"
-            >
-              Previous
-            </button>
-
-            {step < 3 ? (
-              <button
-                onClick={() => setStep(step + 1)}
-                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 min-h-11 touch-manipulation"
-              >
-                Next
-              </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={loading || questions.length === 0}
-                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-h-11 touch-manipulation"
-              >
-                {loading ? 'Creating...' : 'Create Assessment'}
-              </button>
+              </>
             )}
           </div>
-        </div>
-      </div>
-    </div>
+
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+            <Button variant="ghost" disabled={step === 1} onClick={() => setStep((prev) => Math.max(1, prev - 1))}>
+              Previous
+            </Button>
+            {step < 4 ? (
+              <Button onClick={() => setStep((prev) => Math.min(4, prev + 1))}>Next</Button>
+            ) : (
+              <Button onClick={handleSubmit} disabled={loading}>
+                {loading ? 'Creating…' : 'Create assessment'}
+              </Button>
+            )}
+          </div>
+        </Card>
+      </section>
+
+      <Footer />
+    </PageShell>
   );
 }
 
-export default function CreateAssessment() {
+export default function AssessmentCreatePage() {
   return (
     <AuthGuard>
       <CreateAssessmentContent />

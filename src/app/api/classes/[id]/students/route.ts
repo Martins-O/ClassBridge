@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import {NextRequest, NextResponse} from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Class from '@/models/Class';
 import User from '@/models/User';
-import { getUserIdFromRequest } from '@/lib/session';
+import {getUserIdFromRequest} from '@/lib/session';
 
 export async function GET(
   request: NextRequest,
@@ -28,9 +28,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const classId = id;
-
-    const classDoc = await Class.findById(classId).populate('studentIds', 'name email studentId isActive');
+      const classDoc = await Class.findById(id).populate('studentIds', 'name email studentId isActive');
     if (!classDoc) {
       return NextResponse.json(
         { error: 'Class not found' },
@@ -38,7 +36,7 @@ export async function GET(
       );
     }
 
-    let hasAccess = false;
+    let hasAccess: boolean;
 
     switch (currentUser.role) {
       case 'super_admin':

@@ -1,9 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/AuthGuard';
 import Footer from '@/components/Footer';
+import { PageShell } from '@/components/ui/PageShell';
+import { GradientHeader } from '@/components/ui/GradientHeader';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { useToast } from '@/components/ui/Toast';
 
 interface Course {
   _id: string;
@@ -39,7 +46,7 @@ interface Course {
   createdAt: string;
 }
 
-interface Class {
+interface ClassSummary {
   _id: string;
   name: string;
   academicYear: string;
@@ -47,478 +54,351 @@ interface Class {
   mentorIds?: string[];
 }
 
+const INITIAL_FORM = {
+  name: '',
+  description: '',
+  classId: '',
+  subject: '',
+  duration: '1 month',
+  startDate: '',
+  endDate: '',
+  maxStudents: 30,
+  syllabus: '',
+};
+
 function CourseManagementContent() {
   const router = useRouter();
+  const { pushToast } = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
-  const [classes, setClasses] = useState<Class[]>([]);
+  const [classes, setClasses] = useState<ClassSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    classId: '',
-    subject: '',
-    duration: '1 month',
-    startDate: '',
-    endDate: '',
-    maxStudents: 30,
-    syllabus: ''
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM);
 
-  const durationOptions = [
-    '1 week',
-    '2 weeks',
-    '1 month',
-    '2 months',
-    '3 months',
-    '6 months'
-  ];
+  const durationOptions = ['1 week', '2 weeks', '1 month', '2 months', '3 months', '6 months'];
 
   const fetchUserAndData = useCallback(async () => {
     try {
-      // Fetch user info
       const userResponse = await fetch('/api/auth/me');
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
+      if (!userResponse.ok) return;
+      const userData = await userResponse.json();
 
-        // Check if user is mentor
-        if (userData.user.role !== 'mentor' && userData.user.role !== 'super_admin') {
-          router.push('/dashboard');
-          return;
-        }
-
-        // Fetch mentor's courses
-        const coursesResponse = await fetch('/api/courses');
-        if (coursesResponse.ok) {
-          const coursesData = await coursesResponse.json();
-          setCourses(coursesData.courses || []);
-        }
-
-        // Fetch classes assigned to this mentor
-        const classesResponse = await fetch('/api/classes');
-        if (classesResponse.ok) {
-          const classesData = await classesResponse.json();
-          const allClasses: Class[] = classesData.classes || [];
-
-          // Filter classes where this mentor is assigned
-          const mentorClasses = allClasses.filter((cls) =>
-            cls.mentorIds?.includes(userData.user._id)
-          );
-          setClasses(mentorClasses);
-        }
+      if (userData.user.role !== 'mentor' && userData.user.role !== 'super_admin') {
+        router.push('/dashboard');
+        return;
       }
-    } catch (error) {
-      console.error('Error fetching data:', error);
+
+      const [coursesResponse, classesResponse] = await Promise.all([
+        fetch('/api/courses'),
+        fetch('/api/classes'),
+      ]);
+
+      if (coursesResponse.ok) {
+        const coursesData = await coursesResponse.json();
+        setCourses(coursesData.courses || []);
+      }
+
+      if (classesResponse.ok) {
+        const classesData = await classesResponse.json();
+        const allClasses: ClassSummary[] = classesData.classes || [];
+        const mentorClasses = allClasses.filter((cls) => cls.mentorIds?.includes(userData.user._id));
+        setClasses(mentorClasses);
+      }
+    } catch {
+      pushToast({ title: 'Unable to load courses', intent: 'warning' });
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [pushToast, router]);
 
   useEffect(() => {
     fetchUserAndData();
   }, [fetchUserAndData]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (classes.length > 0 && !formData.classId) {
+      setFormData((prev) => ({ ...prev, classId: classes[0]._id }));
+    }
+  }, [classes, formData.classId]);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setSubmitting(true);
 
     try {
       const response = await fetch('/api/courses', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
       if (response.ok) {
-        await fetchUserAndData();
+        pushToast({ title: 'Course created', description: 'Your learners can now enroll.', intent: 'success' });
         setShowCreateForm(false);
-        setFormData({
-          name: '',
-          description: '',
-          classId: '',
-          subject: '',
-          duration: '1 month',
-          startDate: '',
-          endDate: '',
-          maxStudents: 30,
-          syllabus: ''
-        });
+        setFormData({ ...INITIAL_FORM, classId: classes[0]?._id || '' });
+        fetchUserAndData();
       } else {
         const errorData = await response.json();
-        alert(errorData.error || 'Failed to create course');
+        pushToast({ title: errorData.error || 'Failed to create course', intent: 'danger' });
       }
     } catch {
-      alert('Failed to create course');
+      pushToast({ title: 'Failed to create course', description: 'Please try again shortly.', intent: 'danger' });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  const courseCards = useMemo(() => {
+    if (courses.length === 0) {
+      return (
+        <Card className="border border-white/40 p-10 text-center shadow-glass">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-brand-500/15 text-brand-600">
+            <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </div>
+          <h2 className="mt-4 text-xl font-semibold text-ink-900">No courses yet</h2>
+          <p className="mt-2 text-sm text-ink-500">Create a course for one of your classes to start coaching.</p>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {courses.map((course) => (
+          <Card key={course._id} className="border border-white/40 p-6 shadow-soft">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-ink-900">{course.name}</h3>
+                {course.description ? <p className="mt-1 text-sm text-ink-400">{course.description}</p> : null}
+              </div>
+              <span className="rounded-full bg-brand-500/15 px-3 py-1 text-xs font-semibold text-brand-600">
+                {course.duration}
+              </span>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-ink-400">
+              <span className="rounded-full bg-white/80 px-3 py-1">Class · {course.classId.name}</span>
+              {course.subject ? <span className="rounded-full bg-white/80 px-3 py-1">{course.subject}</span> : null}
+              <span className="rounded-full bg-white/80 px-3 py-1">Max {course.maxStudents} students</span>
+            </div>
+
+            <div className="mt-5 grid grid-cols-3 gap-3 rounded-xl border border-white/40 bg-white/80 px-4 py-3 text-center text-sm">
+              <div>
+                <p className="text-lg font-semibold text-brand-600">{course.studentIds.length}</p>
+                <p className="text-xs text-ink-400">Enrolled</p>
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-mint-500">{course.availableSpots}</p>
+                <p className="text-xs text-ink-400">Spots left</p>
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-accent-purple">{course.materials?.length ?? 0}</p>
+                <p className="text-xs text-ink-400">Resources</p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-between text-sm text-brand-600">
+              <Link href={`/dashboard/classes/${course.classId._id}`} className="font-semibold">
+                View class →
+              </Link>
+              <span className="text-ink-400">Created {new Date(course.createdAt).toLocaleDateString()}</span>
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  }, [courses]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
-          <p className="mt-6 text-gray-600 font-medium">Loading course management...</p>
+      <PageShell>
+        <GradientHeader title="Loading courses" description="Collecting course data, please hang tight." />
+        <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="h-48 animate-pulse rounded-2xl bg-white/50" />
+          ))}
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Navigation */}
-        <div className="flex items-center space-x-4 mb-6">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="flex items-center space-x-2 text-indigo-600 hover:text-indigo-700 transition-colors font-medium group"
-          >
-            <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            <span>Back to Dashboard</span>
-          </button>
+    <PageShell>
+      <GradientHeader
+        title="Course Management"
+        description="Design compelling learning experiences and keep your cohorts moving forward."
+        action={
+          classes.length > 0 ? (
+            <Button onClick={() => setShowCreateForm(true)}>Create course</Button>
+          ) : null
+        }
+      />
+
+      <section className="mt-10">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wider text-brand-300">Overview</p>
+            <h2 className="text-xl font-semibold text-ink-900">{courses.length} courses</h2>
+          </div>
+          <Button variant="ghost" onClick={() => router.push('/dashboard')}>
+            Back to dashboard
+          </Button>
         </div>
 
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                Course Management
-              </h1>
-              <p className="text-xl text-gray-600">
-                Create and manage your courses
-              </p>
-            </div>
+        <div className="mt-8">{courseCards}</div>
+      </section>
 
-            {classes.length > 0 && (
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="group px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-              >
-                <span className="flex items-center space-x-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  <span>Create Course</span>
-                </span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* No Classes State */}
-        {classes.length === 0 && (
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/20 text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">No Classes Assigned</h2>
-            <p className="text-gray-600 mb-6">You need to be assigned to classes before you can create courses.</p>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        )}
-
-        {/* Courses Grid */}
-        {classes.length > 0 && (
-          <>
-            {courses.length === 0 ? (
-              <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/20 text-center">
-                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">No Courses Yet</h2>
-                <p className="text-gray-600 mb-6">Create your first course to start teaching your assigned classes.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.map((course) => (
-                  <div
-                    key={course._id}
-                    className="group bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-white/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
-                    onClick={() => router.push(`/dashboard/courses/${course._id}`)}
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                          {course.name}
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {course.classId.name} • {course.classId.academicYear}
-                        </p>
-                      </div>
-                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        course.isActive
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {course.isActive ? 'Active' : 'Inactive'}
-                      </div>
-                    </div>
-
-                    {course.description && (
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                        {course.description}
-                      </p>
-                    )}
-
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Duration:</span>
-                        <span className="font-medium">{course.duration}</span>
-                      </div>
-                      {course.subject && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">Subject:</span>
-                          <span className="font-medium">{course.subject}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Enrollment:</span>
-                        <span className="font-medium">
-                          {course.enrolledCount}/{course.maxStudents}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-                      <div
-                        className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-300"
-                        style={{
-                          width: `${course.maxStudents > 0 ? (course.enrolledCount / course.maxStudents) * 100 : 0}%`
-                        }}
-                      ></div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">
-                        Created {new Date(course.createdAt).toLocaleDateString()}
-                      </span>
-                      <div className="flex items-center space-x-1">
-                        <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-2.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                        </svg>
-                        <span className="text-sm font-medium text-gray-700">
-                          {course.enrolledCount} students
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Create Course Modal */}
-        {showCreateForm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Create New Course</h2>
-                <button
-                  onClick={() => setShowCreateForm(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Course Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                    placeholder="Enter course name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Class *
-                  </label>
-                  <select
-                    name="classId"
-                    value={formData.classId}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                  >
-                    <option value="">Select a class</option>
-                    {classes.map((cls) => (
-                      <option key={cls._id} value={cls._id}>
-                        {cls.name} - {cls.academicYear}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Subject
-                    </label>
-                    <input
-                      type="text"
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                      placeholder="e.g., Mathematics"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Duration *
-                    </label>
-                    <select
-                      name="duration"
-                      value={formData.duration}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                    >
-                      {durationOptions.map((duration) => (
-                        <option key={duration} value={duration}>
-                          {duration}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Start Date
-                    </label>
-                    <input
-                      type="date"
-                      name="startDate"
-                      value={formData.startDate}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      End Date
-                    </label>
-                    <input
-                      type="date"
-                      name="endDate"
-                      value={formData.endDate}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Max Students
-                  </label>
-                  <input
-                    type="number"
-                    name="maxStudents"
-                    value={formData.maxStudents}
-                    onChange={handleInputChange}
-                    min="1"
-                    max="100"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
-                    placeholder="Describe your course..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Syllabus
-                  </label>
-                  <textarea
-                    name="syllabus"
-                    value={formData.syllabus}
-                    onChange={handleInputChange}
-                    rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
-                    placeholder="Course outline and syllabus..."
-                  />
-                </div>
-
-                <div className="flex space-x-4 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateForm(false)}
-                    className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50"
-                  >
-                    {submitting ? 'Creating...' : 'Create Course'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-      </div>
       <Footer />
-    </div>
+
+      <Modal
+        open={showCreateForm}
+        onClose={() => setShowCreateForm(false)}
+        title="Create a course"
+        description="Provide details students will see when enrolling."
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setShowCreateForm(false)} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button type="submit" form="create-course-form" disabled={submitting}>
+              {submitting ? 'Creating…' : 'Create course'}
+            </Button>
+          </>
+        }
+      >
+        <form id="create-course-form" className="space-y-4" onSubmit={handleSubmit}>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-500">Course name *</label>
+            <input
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+              placeholder="Design Thinking Fundamentals"
+              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-500">Description</label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              rows={3}
+              placeholder="Explain what students will gain from this course."
+              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-ink-500">Assign to class *</label>
+              <select
+                name="classId"
+                value={formData.classId}
+                onChange={handleInputChange}
+                required
+                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              >
+                <option value="">Select class</option>
+                {classes.map((cls) => (
+                  <option key={cls._id} value={cls._id}>
+                    {cls.name} · {cls.academicYear}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-ink-500">Subject</label>
+              <input
+                name="subject"
+                value={formData.subject}
+                onChange={handleInputChange}
+                placeholder="Leadership"
+                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-ink-500">Duration *</label>
+              <select
+                name="duration"
+                value={formData.duration}
+                onChange={handleInputChange}
+                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              >
+                {durationOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-ink-500">Maximum students</label>
+              <input
+                type="number"
+                min={1}
+                name="maxStudents"
+                value={formData.maxStudents}
+                onChange={handleInputChange}
+                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-ink-500">Start date</label>
+              <input
+                type="date"
+                name="startDate"
+                value={formData.startDate}
+                onChange={handleInputChange}
+                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-ink-500">End date</label>
+              <input
+                type="date"
+                name="endDate"
+                value={formData.endDate}
+                onChange={handleInputChange}
+                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-ink-500">Syllabus URL</label>
+            <input
+              name="syllabus"
+              value={formData.syllabus}
+              onChange={handleInputChange}
+              placeholder="https://..."
+              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+            />
+          </div>
+        </form>
+      </Modal>
+    </PageShell>
   );
 }
 
-export default function CourseManagement() {
+export default function CourseManagementPage() {
   return (
-    <AuthGuard requiredRole="mentor">
+    <AuthGuard requiredRoles={['mentor', 'super_admin']}>
       <CourseManagementContent />
     </AuthGuard>
   );

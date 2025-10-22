@@ -1,7 +1,7 @@
-import { NextRequest } from 'next/server';
+import {NextRequest} from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
-import { getUserIdFromRequest } from '@/lib/session';
+import {getUserIdFromRequest} from '@/lib/session';
 
 export async function getCurrentUser(request: NextRequest) {
   try {
@@ -12,8 +12,7 @@ export async function getCurrentUser(request: NextRequest) {
       return null;
     }
 
-    const user = await User.findById(userId).select('-password');
-    return user;
+    return await User.findById(userId).select('-password');
   } catch {
     return null;
   }

@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import {NextRequest, NextResponse} from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Class from '@/models/Class';
 import User from '@/models/User';
-import { getUserIdFromRequest } from '@/lib/session';
+import {getUserIdFromRequest} from '@/lib/session';
 
 export async function GET(
   request: NextRequest,
@@ -28,8 +28,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const classId = id;
-    const classData = await Class.findById(classId).populate([
+      const classData = await Class.findById(id).populate([
       'mentorIds',
       'studentIds',
       'schoolId'
