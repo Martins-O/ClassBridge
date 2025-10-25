@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .lean();
 
-    const formattedClasses = classes.map((classDoc) => formatClassDocument(classDoc as PopulatedClassDoc));
+    const formattedClasses = classes.map((classDoc) => formatClassDocument(classDoc as unknown as PopulatedClassDoc));
 
     return NextResponse.json({ classes: formattedClasses });
 

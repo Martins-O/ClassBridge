@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let courses;
+    let courses: unknown[];
 
     // Filter courses based on user role
     if (user.role === 'super_admin') {

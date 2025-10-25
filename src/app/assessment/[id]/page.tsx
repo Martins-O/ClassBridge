@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/AuthGuard';
 import { AssessmentLayout } from '@/components/ui/AssessmentLayout';
-import { QuestionCard } from '@/components/ui/QuestionCard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { MultipleChoiceInput, CheckboxInput, TextInput, RatingInput } from '@/components/ui/QuestionInputs';
 
 interface Question {
   id: string;
@@ -56,10 +54,7 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchAssessment();
-  }, [params.id, fetchAssessment]);
+  const submitRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (assessment?.timeLimit && attempt) {
@@ -74,13 +69,13 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
         setTimeRemaining(remaining);
 
         if (remaining === 0) {
-          handleSubmit(); // Auto-submit when time runs out
+          submitRef.current?.(); // Auto-submit when time runs out
         }
       }, 1000);
 
       return () => clearInterval(timer);
     }
-  }, [assessment, attempt, handleSubmit]);
+  }, [assessment, attempt]);
 
   const fetchAssessment = useCallback(async () => {
     try {
@@ -99,7 +94,11 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
     } finally {
       setLoading(false);
     }
-  }, [params.id, startNewAttempt]);
+  }, [params.id]);
+
+  useEffect(() => {
+    fetchAssessment();
+  }, [params.id, fetchAssessment]);
 
   const startNewAttempt = useCallback(async () => {
     try {
@@ -162,6 +161,10 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
       setSubmitting(false);
     }
   }, [attempt, submitting, answers, router, params.id]);
+
+  useEffect(() => {
+    submitRef.current = handleSubmit;
+  }, [handleSubmit]);
 
   const saveProgress = async () => {
     if (!attempt) return;

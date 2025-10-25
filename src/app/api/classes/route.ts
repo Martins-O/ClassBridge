@@ -214,7 +214,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let classes;
+    let classes: unknown[];
 
     // Filter classes based on user role
     if (user.role === 'super_admin') {

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { DarkLayout } from '@/components/ui/DarkLayout';
 import { Card, CardContent, CardHeader, GlowCard } from '@/components/ui/Card';
-import { Button, LoadingButton } from '@/components/ui/Button';
+import { LoadingButton } from '@/components/ui/Button';
 import { Input, PasswordInput } from '@/components/ui/Input';
 
 export default function LoginPage() {
@@ -145,7 +145,7 @@ export default function LoginPage() {
             {/* Footer */}
             <div className="mt-8 pt-6 border-t border-border-primary text-center">
               <p className="text-sm text-text-muted font-mono">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <Link
                   href="/register"
                   className="text-accent-primary hover:text-accent-primary/80 transition-colors font-semibold"

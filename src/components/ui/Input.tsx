@@ -58,7 +58,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             variantClasses[variant],
 
             // Icon padding
-            icon && 'pl-10',
+            icon ? 'pl-10' : '',
 
             // Error state
             error && 'border-accent-danger focus:border-accent-danger focus:ring-accent-danger',

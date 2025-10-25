@@ -5,6 +5,7 @@ import User from '@/models/User';
 import { getUserIdFromRequest } from '@/lib/session';
 import {
   ValidationResult,
+  ValidationError,
   validateString,
   validateArray,
   validateObjectId,
@@ -59,11 +60,12 @@ export async function POST(request: NextRequest) {
       required: true,
       minLength: 1,
       maxLength: 50,
-      itemValidator: (question: { question: unknown; type: unknown; options?: unknown }) => {
-        const questionErrors: string[] = [];
+      itemValidator: (question: unknown) => {
+        const questionErrors: ValidationError[] = [];
 
-        const questionText = question.question;
-        const questionType = question.type;
+        const questionObj = question as { question: unknown; type: unknown; options?: unknown };
+        const questionText = questionObj.question;
+        const questionType = questionObj.type;
 
         questionErrors.push(
           ...validateString(questionText, 'question', { required: true, minLength: 5, maxLength: 500 })
@@ -74,7 +76,7 @@ export async function POST(request: NextRequest) {
 
         if (questionType === 'multiple-choice' || questionType === 'checkbox') {
           questionErrors.push(
-            ...validateArray(question.options, 'options', { required: true, minLength: 2, maxLength: 10 })
+            ...validateArray(questionObj.options, 'options', { required: true, minLength: 2, maxLength: 10 })
           );
         }
 

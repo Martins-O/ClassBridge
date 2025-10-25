@@ -41,14 +41,6 @@ function AssessmentResultContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (attemptId) {
-      fetchAttemptResult();
-    } else {
-      setError('No attempt ID provided');
-      setLoading(false);
-    }
-  }, [attemptId, fetchAttemptResult]);
 
   const fetchAttemptResult = useCallback(async () => {
     try {
@@ -65,6 +57,15 @@ function AssessmentResultContent() {
       setLoading(false);
     }
   }, [attemptId]);
+
+  useEffect(() => {
+    if (attemptId) {
+      fetchAttemptResult();
+    } else {
+      setError('No attempt ID provided');
+      setLoading(false);
+    }
+  }, [attemptId, fetchAttemptResult]);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);

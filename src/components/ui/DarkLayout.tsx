@@ -1,3 +1,5 @@
+'use client';
+
 import { ReactNode, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from './Card';
@@ -191,7 +193,7 @@ export function DashboardLayout({
       {...props}
     >
       {children}
-    </DashboardLayout>
+    </DarkLayout>
   );
 }
 

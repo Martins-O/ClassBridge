@@ -73,12 +73,12 @@ export default function Home() {
           </div>
 
           <nav className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/login">Sign in</Link>
-            </Button>
-            <Button variant="primary" size="sm" glow asChild>
-              <Link href="/register">Request demo</Link>
-            </Button>
+            <Link href="/login">
+              <Button variant="ghost" size="sm">Sign in</Button>
+            </Link>
+            <Link href="/register">
+              <Button variant="primary" size="sm" glow>Request demo</Button>
+            </Link>
           </nav>
         </div>
       }
@@ -104,12 +104,12 @@ export default function Home() {
               ClassBridge brings academic planning, competency tracking, and community communication into one secure workspace—so leadership can make timely decisions and teams can execute with confidence.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Button variant="primary" size="lg" glow asChild>
-                <Link href="/register">Launch your workspace</Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild>
-                <Link href="/login">Explore the platform</Link>
-              </Button>
+              <Link href="/register">
+                <Button variant="primary" size="lg" glow>Launch your workspace</Button>
+              </Link>
+              <Link href="/login">
+                <Button variant="outline" size="lg">Explore the platform</Button>
+              </Link>
             </div>
             <div className="mt-10 grid gap-4 sm:grid-cols-3">
               {metrics.map((metric) => (
@@ -203,12 +203,12 @@ export default function Home() {
             Schedule a strategy session with our onboarding specialists and see how quickly your team can move from reactive to proactive operations.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-4">
-            <Button variant="primary" size="lg" glow asChild>
-              <Link href="/register">Book a strategy call</Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild>
-              <Link href="/login">Preview the console</Link>
-            </Button>
+            <Link href="/register">
+              <Button variant="primary" size="lg" glow>Book a strategy call</Button>
+            </Link>
+            <Link href="/login">
+              <Button variant="outline" size="lg">Preview the console</Button>
+            </Link>
           </div>
         </GlowCard>
       </main>

@@ -302,9 +302,9 @@ function DashboardContent() {
             </div>
             <h2 className="mb-2 text-xl font-bold text-text-primary">Access Denied</h2>
             <p className="mb-6 text-text-muted">Unable to load user information</p>
-            <Button variant="danger" asChild>
-              <Link href="/login">Go to Login</Link>
-            </Button>
+            <Link href="/login">
+              <Button variant="danger">Go to Login</Button>
+            </Link>
           </CardContent>
         </GlowCard>
       </DashboardLayout>
@@ -498,11 +498,11 @@ function DashboardContent() {
             <p className="text-neon-green/80 text-sm font-mono mb-4">
               Explore our detailed guides on onboarding mentors, setting up classes, and tracking performance insights.
             </p>
-            <GlowButton variant="success" size="sm" asChild>
-              <Link href="/dashboard/invitations">
+            <Link href="/dashboard/invitations">
+              <GlowButton variant="success" size="sm">
                 Access Documentation →
-              </Link>
-            </GlowButton>
+              </GlowButton>
+            </Link>
           </div>
         </div>
       </TerminalCard>

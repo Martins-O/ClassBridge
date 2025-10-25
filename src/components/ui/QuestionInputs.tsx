@@ -1,8 +1,8 @@
 import { cn } from '@/lib/utils';
 
 interface BaseQuestionProps {
-  value: any;
-  onChange: (value: any) => void;
+  value: unknown;
+  onChange: (value: unknown) => void;
   className?: string;
 }
 
@@ -99,7 +99,7 @@ export function TextInput({
   return (
     <div className={cn('space-y-2', className)}>
       <textarea
-        value={value || ''}
+        value={typeof value === 'string' ? value : ''}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         maxLength={maxLength}
@@ -108,7 +108,7 @@ export function TextInput({
       />
       {maxLength && (
         <div className="text-right text-sm text-ink-500">
-          {(value || '').length} / {maxLength}
+          {(typeof value === 'string' ? value : '').length} / {maxLength}
         </div>
       )}
     </div>

@@ -182,7 +182,7 @@ export const validateEnum = (value: unknown, field: string, allowedValues: strin
     return errors;
   }
 
-  if (value && !allowedValues.includes(value)) {
+  if (value && typeof value === 'string' && !allowedValues.includes(value)) {
     errors.push({ field, message: `${field} must be one of: ${allowedValues.join(', ')}` });
   }
 
@@ -199,7 +199,7 @@ export const validateDate = (value: unknown, field: string, required: boolean = 
   }
 
   if (value) {
-    const date = new Date(value);
+    const date = new Date(value as string | number | Date);
     if (isNaN(date.getTime())) {
       errors.push({ field, message: `${field} must be a valid date` });
     }
