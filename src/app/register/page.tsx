@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { AuthLayout } from '@/components/ui/AuthLayout';
-import { buttonClasses } from '@/components/ui/Button';
+import { DarkLayout } from '@/components/ui/DarkLayout';
+import { Card, CardContent, CardHeader, GlowCard } from '@/components/ui/Card';
+import { LoadingButton } from '@/components/ui/Button';
+import { Input, PasswordInput } from '@/components/ui/Input';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -69,95 +71,146 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthLayout
-      title="Create your account"
-      subtitle="Set up ClassBridge for your organisation."
-      helper={
-        <span>
-          Already joined?{' '}
-          <Link href="/login" className="text-brand-600 underline">
-            Sign in
-          </Link>
-        </span>
-      }
-      badge="Start collaborating"
-    >
-      {error ? (
-        <div className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
-          {error}
-        </div>
-      ) : null}
+    <DarkLayout className="flex items-center justify-center min-h-screen">
+      <div className="w-full max-w-md mx-auto p-6">
+        <GlowCard neonBorder="purple" className="p-8">
+          <CardHeader className="text-center pb-6">
+            {/* Logo */}
+            <div className="w-16 h-16 bg-gradient-to-br from-accent-secondary to-accent-primary rounded-xl mx-auto mb-4 flex items-center justify-center">
+              <svg viewBox="0 0 40 40" className="w-8 h-8 text-background-primary">
+                <defs>
+                  <linearGradient id="bridgeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#8B5CF6" />
+                    <stop offset="50%" stopColor="#00D9FF" />
+                    <stop offset="100%" stopColor="#00FF88" />
+                  </linearGradient>
+                </defs>
+                <path d="M4 22 Q12 15, 20 17 Q28 19, 36 22 L36 25 Q28 22, 20 20 Q12 18, 4 25 Z" fill="url(#bridgeGradient)" />
+                <rect x="3" y="22" width="2" height="8" fill="url(#bridgeGradient)" rx="1" />
+                <rect x="35" y="22" width="2" height="8" fill="url(#bridgeGradient)" rx="1" />
+                <rect x="19" y="17" width="2" height="13" fill="url(#bridgeGradient)" rx="1" />
+              </svg>
+            </div>
 
-      <form className="space-y-5" onSubmit={handleSubmit}>
-        <div className="space-y-2">
-          <label htmlFor="name" className="text-sm font-medium text-ink-600">
-            Full name
-          </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            required
-            value={formData.name}
-            onChange={handleChange}
-            className="w-full rounded-xl border border-brand-100 bg-white px-4 py-3 text-sm text-ink-800 shadow-inset focus:border-brand-300 focus:outline-none"
-            placeholder="Jordan Garcia"
-          />
-        </div>
+            <h1 className="text-2xl font-bold text-text-primary mb-2">
+              Join <span className="text-accent-secondary neon-text">ClassBridge</span>
+            </h1>
+            <p className="text-text-muted font-mono">Set up your educational workspace.</p>
 
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium text-ink-600">
-            Work email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full rounded-xl border border-brand-100 bg-white px-4 py-3 text-sm text-ink-800 shadow-inset focus:border-brand-300 focus:outline-none"
-            placeholder="you@institution.edu"
-          />
-        </div>
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 mt-4 px-3 py-1 bg-accent-secondary/10 border border-accent-secondary/20 rounded-full">
+              <div className="w-2 h-2 bg-accent-secondary rounded-full animate-glow-pulse"></div>
+              <span className="text-xs font-mono text-accent-secondary">Start Collaborating</span>
+            </div>
+          </CardHeader>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium text-ink-600">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-brand-100 bg-white px-4 py-3 text-sm text-ink-800 shadow-inset focus:border-brand-300 focus:outline-none"
-              placeholder="Minimum 6 characters"
-            />
+          <CardContent>
+            {error && (
+              <Card className="mb-6 p-4 bg-accent-danger/5 border-accent-danger/20">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-accent-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm text-accent-danger font-mono">{error}</span>
+                </div>
+              </Card>
+            )}
+
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <Input
+                label="Full name"
+                type="text"
+                name="name"
+                autoComplete="name"
+                required
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Jordan Garcia"
+                variant="neon"
+                icon={
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                }
+              />
+
+              <Input
+                label="Work email"
+                type="email"
+                name="email"
+                autoComplete="email"
+                required
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="you@institution.edu"
+                variant="neon"
+                icon={
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                  </svg>
+                }
+              />
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <PasswordInput
+                  label="Password"
+                  name="password"
+                  autoComplete="new-password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Minimum 6 characters"
+                  variant="neon"
+                  helperText="At least 6 characters"
+                />
+                <PasswordInput
+                  label="Confirm password"
+                  name="confirmPassword"
+                  autoComplete="new-password"
+                  required
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Confirm your password"
+                  variant="neon"
+                />
+              </div>
+
+              <LoadingButton
+                type="submit"
+                loading={loading}
+                variant="primary"
+                size="lg"
+                glow
+                className="w-full"
+              >
+                {loading ? 'Creating account...' : 'Create account'}
+              </LoadingButton>
+            </form>
+
+            {/* Footer */}
+            <div className="mt-8 pt-6 border-t border-border-primary text-center">
+              <p className="text-sm text-text-muted font-mono">
+                Already joined?{' '}
+                <Link
+                  href="/login"
+                  className="text-accent-secondary hover:text-accent-secondary/80 transition-colors font-semibold"
+                >
+                  Sign in →
+                </Link>
+              </p>
+            </div>
+          </CardContent>
+        </GlowCard>
+
+        {/* Terminal-style help */}
+        <Card variant="terminal" className="mt-6 p-4">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-neon-green">$</span>
+            <span className="text-neon-green/80">Need help? Run:</span>
+            <code className="text-neon-cyan">support --register</code>
           </div>
-          <div className="space-y-2">
-            <label htmlFor="confirmPassword" className="text-sm font-medium text-ink-600">
-              Confirm password
-            </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              required
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-brand-100 bg-white px-4 py-3 text-sm text-ink-800 shadow-inset focus:border-brand-300 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        <button type="submit" disabled={loading} className={buttonClasses({ variant: 'primary', size: 'lg', className: 'w-full justify-center' })}>
-          {loading ? 'Creating account…' : 'Create account'}
-        </button>
-      </form>
-    </AuthLayout>
+        </Card>
+      </div>
+    </DarkLayout>
   );
 }
