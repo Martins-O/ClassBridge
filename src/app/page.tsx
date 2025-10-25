@@ -93,14 +93,14 @@ export default function Home() {
       <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 pb-24 pt-10 sm:pt-16">
         <section className="grid gap-12 lg:grid-cols-[1.3fr,1fr] lg:items-center">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-accent-primary/10 border border-accent-primary/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-accent-primary font-mono">
-              <div className="w-2 h-2 bg-accent-primary rounded-full animate-glow-pulse"></div>
+            <span className="status-indicator online">
+              <div className="w-2 h-2 bg-semantic-success-500 rounded-full motion-safe:animate-pulse"></div>
               Operational clarity
             </span>
-            <h1 className="mt-4 text-4xl font-semibold leading-tight text-text-primary sm:text-5xl lg:text-[3.4rem]">
-              Govern every programme, class, and outcome from a single <span className="text-accent-primary neon-text">command centre</span>.
+            <h1 className="mt-4 text-display-1">
+              Govern every programme, class, and outcome from a single <span className="text-semantic-primary-500 neon-text">command centre</span>.
             </h1>
-            <p className="mt-6 max-w-2xl text-lg text-text-secondary font-mono">
+            <p className="mt-6 max-w-2xl text-body-lg text-text-secondary leading-relaxed">
               ClassBridge brings academic planning, competency tracking, and community communication into one secure workspace—so leadership can make timely decisions and teams can execute with confidence.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">

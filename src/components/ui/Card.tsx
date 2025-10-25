@@ -16,7 +16,8 @@ const variantClasses = {
   ),
   glass: cn(
     'glass-dark',
-    'backdrop-blur-dark'
+    'backdrop-blur-dark',
+    'border border-border-primary/50'
   ),
   terminal: cn(
     'bg-dark-800',
@@ -26,7 +27,7 @@ const variantClasses = {
   ),
   glow: cn(
     'bg-background-secondary',
-    'border border-accent-primary/30',
+    'border border-semantic-primary-500/30',
     'shadow-glow-cyan'
   ),
   elevated: cn(
@@ -37,10 +38,10 @@ const variantClasses = {
 };
 
 const neonBorderClasses = {
-  cyan: 'border-accent-primary shadow-glow-cyan',
-  purple: 'border-accent-secondary shadow-glow-purple',
+  cyan: 'border-semantic-primary-500 shadow-glow-cyan',
+  purple: 'border-neon-purple shadow-glow-purple',
   green: 'border-neon-green shadow-glow-green',
-  pink: 'border-accent-danger shadow-[0_0_20px_rgba(255,0,128,0.3)]',
+  pink: 'border-neon-pink shadow-glow-pink',
   none: '',
 };
 
@@ -58,7 +59,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         ref={ref}
         className={cn(
           // Base styles
-          'rounded-lg overflow-hidden transition-all duration-300',
+          'rounded-lg overflow-hidden',
 
           // Variant styles
           variantClasses[variant],
@@ -66,15 +67,26 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
           // Neon border
           neonBorder !== 'none' && neonBorderClasses[neonBorder],
 
-          // Interactive effects
+          // Interactive effects with accessibility
           interactive && cn(
             'cursor-pointer',
-            'hover:scale-[1.02] hover:shadow-dark-medium',
-            'active:scale-[0.98]'
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-semantic-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background-primary',
+            'motion-safe:transition-all motion-safe:duration-200',
+            'motion-safe:hover:scale-[1.02] motion-safe:hover:shadow-dark-medium',
+            'motion-safe:active:scale-[0.98]',
+            'motion-reduce:transition-none motion-reduce:hover:scale-100'
           ),
+
+          // Non-interactive cards still get subtle transitions
+          !interactive && 'motion-safe:transition-all motion-safe:duration-200',
 
           className
         )}
+        {...(interactive && {
+          role: 'button',
+          tabIndex: 0,
+          'aria-pressed': 'false'
+        })}
         {...props}
       >
         {children}

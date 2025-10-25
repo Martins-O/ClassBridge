@@ -13,20 +13,20 @@ const variantClasses = {
   default: cn(
     'bg-background-secondary border border-border-primary text-text-primary',
     'placeholder:text-text-muted',
-    'focus:border-accent-primary focus:ring-1 focus:ring-accent-primary',
-    'hover:border-border-accent transition-colors'
+    'focus:border-semantic-primary-500 focus:ring-2 focus:ring-semantic-primary-500/20',
+    'hover:border-border-accent motion-safe:transition-all motion-safe:duration-200'
   ),
   terminal: cn(
     'bg-dark-800 border border-neon-green/30 text-neon-green',
     'font-mono placeholder:text-neon-green/50',
-    'focus:border-neon-green focus:ring-1 focus:ring-neon-green focus:shadow-glow-green',
-    'hover:border-neon-green/60 transition-all'
+    'focus:border-neon-green focus:ring-2 focus:ring-neon-green/20 motion-safe:focus:shadow-glow-green',
+    'hover:border-neon-green/60 motion-safe:transition-all motion-safe:duration-200'
   ),
   neon: cn(
-    'bg-background-secondary/50 border border-accent-primary/30 text-text-primary',
+    'bg-background-secondary/50 border border-semantic-primary-500/30 text-text-primary',
     'placeholder:text-text-muted backdrop-blur-sm',
-    'focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 focus:shadow-glow-cyan',
-    'hover:border-accent-primary/50 transition-all'
+    'focus:border-semantic-primary-500 focus:ring-2 focus:ring-semantic-primary-500/20 motion-safe:focus:shadow-glow-cyan',
+    'hover:border-semantic-primary-500/50 motion-safe:transition-all motion-safe:duration-200'
   ),
 };
 
@@ -51,8 +51,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           className={cn(
             // Base styles
-            'w-full px-4 py-3 rounded-lg transition-all duration-200',
-            'focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed',
+            'w-full px-4 py-3 rounded-lg focus:outline-none',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            'motion-safe:transition-all motion-safe:duration-200',
+            'motion-reduce:transition-none',
 
             // Variant styles
             variantClasses[variant],
@@ -60,8 +62,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             // Icon padding
             icon ? 'pl-10' : '',
 
-            // Error state
-            error && 'border-accent-danger focus:border-accent-danger focus:ring-accent-danger',
+            // Error state with semantic colors
+            error && 'border-semantic-danger-500 focus:border-semantic-danger-500 focus:ring-semantic-danger-500/20',
 
             className
           )}
@@ -77,7 +79,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             <label className={cn(
               'block text-sm font-medium',
               variant === 'terminal' ? 'text-neon-green font-mono' : 'text-text-primary',
-              error && 'text-accent-danger'
+              error && 'text-semantic-danger-500'
             )}>
               {label}
               {props.required && <span className="text-accent-danger ml-1">*</span>}
@@ -88,7 +90,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             <p className={cn(
               'text-xs',
               variant === 'terminal' ? 'font-mono' : '',
-              error ? 'text-accent-danger' : 'text-text-muted'
+              error ? 'text-semantic-danger-500' : 'text-text-muted'
             )}>
               {helperText}
             </p>
@@ -156,7 +158,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             <label className={cn(
               'block text-sm font-medium',
               variant === 'terminal' ? 'text-neon-green font-mono' : 'text-text-primary',
-              error && 'text-accent-danger'
+              error && 'text-semantic-danger-500'
             )}>
               {label}
               {props.required && <span className="text-accent-danger ml-1">*</span>}
@@ -167,7 +169,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             <p className={cn(
               'text-xs',
               variant === 'terminal' ? 'font-mono' : '',
-              error ? 'text-accent-danger' : 'text-text-muted'
+              error ? 'text-semantic-danger-500' : 'text-text-muted'
             )}>
               {helperText}
             </p>
