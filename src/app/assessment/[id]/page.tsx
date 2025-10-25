@@ -3,6 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/AuthGuard';
+import { AssessmentLayout } from '@/components/ui/AssessmentLayout';
+import { QuestionCard } from '@/components/ui/QuestionCard';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { MultipleChoiceInput, CheckboxInput, TextInput, RatingInput } from '@/components/ui/QuestionInputs';
 
 interface Question {
   id: string;
@@ -276,34 +281,31 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
-          <p className="mt-6 text-gray-600 font-medium">Loading assessment...</p>
-        </div>
-      </div>
+      <AssessmentLayout title="Loading Assessment" description="Please wait...">
+        <Card className="p-8 text-center">
+          <div className="w-16 h-16 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin mx-auto"></div>
+          <p className="mt-6 text-ink-600 font-medium">Loading assessment...</p>
+        </Card>
+      </AssessmentLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center">
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/20 text-center max-w-md">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <AssessmentLayout title="Assessment Error" description="Unable to load assessment">
+        <Card className="p-8 text-center max-w-md mx-auto">
+          <div className="w-16 h-16 bg-danger/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Assessment Error</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2 rounded-xl font-medium hover:shadow-lg transition-all duration-300"
-          >
+          <h2 className="text-xl font-bold text-ink-900 mb-2">Assessment Error</h2>
+          <p className="text-ink-600 mb-6">{error}</p>
+          <Button onClick={() => router.push('/dashboard')} variant="primary">
             Back to Dashboard
-          </button>
-        </div>
-      </div>
+          </Button>
+        </Card>
+      </AssessmentLayout>
     );
   }
 

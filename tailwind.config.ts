@@ -6,90 +6,122 @@ const config: Config = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#F5F7FF',
-          100: '#E8ECFF',
-          200: '#CED7FF',
-          300: '#A7BAFF',
-          400: '#7E9AFF',
-          500: '#5E7CE2',
-          600: '#3F5EC7',
-          700: '#2E45A5',
-          800: '#253A86',
-          900: '#1A1F36',
+        // Dark-first color system inspired by VS Code/GitHub
+        dark: {
+          900: '#0D1117', // GitHub dark bg
+          800: '#161B22', // Darker panels
+          700: '#21262D', // Panel bg
+          600: '#30363D', // Borders
+          500: '#484F58', // Muted elements
+          400: '#656D76', // Secondary text
+          300: '#7D8590', // Placeholder text
+          200: '#C9D1D9', // Primary text
+          100: '#F0F6FC', // Bright text
         },
-        ink: {
-          50: '#F7F9FC',
-          100: '#EEF1F7',
-          200: '#D9DEE9',
-          300: '#B6C0D4',
-          400: '#8893AE',
-          500: '#5A647E',
-          600: '#404963',
-          700: '#2E3446',
-          800: '#222838',
-          900: '#1A1F2E',
-        },
-        surface: {
-          base: '#F5F7FF',
-          subtle: '#EEF1F7',
-          elevated: '#FFFFFF',
-          overlay: 'rgba(26, 31, 46, 0.65)',
+        neon: {
+          cyan: '#00D9FF',    // Electric cyan
+          purple: '#8B5CF6',  // Electric purple
+          green: '#00FF88',   // Matrix green
+          pink: '#FF0080',    // Hot pink
+          yellow: '#FFE135',  // Warning yellow
+          blue: '#0070F3',    // Bright blue
+          orange: '#FF8C00',  // Electric orange
         },
         accent: {
-          sky: '#5E7CE2',
-          midnight: '#1A1F36',
-          coral: '#FF7B5C',
+          primary: '#00D9FF',   // Main brand color (cyan)
+          secondary: '#8B5CF6', // Secondary (purple)
+          success: '#00FF88',   // Success states
+          warning: '#FFE135',   // Warning states
+          danger: '#FF0080',    // Error states
+          info: '#0070F3',      // Info states
         },
-        success: '#2E8E68',
-        warning: '#FF7B5C',
-        danger: '#EF4444',
+        // Semantic color mapping for dark theme
+        background: {
+          primary: '#0D1117',   // Main background
+          secondary: '#161B22', // Card backgrounds
+          tertiary: '#21262D',  // Elevated surfaces
+          overlay: 'rgba(0, 0, 0, 0.8)', // Modal overlays
+        },
+        border: {
+          primary: '#30363D',   // Default borders
+          secondary: '#21262D', // Subtle borders
+          accent: '#00D9FF',    // Highlighted borders
+          muted: '#484F58',     // Very subtle borders
+        },
+        text: {
+          primary: '#F0F6FC',   // Main text
+          secondary: '#C9D1D9', // Secondary text
+          muted: '#7D8590',     // Muted text
+          accent: '#00D9FF',    // Accent text
+          inverse: '#0D1117',   // Text on light backgrounds
+        },
       },
       fontFamily: {
-        sans: ['var(--font-geist-sans)', 'Inter', 'system-ui', 'sans-serif'],
-        display: ['var(--font-geist-sans)', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Fira Code', 'Monaco', 'Consolas', 'monospace'],
+        display: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      fontSize: {
+        'code': ['0.875rem', { lineHeight: '1.5', fontFamily: 'JetBrains Mono' }],
       },
       boxShadow: {
-        soft: '0 20px 45px rgba(31, 41, 55, 0.12)',
-        glass: '0 30px 60px rgba(31, 41, 55, 0.18)',
-        inset: 'inset 0 2px 6px rgba(31, 41, 55, 0.08)',
+        'glow-cyan': '0 0 20px rgba(0, 217, 255, 0.3)',
+        'glow-purple': '0 0 20px rgba(139, 92, 246, 0.3)',
+        'glow-green': '0 0 20px rgba(0, 255, 136, 0.3)',
+        'dark-soft': '0 4px 20px rgba(0, 0, 0, 0.3)',
+        'dark-medium': '0 8px 30px rgba(0, 0, 0, 0.4)',
+        'dark-strong': '0 16px 40px rgba(0, 0, 0, 0.5)',
+        'inner-glow': 'inset 0 1px 0 rgba(255, 255, 255, 0.1)',
       },
       borderRadius: {
-        xl: '1.25rem',
-        '2xl': '1.75rem',
-        curved: '2.5rem',
+        'code': '0.375rem', // 6px for code blocks
       },
       backgroundImage: {
-        'brand-gradient': 'radial-gradient(circle at 20% 20%, rgba(60, 77, 138, 0.14), transparent 55%), radial-gradient(circle at 80% 10%, rgba(46, 142, 104, 0.12), transparent 45%), radial-gradient(circle at 50% 80%, rgba(31, 41, 55, 0.12), transparent 55%)',
-        'card-gradient': 'linear-gradient(130deg, rgba(60, 77, 138, 0.16), rgba(46, 142, 104, 0.08))',
+        'gradient-dark': 'linear-gradient(135deg, #0D1117 0%, #161B22 100%)',
+        'gradient-neon': 'linear-gradient(135deg, #00D9FF 0%, #8B5CF6 100%)',
+        'gradient-matrix': 'linear-gradient(135deg, #00FF88 0%, #00D9FF 100%)',
+        'noise': "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E\")",
       },
       keyframes: {
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-12px)' },
+        'glow-pulse': {
+          '0%, 100%': {
+            boxShadow: '0 0 20px rgba(0, 217, 255, 0.3)'
+          },
+          '50%': {
+            boxShadow: '0 0 30px rgba(0, 217, 255, 0.6)'
+          },
         },
-        'pulse-soft': {
-          '0%, 100%': { opacity: '0.65' },
-          '50%': { opacity: '1' },
+        'neon-flicker': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.8' },
         },
-        fadeIn: {
+        'slide-up': {
           '0%': {
             opacity: '0',
-            transform: 'translateY(30px)',
+            transform: 'translateY(20px)',
           },
           '100%': {
             opacity: '1',
             transform: 'translateY(0)',
           },
         },
+        'matrix-rain': {
+          '0%': { transform: 'translateY(-100vh)' },
+          '100%': { transform: 'translateY(100vh)' },
+        },
       },
       animation: {
-        float: 'float 12s ease-in-out infinite',
-        'pulse-soft': 'pulse-soft 14s ease-in-out infinite',
-        fadeIn: 'fadeIn 0.8s ease-out',
+        'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
+        'neon-flicker': 'neon-flicker 3s ease-in-out infinite',
+        'slide-up': 'slide-up 0.5s ease-out',
+        'matrix-rain': 'matrix-rain 3s linear infinite',
+      },
+      backdropBlur: {
+        'dark': '16px',
       },
     },
   },

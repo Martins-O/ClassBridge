@@ -1,43 +1,199 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #f5f7fb;
-  --foreground: #1f2937;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Dark theme as default */
+html {
+  @apply dark;
 }
 
 body {
-  background: linear-gradient(180deg, #f5f7ff 0%, #eef1f7 60%, #ffffff 100%);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  @apply bg-background-primary text-text-primary font-sans;
+  @apply min-h-screen;
+  background-image: var(--tw-gradient-to-r);
+  background-attachment: fixed;
 }
 
-/* Custom scrollbar styles */
-.custom-scrollbar {
+/* Custom scrollbars for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-dark-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-dark-500 rounded-full;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-dark-400;
+}
+
+/* Firefox scrollbar */
+* {
   scrollbar-width: thin;
-  scrollbar-color: #d1d5db #f3f4f6;
+  scrollbar-color: #484F58 #161B22;
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+/* Code block styling */
+code {
+  @apply font-mono text-code bg-dark-700 px-1.5 py-0.5 rounded-code border border-border-primary;
+  @apply text-neon-cyan;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 6px;
+pre code {
+  @apply bg-transparent px-0 py-0 border-0;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #3f5ec7, #5e7ce2);
-  border-radius: 6px;
+pre {
+  @apply bg-dark-700 border border-border-primary rounded-lg p-4 overflow-x-auto;
+  @apply shadow-dark-soft;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #2e45a5, #3f5ec7);
+/* Selection styling */
+::selection {
+  @apply bg-accent-primary text-background-primary;
+}
+
+::-moz-selection {
+  @apply bg-accent-primary text-background-primary;
+}
+
+/* Focus styles */
+:focus-visible {
+  @apply outline-none ring-2 ring-accent-primary ring-opacity-50;
+}
+
+/* Glow effects */
+.glow-cyan {
+  @apply shadow-glow-cyan;
+}
+
+.glow-purple {
+  @apply shadow-glow-purple;
+}
+
+.glow-green {
+  @apply shadow-glow-green;
+}
+
+/* Neon text effect */
+.neon-text {
+  text-shadow:
+    0 0 5px currentColor,
+    0 0 10px currentColor,
+    0 0 20px currentColor;
+}
+
+/* Matrix-style animations for loading states */
+.matrix-bg {
+  background:
+    radial-gradient(circle at 20% 50%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(0, 217, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+}
+
+/* Glass morphism for cards */
+.glass-dark {
+  background: rgba(22, 27, 34, 0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(48, 54, 61, 0.5);
+}
+
+/* Button hover effects */
+.btn-neon {
+  @apply relative overflow-hidden transition-all duration-300;
+}
+
+.btn-neon::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-neon opacity-0 transition-opacity duration-300;
+}
+
+.btn-neon:hover::before {
+  @apply opacity-10;
+}
+
+/* Terminal-style input */
+.terminal-input {
+  @apply bg-dark-800 border border-border-primary text-text-primary;
+  @apply font-mono placeholder:text-text-muted;
+  @apply focus:border-accent-primary focus:ring-1 focus:ring-accent-primary;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Status indicators */
+.status-online {
+  @apply relative;
+}
+
+.status-online::before {
+  content: '';
+  @apply absolute -left-3 top-1/2 transform -translate-y-1/2;
+  @apply w-2 h-2 bg-accent-success rounded-full;
+  @apply animate-glow-pulse;
+}
+
+/* Loading spinner with neon effect */
+.neon-spinner {
+  border: 3px solid rgba(0, 217, 255, 0.2);
+  border-top: 3px solid #00D9FF;
+  @apply animate-spin rounded-full;
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+}
+
+/* Smooth page transitions */
+.page-transition {
+  @apply animate-slide-up;
+}
+
+/* Code syntax highlighting colors */
+.token.comment {
+  @apply text-text-muted;
+}
+
+.token.string {
+  @apply text-neon-green;
+}
+
+.token.number {
+  @apply text-neon-orange;
+}
+
+.token.keyword {
+  @apply text-neon-purple;
+}
+
+.token.function {
+  @apply text-neon-cyan;
+}
+
+.token.variable {
+  @apply text-text-primary;
+}
+
+/* Responsive design utilities */
+@media (max-width: 640px) {
+  .mobile-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-background-secondary border-t border-border-primary;
+    @apply z-50 px-4 py-2;
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    @apply bg-white text-black;
+  }
+
+  .no-print {
+    display: none;
+  }
 }
