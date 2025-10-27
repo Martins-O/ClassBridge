@@ -1,231 +1,138 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { Card, CardContent } from './Card';
-import { Button } from './Button';
+import { Header } from '@/components/common/Header';
+import { Sidebar, SidebarSection } from '@/components/common/Sidebar';
+import { RightSidebar, RightSidebarProps } from '@/components/common/RightSidebar';
 
 interface DarkLayoutProps {
   children: ReactNode;
   className?: string;
-  showSidebar?: boolean;
-  sidebarContent?: ReactNode;
-  header?: ReactNode;
-  footer?: ReactNode;
 }
 
-export function DarkLayout({
-  children,
-  className,
-  showSidebar = false,
-  sidebarContent,
-  header,
-  footer
-}: DarkLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
+export function DarkLayout({ children, className }: DarkLayoutProps) {
   return (
-    <div className={cn(
-      'min-h-screen bg-background-primary text-text-primary',
-      'matrix-bg', // Subtle animated background
-      className
-    )}>
-      {/* Header */}
-      {header && (
-        <header className="sticky top-0 z-50 bg-background-secondary/95 backdrop-blur-dark border-b border-border-primary">
-          <div className="px-6 py-3">
-            {header}
-          </div>
-        </header>
-      )}
-
-      <div className="flex min-h-screen">
-        {/* Sidebar - VS Code style */}
-        {showSidebar && (
-          <>
-            {/* Sidebar overlay for mobile */}
-            {sidebarOpen && (
-              <div
-                className="fixed inset-0 z-40 bg-background-overlay lg:hidden"
-                onClick={() => setSidebarOpen(false)}
-              />
-            )}
-
-            {/* Sidebar */}
-            <aside className={cn(
-              'fixed lg:static inset-y-0 left-0 z-50',
-              'w-64 bg-background-secondary border-r border-border-primary',
-              'shadow-dark-medium lg:shadow-none',
-              'transform transition-transform duration-200 ease-in-out',
-              sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-            )}>
-              {/* Sidebar header */}
-              <div className="flex items-center justify-between p-4 border-b border-border-primary">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-gradient-neon rounded"></div>
-                  <span className="font-mono text-accent-primary font-semibold">
-                    ClassBridge
-                  </span>
-                </div>
-
-                {/* Close button for mobile */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="lg:hidden"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </Button>
-              </div>
-
-              {/* Sidebar content */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar">
-                {sidebarContent}
-              </div>
-
-              {/* Terminal-style status bar */}
-              <div className="p-3 border-t border-border-primary bg-dark-800">
-                <div className="flex items-center gap-2 text-xs font-mono text-text-muted">
-                  <div className="w-2 h-2 bg-accent-success rounded-full animate-glow-pulse"></div>
-                  <span>System Online</span>
-                  <div className="ml-auto text-accent-primary">
-                    {new Date().toLocaleTimeString()}
-                  </div>
-                </div>
-              </div>
-            </aside>
-          </>
-        )}
-
-        {/* Main content area */}
-        <main className="flex-1 flex flex-col">
-          {/* Mobile sidebar toggle */}
-          {showSidebar && (
-            <div className="lg:hidden p-4 border-b border-border-primary bg-background-secondary">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-                Menu
-              </Button>
-            </div>
-          )}
-
-          {/* Page content */}
-          <div className="flex-1 p-6 page-transition">
-            {children}
-          </div>
-
-          {/* Footer */}
-          {footer && (
-            <footer className="mt-auto border-t border-border-primary bg-background-secondary">
-              <div className="p-6">
-                {footer}
-              </div>
-            </footer>
-          )}
-        </main>
-      </div>
+    <div className={cn('min-h-screen bg-surface-base text-muted-900 antialiased dark:bg-muted-950 dark:text-muted-100', className)}>
+      {children}
     </div>
   );
 }
 
-// Specialized layouts
-export function TerminalLayout({ children, className, ...props }: DarkLayoutProps) {
-  return (
-    <DarkLayout
-      className={cn('font-mono', className)}
-      {...props}
-    >
-      <Card variant="terminal" className="min-h-[400px]">
-        <CardContent className="p-4">
-          {children}
-        </CardContent>
-      </Card>
-    </DarkLayout>
-  );
+interface DashboardLayoutProps {
+  children: ReactNode;
+  title: string;
+  subtitle?: string;
+  sidebarSections: SidebarSection[];
+  user?: { name: string; role: string; avatarInitials?: string };
+  rightSidebar?: RightSidebarProps;
+  headerActions?: {
+    key: string;
+    icon: ReactNode;
+    ariaLabel: string;
+    onClick?: () => void;
+    badge?: number;
+  }[];
 }
 
-// Dashboard-specific layout
 export function DashboardLayout({
   children,
+  title,
+  subtitle,
+  sidebarSections,
   user,
-  navigation,
-  ...props
-}: DarkLayoutProps & {
-  user?: { name: string; role: string; avatar?: string };
-  navigation?: ReactNode;
-}) {
-  return (
-    <DarkLayout
-      showSidebar
-      header={
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold text-text-primary">
-              ClassBridge <span className="text-accent-primary">Dashboard</span>
-            </h1>
-          </div>
+  rightSidebar,
+  headerActions,
+}: DashboardLayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-          {user && (
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-sm font-medium text-text-primary">{user.name}</div>
-                <div className="text-xs text-text-muted font-mono">{user.role}</div>
-              </div>
-              <div className="w-8 h-8 bg-gradient-neon rounded-full flex items-center justify-center">
-                <span className="text-xs font-bold text-background-primary">
-                  {user.name.charAt(0).toUpperCase()}
-                </span>
-              </div>
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [sidebarOpen]);
+
+  const defaultActions = useMemo(() => [
+    {
+      key: 'notifications',
+      ariaLabel: 'View notifications',
+      badge: 3,
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082A2 2 0 0113 18H7a2 2 0 01-1.857-2.918l.857-1.714V10a6 6 0 0112 0v3.368l.857 1.714A2 2 0 0117 18h-4" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 18v1a3 3 0 006 0v-1" />
+        </svg>
+      ),
+    },
+    {
+      key: 'messages',
+      ariaLabel: 'View messages',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 10l5 3 5-3" />
+        </svg>
+      ),
+    },
+    {
+      key: 'profile',
+      ariaLabel: user ? `${user.name}'s profile` : 'Profile',
+      icon: (
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-200">
+          {user?.avatarInitials ?? user?.name?.slice(0, 2).toUpperCase() ?? 'CB'}
+        </span>
+      ),
+    },
+  ], [user]);
+
+  return (
+    <div className="flex min-h-screen bg-surface-base dark:bg-muted-950">
+      <Sidebar
+        sections={sidebarSections}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
+      <div className="flex min-h-screen flex-1 flex-col">
+        <Header
+          title={title}
+          subtitle={subtitle}
+          onToggleSidebar={() => setSidebarOpen(true)}
+          actions={headerActions ?? defaultActions}
+        />
+
+        <div className="flex flex-1 flex-col gap-6 px-4 py-6 lg:flex-row lg:px-8 lg:py-8">
+          <main className="flex-1 space-y-8">
+            {children}
+          </main>
+
+          {rightSidebar && (
+            <div className="sticky top-24 h-fit lg:w-[320px] xl:w-[360px]">
+              <RightSidebar {...rightSidebar} />
             </div>
           )}
         </div>
-      }
-      sidebarContent={navigation}
-      {...props}
-    >
-      {children}
-    </DarkLayout>
-  );
-}
 
-// Code editor style layout
-export function EditorLayout({ children, ...props }: DarkLayoutProps) {
-  return (
-    <DarkLayout
-      className="font-mono"
-      showSidebar
-      sidebarContent={
-        <div className="p-4 space-y-2">
-          <div className="text-xs text-text-muted uppercase tracking-wider mb-3">
-            Explorer
-          </div>
-          {/* File tree would go here */}
-          <div className="space-y-1 text-sm">
-            <div className="text-accent-primary cursor-pointer hover:bg-dark-700 px-2 py-1 rounded">
-              📁 src/
-            </div>
-            <div className="text-text-secondary cursor-pointer hover:bg-dark-700 px-2 py-1 rounded ml-4">
-              📄 components/
+        <footer className="border-t border-muted-200 px-4 py-4 text-sm text-muted-500 dark:border-muted-800 dark:text-muted-300 lg:px-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span>© {new Date().getFullYear()} ClassBridge. All rights reserved.</span>
+            <div className="flex items-center gap-4">
+              <Link href="/privacy" className="hover:text-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+                Privacy policy
+              </Link>
+              <Link href="/terms" className="hover:text-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+                Terms
+              </Link>
             </div>
           </div>
-        </div>
-      }
-      {...props}
-    >
-      <Card variant="terminal" className="h-full">
-        <CardContent className="p-0 h-full">
-          {children}
-        </CardContent>
-      </Card>
-    </DarkLayout>
+        </footer>
+      </div>
+    </div>
   );
 }

@@ -1,217 +1,312 @@
 import Link from 'next/link';
-import { DarkLayout } from '@/components/ui/DarkLayout';
 import { Button } from '@/components/ui/Button';
-import { Card, GlowCard } from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 
 const metrics = [
-  { label: 'Schools orchestrated', value: '180+', detail: 'from K-12 to vocational' },
-  { label: 'Learners onboarded', value: '28k', detail: 'active student accounts' },
-  { label: 'Time saved weekly', value: '12hrs', detail: 'per admin team' },
+  { label: 'Schools assisted', value: '180+', detail: 'from K-12 to vocational' },
+  { label: 'Success rate', value: '92%', detail: 'implementation success' },
+  { label: 'Expert team', value: '26', detail: 'educational specialists' },
+  { label: 'Years experience', value: '12', detail: 'in academic management' },
 ];
 
-const pillars = [
+const features = [
   {
-    title: 'Operational Control Centre',
-    description:
-      'Automate enrolment, attendance, and scheduling while keeping every stakeholder aligned with role-based workflows.',
-    badge: 'Leadership dashboard',
+    title: 'Academic Planning & Scheduling',
+    description: 'Streamline course management, timetabling, and resource allocation with intelligent automation.',
+    icon: '📅',
   },
   {
-    title: 'Instructional Excellence',
-    description:
-      'Design assessments, track mastery, and deliver targeted feedback with analytics that surface where support is needed most.',
-    badge: 'Assessment intelligence',
+    title: 'Assessment & Competency Tracking',
+    description: 'Design assessments, track student progress, and monitor competency achievement across all programs.',
+    icon: '📊',
   },
   {
-    title: 'Connected Community',
-    description:
-      'Give mentors, students, and guardians a single hub for communication, resources, and progress updates in real time.',
-    badge: 'Unified engagement',
+    title: 'Community Communication Hub',
+    description: 'Connect students, teachers, and parents through integrated messaging and progress sharing.',
+    icon: '💬',
   },
 ];
 
-const initiatives = [
+const tools = [
   {
-    title: 'Launch in minutes, not months',
-    copy: 'Structured onboarding templates, SIS importers, and guided configuration help your team switch with confidence.',
+    title: 'Real-time Dashboard',
+    description: 'Monitor school operations, attendance, and key metrics from a unified command center.',
   },
   {
-    title: 'Secure by design',
-    copy: 'Enterprise-grade encryption, audit trails, and compliance tooling keep data protected and accountable.',
+    title: 'Assessment Builder',
+    description: 'Create and deploy assessments with automatic grading and competency mapping.',
   },
   {
-    title: 'Advisory partnership',
-    copy: 'Dedicated success specialists and a growing playbook of best practices keep every rollout on track.',
+    title: 'Parent Portal',
+    description: 'Give families access to student progress, assignments, and school communications.',
   },
 ];
 
 export default function Home() {
   return (
-    <DarkLayout
-      header={
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-xl flex items-center justify-center">
-              <svg viewBox="0 0 40 40" className="w-6 h-6 text-background-primary">
-                <defs>
-                  <linearGradient id="bridgeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#00D9FF" />
-                    <stop offset="50%" stopColor="#8B5CF6" />
-                    <stop offset="100%" stopColor="#00FF88" />
-                  </linearGradient>
-                </defs>
-                <path d="M4 22 Q12 15, 20 17 Q28 19, 36 22 L36 25 Q28 22, 20 20 Q12 18, 4 25 Z" fill="url(#bridgeGradient)" />
-                <rect x="3" y="22" width="2" height="8" fill="url(#bridgeGradient)" rx="1" />
-                <rect x="35" y="22" width="2" height="8" fill="url(#bridgeGradient)" rx="1" />
-                <rect x="19" y="17" width="2" height="13" fill="url(#bridgeGradient)" rx="1" />
-              </svg>
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="bg-primary-500 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                <svg viewBox="0 0 40 40" className="w-6 h-6 text-white">
+                  <path d="M4 22 Q12 15, 20 17 Q28 19, 36 22 L36 25 Q28 22, 20 20 Q12 18, 4 25 Z" fill="currentColor" />
+                  <rect x="3" y="22" width="2" height="8" fill="currentColor" rx="1" />
+                  <rect x="35" y="22" width="2" height="8" fill="currentColor" rx="1" />
+                  <rect x="19" y="17" width="2" height="13" fill="currentColor" rx="1" />
+                </svg>
+              </div>
+              <span className="text-xl font-bold">ClassBridge</span>
             </div>
-            <span className="text-xl font-bold text-text-primary">
-              <span className="text-accent-primary neon-text">ClassBridge</span>
-            </span>
-          </div>
 
-          <nav className="flex items-center gap-4">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">Sign in</Button>
-            </Link>
-            <Link href="/register">
-              <Button variant="primary" size="sm" glow>Request demo</Button>
-            </Link>
-          </nav>
-        </div>
-      }
-    >
-      {/* Animated background elements */}
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="animate-pulse-soft absolute -top-52 -left-32 h-96 w-96 rounded-full bg-accent-primary/10 blur-3xl" />
-        <div className="animate-float absolute top-1/4 right-16 h-72 w-72 rounded-full bg-accent-secondary/10 blur-3xl" />
-        <div className="animate-pulse-soft absolute bottom-[-18rem] left-1/3 h-[28rem] w-[28rem] rounded-full bg-neon-green/10 blur-[140px]" />
-      </div>
+            {/* Navigation */}
+            <nav className="hidden md:flex items-center space-x-8">
+              <Link href="#" className="text-white hover:text-primary-100 transition-colors">Home</Link>
+              <Link href="#" className="text-white hover:text-primary-100 transition-colors">Features</Link>
+              <Link href="#" className="text-white hover:text-primary-100 transition-colors">About</Link>
+              <Link href="#" className="text-white hover:text-primary-100 transition-colors">Contact</Link>
+            </nav>
 
-      <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 pb-24 pt-10 sm:pt-16">
-        <section className="grid gap-12 lg:grid-cols-[1.3fr,1fr] lg:items-center">
-          <div>
-            <span className="status-indicator online">
-              <div className="w-2 h-2 bg-semantic-success-500 rounded-full motion-safe:animate-pulse"></div>
-              Operational clarity
-            </span>
-            <h1 className="mt-4 text-display-1">
-              Govern every programme, class, and outcome from a single <span className="text-semantic-primary-500 neon-text">command centre</span>.
-            </h1>
-            <p className="mt-6 max-w-2xl text-body-lg text-text-secondary leading-relaxed">
-              ClassBridge brings academic planning, competency tracking, and community communication into one secure workspace—so leadership can make timely decisions and teams can execute with confidence.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <Link href="/register">
-                <Button variant="primary" size="lg" glow>Launch your workspace</Button>
-              </Link>
+            {/* CTA Buttons */}
+            <div className="flex items-center gap-4">
               <Link href="/login">
-                <Button variant="outline" size="lg">Explore the platform</Button>
+                <Button variant="ghost" size="sm" className="text-white border-white hover:bg-white hover:text-primary-500">
+                  Sign in
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button size="sm" className="bg-white text-primary-500 hover:bg-primary-50">
+                  Get Started
+                </Button>
               </Link>
             </div>
-            <div className="mt-10 grid gap-4 sm:grid-cols-3">
-              {metrics.map((metric) => (
-                <GlowCard key={metric.label} neonBorder="cyan" className="px-5 py-4">
-                  <p className="text-3xl font-bold text-accent-primary font-mono">{metric.value}</p>
-                  <p className="text-sm font-semibold text-text-primary">{metric.label}</p>
-                  <p className="text-xs text-text-muted font-mono">{metric.detail}</p>
-                </GlowCard>
-              ))}
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-primary-50 to-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm font-medium mb-6">
+                <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
+                School management made simple
+              </div>
+
+              <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                Govern every programme, class, and outcome from a single{' '}
+                <span className="text-primary-500">command centre</span>
+              </h1>
+
+              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                ClassBridge brings academic planning, competency tracking, and community communication into one secure workspace—so leadership can make timely decisions and teams can execute with confidence.
+              </p>
+
+              <div className="flex flex-wrap gap-4 mb-12">
+                <Link href="/register">
+                  <Button size="lg" className="bg-primary-500 hover:bg-primary-600">
+                    Launch your workspace
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button variant="outline" size="lg" className="border-primary-500 text-primary-500 hover:bg-primary-50">
+                    Watch how it works
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Hero Image Placeholder */}
+            <div className="relative">
+              <div className="bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl p-8 h-96 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-primary-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <span className="text-white text-2xl">🎓</span>
+                  </div>
+                  <p className="text-primary-700 font-medium">Your educational platform dashboard</p>
+                </div>
+              </div>
+              {/* Floating notification cards */}
+              <div className="absolute -top-4 -right-4 bg-white p-3 rounded-lg shadow-card border border-primary-200">
+                <p className="text-xs font-medium text-gray-600">Student progress updated</p>
+              </div>
+              <div className="absolute -bottom-4 -left-4 bg-white p-3 rounded-lg shadow-card border border-primary-200">
+                <p className="text-xs font-medium text-gray-600">Assessment completed</p>
+              </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          <GlowCard neonBorder="purple" className="relative hidden min-h-[22rem] p-8 lg:block">
-            <div className="absolute -top-8 right-10 h-16 w-16 rounded-full bg-accent-secondary/20 blur-xl" aria-hidden />
-            <div className="absolute bottom-6 left-4 h-24 w-24 rounded-full bg-accent-primary/15 blur-[60px]" aria-hidden />
-            <div className="space-y-6">
-              <Card className="px-5 py-4 bg-background-tertiary/50">
-                <p className="text-xs font-semibold uppercase tracking-wide text-accent-primary font-mono">Live overview</p>
-                <p className="mt-2 text-sm text-text-secondary font-mono">
-                  Daily attendance is on track (98%). Two cohorts need additional mentor coverage this week.
-                </p>
-              </Card>
-              <Card className="px-5 py-4 bg-background-tertiary/50">
-                <p className="text-xs font-semibold uppercase tracking-wide text-accent-secondary font-mono">Action queue</p>
-                <ul className="mt-2 space-y-2 text-sm text-text-secondary font-mono">
-                  <li>• Approve assessment blueprint for Year 10 Science</li>
-                  <li>• Review mentor feedback for Leadership Workshop</li>
-                  <li>• Publish family newsletter for Semester planning</li>
-                </ul>
-              </Card>
-            </div>
-          </GlowCard>
-        </section>
-
-        <section className="grid gap-6 md:grid-cols-3">
-          {pillars.map((pillar, index) => {
-            const borderColors = ['cyan', 'purple', 'green'] as const;
-            return (
-              <GlowCard key={pillar.title} neonBorder={borderColors[index]} interactive className="p-6">
-                <span className="inline-flex items-center rounded-full bg-neon-green/15 px-3 py-1 text-xs font-semibold text-neon-green font-mono">
-                  {pillar.badge}
-                </span>
-                <h3 className="mt-4 text-lg font-semibold text-text-primary">{pillar.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-text-secondary font-mono">{pillar.description}</p>
-              </GlowCard>
-            );
-          })}
-        </section>
-
-        <GlowCard neonBorder="green" className="grid gap-8 p-8 lg:grid-cols-[1.1fr,0.9fr]">
-          <div>
-            <h2 className="text-2xl font-semibold text-text-primary">Implementation without <span className="text-neon-green neon-text">disruption</span></h2>
-            <p className="mt-3 text-sm text-text-secondary font-mono">
-              ClassBridge adapts to your existing academic model. Our migration utilities, advisory services, and automation library ensure you stay focused on delivery—not spreadsheets.
+      {/* Metrics Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Success</h2>
+            <p className="text-lg text-gray-600">
+              Trusted by educational institutions worldwide to streamline their operations
             </p>
-            <div className="mt-6 space-y-4">
-              {initiatives.map((item) => (
-                <Card key={item.title} className="px-5 py-4 bg-background-tertiary/50">
-                  <h3 className="text-sm font-semibold text-text-primary">{item.title}</h3>
-                  <p className="text-sm text-text-secondary font-mono">{item.copy}</p>
-                </Card>
-              ))}
-            </div>
           </div>
-          <Card className="relative px-6 py-8 bg-background-tertiary/50">
-            <div className="absolute right-10 top-6 h-12 w-12 animate-float rounded-full bg-neon-green/20 blur-lg" aria-hidden />
-            <h3 className="text-lg font-semibold text-text-primary">Governance snapshots</h3>
-            <div className="mt-4 space-y-4 text-sm text-text-secondary font-mono">
-              <div className="flex items-center justify-between rounded-xl border border-border-primary bg-background-secondary px-4 py-3">
-                <span>Compliance & safeguarding</span>
-                <span className="rounded-full bg-neon-green px-3 py-1 text-xs font-semibold text-background-primary">On track</span>
-              </div>
-              <div className="flex items-center justify-between rounded-xl border border-border-primary bg-background-secondary px-4 py-3">
-                <span>Curriculum coverage</span>
-                <span className="text-sm font-semibold text-accent-primary">94%</span>
-              </div>
-              <div className="space-y-1 rounded-xl border border-border-primary bg-background-secondary px-4 py-3">
-                <p>Focus areas this week</p>
-                <ul className="list-disc pl-4 text-xs text-text-muted">
-                  <li>Confirm mentorship pairings for Cohort Delta</li>
-                  <li>Publish assessment rubrics for Quarter 2</li>
-                </ul>
-              </div>
-            </div>
-          </Card>
-        </GlowCard>
 
-        <GlowCard neonBorder="cyan" className="px-6 py-10 text-center">
-          <h2 className="text-2xl font-semibold text-text-primary">Ready to orchestrate a connected <span className="text-accent-primary neon-text">learning community</span>?</h2>
-          <p className="mt-3 text-sm text-text-secondary font-mono">
-            Schedule a strategy session with our onboarding specialists and see how quickly your team can move from reactive to proactive operations.
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {metrics.map((metric) => (
+              <div key={metric.label} className="text-center">
+                <div className="text-3xl lg:text-4xl font-bold text-primary-500 mb-2">{metric.value}</div>
+                <div className="text-gray-900 font-medium mb-1">{metric.label}</div>
+                <div className="text-sm text-gray-500">{metric.detail}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">All-In-One School Management</h2>
+            <p className="text-lg text-gray-600">
+              ClassBridge combines all the tools needed to run a successful educational institution
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {features.map((feature) => (
+              <Card key={feature.title} className="p-6 bg-white shadow-card hover:shadow-card-hover transition-shadow">
+                <div className="text-3xl mb-4">{feature.icon}</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Tools Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-6">
+                What is <span className="text-primary-500">ClassBridge</span>?
+              </h2>
+              <p className="text-lg text-gray-600 mb-8">
+                ClassBridge is a comprehensive platform that allows educational institutions to manage all aspects
+                of their operations—from student enrollment and academic planning to assessment delivery and
+                community engagement—all in one secure, cloud-based system.
+              </p>
+
+              <div className="space-y-6">
+                {tools.map((tool) => (
+                  <div key={tool.title} className="flex items-start gap-4">
+                    <div className="w-6 h-6 bg-primary-500 rounded-full flex-shrink-0 flex items-center justify-center mt-1">
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-1">{tool.title}</h4>
+                      <p className="text-gray-600">{tool.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl p-8 h-96 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-20 h-20 bg-primary-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <span className="text-white text-3xl">📱</span>
+                </div>
+                <p className="text-gray-700 font-medium">Interactive platform demo</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 bg-primary-500">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Ready to streamline your school management?
+          </h2>
+          <p className="text-xl text-primary-100 mb-8">
+            Join hundreds of educational institutions already using ClassBridge to transform their operations
           </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-4">
             <Link href="/register">
-              <Button variant="primary" size="lg" glow>Book a strategy call</Button>
+              <Button size="lg" className="bg-white text-primary-500 hover:bg-gray-50">
+                Start free trial
+              </Button>
             </Link>
-            <Link href="/login">
-              <Button variant="outline" size="lg">Preview the console</Button>
+            <Link href="/contact">
+              <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary-500">
+                Schedule demo
+              </Button>
             </Link>
           </div>
-        </GlowCard>
-      </main>
-    </DarkLayout>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
+                  <svg viewBox="0 0 40 40" className="w-5 h-5 text-white">
+                    <path d="M4 22 Q12 15, 20 17 Q28 19, 36 22 L36 25 Q28 22, 20 20 Q12 18, 4 25 Z" fill="currentColor" />
+                    <rect x="3" y="22" width="2" height="8" fill="currentColor" rx="1" />
+                    <rect x="35" y="22" width="2" height="8" fill="currentColor" rx="1" />
+                    <rect x="19" y="17" width="2" height="13" fill="currentColor" rx="1" />
+                  </svg>
+                </div>
+                <span className="text-lg font-bold">ClassBridge</span>
+              </div>
+              <p className="text-gray-400">
+                Streamlining educational management for institutions worldwide.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Platform</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><Link href="#" className="hover:text-white transition-colors">Features</Link></li>
+                <li><Link href="#" className="hover:text-white transition-colors">Pricing</Link></li>
+                <li><Link href="#" className="hover:text-white transition-colors">Security</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Company</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><Link href="#" className="hover:text-white transition-colors">About</Link></li>
+                <li><Link href="#" className="hover:text-white transition-colors">Careers</Link></li>
+                <li><Link href="#" className="hover:text-white transition-colors">Contact</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><Link href="#" className="hover:text-white transition-colors">Help Center</Link></li>
+                <li><Link href="#" className="hover:text-white transition-colors">Documentation</Link></li>
+                <li><Link href="#" className="hover:text-white transition-colors">Status</Link></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 ClassBridge. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }

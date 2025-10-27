@@ -47,70 +47,77 @@
   }
 }
 
-/* Dark theme as default */
+/* Light theme as default - TOTC inspired */
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
-  background-color: #0D1117;
-  color: #F0F6FC;
+  background-color: #F8FAFC;
+  color: #0F172A;
   font-family: Inter, system-ui, sans-serif;
   min-height: 100vh;
   background-attachment: fixed;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark,
+.dark body {
+  background-color: #0B1120;
+  color: #E2E8F0;
 }
 
 /* Improved focus styles for accessibility */
 :focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 191, 255, 0.6);
-  border-radius: 4px;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.55);
+  border-radius: 0.5rem;
 }
 
 /* High contrast focus for better accessibility */
 @media (prefers-contrast: high) {
   :focus-visible {
-    outline: 2px solid #00BFFF;
+    outline: 2px solid #2563EB;
     outline-offset: 2px;
     box-shadow: none;
   }
 }
 
-/* Custom scrollbars for dark theme */
+/* Custom scrollbars for light theme */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background-color: #161B22;
+  background-color: #EFF6FF;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #484F58;
+  background-color: #CBD5F5;
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #656D76;
+  background-color: #94A3B8;
 }
 
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #484F58 #161B22;
+  scrollbar-color: #CBD5F5 #EFF6FF;
 }
 
 /* Code block styling */
 code {
   font-family: 'JetBrains Mono', monospace;
-  background-color: #21262D;
-  color: #00D9FF;
+  background-color: #EEF2FF;
+  color: #2563EB;
   padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
-  border: 1px solid #30363D;
+  border-radius: 0.375rem;
+  border: 1px solid #DBEAFE;
 }
 
 pre code {
@@ -120,115 +127,95 @@ pre code {
 }
 
 pre {
-  background-color: #21262D;
-  border: 1px solid #30363D;
-  border-radius: 0.5rem;
+  background-color: #EEF2FF;
+  border: 1px solid #E2E8F0;
+  border-radius: 0.75rem;
   padding: 1rem;
   overflow-x: auto;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 45px -30px rgba(37, 99, 235, 0.35);
 }
 
 /* Selection styling */
 ::selection {
-  background-color: #00D9FF;
-  color: #0D1117;
+  background-color: #2563EB;
+  color: #FFFFFF;
 }
 
 ::-moz-selection {
-  background-color: #00D9FF;
-  color: #0D1117;
+  background-color: #2563EB;
+  color: #FFFFFF;
 }
 
-/* Refined glow effects (reduced intensity) */
-.glow-cyan {
-  box-shadow: 0 0 15px rgba(0, 191, 255, 0.25);
+/* Light theme card shadows */
+.card-shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
-.glow-purple {
-  box-shadow: 0 0 15px rgba(124, 58, 237, 0.25);
+.card-shadow-hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-.glow-green {
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+.elevated-shadow {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-.glow-pink {
-  box-shadow: 0 0 15px rgba(236, 72, 153, 0.25);
+.hero-shadow {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-.glow-yellow {
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+/* Subtle teal accent effect */
+.teal-accent {
+  color: #14B8A6;
+  font-weight: 600;
 }
 
-.glow-blue {
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.25);
-}
-
-/* Refined neon text effect (subtle) */
-.neon-text {
-  text-shadow:
-    0 0 3px currentColor,
-    0 0 6px currentColor,
-    0 0 12px currentColor;
-}
-
-/* Optimized matrix-style background (reduced intensity) */
-.matrix-bg {
+/* Light background gradients */
+.gradient-bg {
   background:
-    radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(0, 191, 255, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 40% 80%, rgba(124, 58, 237, 0.05) 0%, transparent 50%);
+    radial-gradient(circle at 20% 50%, rgba(20, 184, 166, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
 }
 
-/* Performance-optimized matrix background */
-.matrix-bg-subtle {
-  background:
-    radial-gradient(circle at 30% 70%, rgba(16, 185, 129, 0.03) 0%, transparent 40%),
-    radial-gradient(circle at 70% 30%, rgba(0, 191, 255, 0.03) 0%, transparent 40%);
+/* Subtle background for sections */
+.section-bg {
+  background-color: #F8FAFC;
 }
 
-/* Glass morphism for cards */
-.glass-dark {
-  background: rgba(22, 27, 34, 0.8);
+/* Glass morphism for light theme */
+.glass-light {
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(48, 54, 61, 0.5);
+  border: 1px solid rgba(226, 232, 240, 0.5);
 }
 
 /* Button hover effects */
-.btn-neon {
+.btn-hover {
   position: relative;
   overflow: hidden;
   transition: all 0.3s;
 }
 
-.btn-neon::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(45deg, #00D9FF, #8B5CF6, #00FF88);
-  opacity: 0;
-  transition: opacity 0.3s;
+.btn-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.btn-neon:hover::before {
-  opacity: 0.1;
+/* Modern input styling */
+.modern-input {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  color: #1E293B;
+  font-family: Inter, system-ui, sans-serif;
 }
 
-/* Terminal-style input */
-.terminal-input {
-  background-color: #161B22;
-  border: 1px solid #30363D;
-  color: #F0F6FC;
-  font-family: 'JetBrains Mono', monospace;
+.modern-input::placeholder {
+  color: #64748B;
 }
 
-.terminal-input::placeholder {
-  color: #7D8590;
-}
-
-.terminal-input:focus {
-  border-color: #00D9FF;
-  box-shadow: 0 0 0 1px #00D9FF;
+.modern-input:focus {
+  border-color: #14B8A6;
+  box-shadow: 0 0 0 1px #14B8A6;
 }
 
 /* Status indicators */
@@ -327,7 +314,7 @@ pre {
   line-height: 1;
   font-weight: 700;
   letter-spacing: -0.025em;
-  color: #F0F6FC;
+  color: #1E293B;
 }
 
 .text-display-2 {
@@ -335,7 +322,7 @@ pre {
   line-height: 1;
   font-weight: 700;
   letter-spacing: -0.025em;
-  color: #F0F6FC;
+  color: #1E293B;
 }
 
 .text-heading-1 {
@@ -343,7 +330,7 @@ pre {
   line-height: 2.5rem;
   font-weight: 600;
   letter-spacing: -0.025em;
-  color: #F0F6FC;
+  color: #1E293B;
 }
 
 .text-heading-2 {
@@ -351,39 +338,39 @@ pre {
   line-height: 2.25rem;
   font-weight: 600;
   letter-spacing: -0.025em;
-  color: #F0F6FC;
+  color: #1E293B;
 }
 
 .text-heading-3 {
   font-size: 1.5rem;
   line-height: 2rem;
   font-weight: 600;
-  color: #F0F6FC;
+  color: #1E293B;
 }
 
 .text-heading-4 {
   font-size: 1.25rem;
   line-height: 1.75rem;
   font-weight: 600;
-  color: #F0F6FC;
+  color: #1E293B;
 }
 
 .text-body-lg {
   font-size: 1.125rem;
   line-height: 1.75rem;
-  color: #F0F6FC;
+  color: #475569;
 }
 
 .text-body {
   font-size: 1rem;
   line-height: 1.5rem;
-  color: #F0F6FC;
+  color: #475569;
 }
 
 .text-body-sm {
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: #C9D1D9;
+  color: #64748B;
 }
 
 .text-caption {
@@ -392,14 +379,14 @@ pre {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #7D8590;
+  color: #64748B;
 }
 
 .text-code {
   font-size: 0.875rem;
   line-height: 1.5;
   font-family: 'JetBrains Mono', monospace;
-  color: #00BFFF;
+  color: #14B8A6;
 }
 
 /* Spacing utilities for consistent rhythm */

@@ -1,3 +1,4 @@
+import colors from 'tailwindcss/colors'
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
@@ -10,86 +11,112 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Dark-first color system inspired by VS Code/GitHub
-        dark: {
-          900: '#0D1117', // GitHub dark bg
-          800: '#161B22', // Darker panels
-          700: '#21262D', // Panel bg
-          600: '#30363D', // Borders
-          500: '#484F58', // Muted elements
-          400: '#656D76', // Secondary text
-          300: '#7D8590', // Placeholder text
-          200: '#C9D1D9', // Primary text
-          100: '#F0F6FC', // Bright text
+        brand: {
+          50: '#EFF6FF',
+          100: '#DBEAFE',
+          200: '#BFDBFE',
+          300: '#93C5FD',
+          400: '#60A5FA',
+          500: '#2563EB',
+          600: '#1D4ED8',
+          700: '#1E40AF',
+          800: '#1E3A8A',
+          900: '#1D2F6F',
+          950: '#172554',
         },
-        // Refined neon system (reduced intensity for better UX)
-        neon: {
-          cyan: '#00BFFF',      // Reduced from #00D9FF for better contrast
-          purple: '#7C3AED',    // Reduced from #8B5CF6 for accessibility
-          green: '#10B981',     // Reduced from #00FF88 for eye comfort
-          pink: '#EC4899',      // Reduced from #FF0080 for readability
-          yellow: '#F59E0B',    // Reduced from #FFE135 for better contrast
-          blue: '#3B82F6',      // Reduced from #0070F3 for accessibility
-          orange: '#F97316',    // Reduced from #FF8C00 for better balance
+        primary: {
+          50: '#EFF6FF',
+          100: '#DBEAFE',
+          200: '#BFDBFE',
+          300: '#93C5FD',
+          400: '#60A5FA',
+          500: '#2563EB',
+          600: '#1D4ED8',
+          700: '#1E40AF',
+          800: '#1E3A8A',
+          900: '#1D2F6F',
         },
-        // Legacy accent system for backward compatibility
-        accent: {
-          primary: '#00BFFF',   // Main brand color (refined cyan)
-          secondary: '#6B7280', // More subtle secondary color
-          success: '#10B981',   // Success states (refined green)
-          warning: '#F59E0B',   // Warning states (refined yellow)
-          danger: '#EF4444',    // Error states (refined red)
-          info: '#3B82F6',      // Info states (refined blue)
+        secondary: {
+          50: '#F5F3FF',
+          100: '#EDE9FE',
+          200: '#DDD6FE',
+          300: '#C4B5FD',
+          400: '#A78BFA',
+          500: '#7C3AED',
+          600: '#6D28D9',
+          700: '#5B21B6',
+          800: '#4C1D95',
+          900: '#3C138C',
         },
-        // New semantic color system for better UX
+        muted: colors.slate,
+        background: {
+          primary: '#FFFFFF',
+          secondary: '#F8FAFC',
+          tertiary: '#EEF2FF',
+          muted: '#E2E8F0',
+          overlay: 'rgba(15, 23, 42, 0.45)',
+        },
+        surface: {
+          base: '#F8FAFC',
+          raised: '#FFFFFF',
+          subtle: '#F1F5F9',
+          inverted: '#0F172A',
+        },
+        text: {
+          primary: '#0F172A',
+          secondary: '#475569',
+          muted: '#64748B',
+          inverse: '#FFFFFF',
+        },
+        border: {
+          primary: '#E2E8F0',
+          secondary: '#F1F5F9',
+          muted: '#CBD5F5',
+        },
         semantic: {
-          // Primary actions - use sparingly for CTAs
           primary: {
-            DEFAULT: '#00BFFF',
-            50: '#F0F9FF',
-            100: '#E0F2FE',
-            200: '#BAE6FD',
-            300: '#7DD3FC',
-            400: '#38BDF8',
-            500: '#00BFFF',
-            600: '#0284C7',
-            700: '#0369A1',
-            800: '#075985',
-            900: '#0C4A6E',
-            muted: 'rgba(0, 191, 255, 0.12)',
-            hover: '#00D9FF',
+            DEFAULT: '#2563EB',
+            50: '#EFF6FF',
+            100: '#DBEAFE',
+            200: '#BFDBFE',
+            300: '#93C5FD',
+            400: '#60A5FA',
+            500: '#2563EB',
+            600: '#1D4ED8',
+            700: '#1E40AF',
+            800: '#1E3A8A',
+            900: '#172554',
+            muted: 'rgba(37, 99, 235, 0.12)',
+            hover: '#1D4ED8',
           },
-          // Secondary actions
           secondary: {
-            DEFAULT: '#6B7280',
-            50: '#F9FAFB',
-            100: '#F3F4F6',
-            200: '#E5E7EB',
-            300: '#D1D5DB',
-            400: '#9CA3AF',
-            500: '#6B7280',
-            600: '#4B5563',
-            700: '#374151',
-            800: '#1F2937',
-            900: '#111827',
-            muted: 'rgba(107, 114, 128, 0.12)',
-            hover: '#9CA3AF',
+            DEFAULT: '#7C3AED',
+            50: '#F5F3FF',
+            100: '#EDE9FE',
+            200: '#DDD6FE',
+            300: '#C4B5FD',
+            400: '#A78BFA',
+            500: '#7C3AED',
+            600: '#6D28D9',
+            700: '#5B21B6',
+            800: '#4C1D95',
+            900: '#3C138C',
+            muted: 'rgba(124, 58, 237, 0.12)',
+            hover: '#6D28D9',
           },
-          // Status colors with improved contrast
           success: {
-            DEFAULT: '#10B981',
-            50: '#ECFDF5',
-            100: '#D1FAE5',
-            200: '#A7F3D0',
-            300: '#6EE7B7',
-            400: '#34D399',
-            500: '#10B981',
-            600: '#059669',
-            700: '#047857',
-            800: '#065F46',
-            900: '#064E3B',
-            muted: 'rgba(16, 185, 129, 0.12)',
-            bg: '#064E3B',
+            DEFAULT: '#22C55E',
+            50: '#F0FDF4',
+            100: '#DCFCE7',
+            200: '#BBF7D0',
+            300: '#86EFAC',
+            400: '#4ADE80',
+            500: '#22C55E',
+            600: '#16A34A',
+            700: '#15803D',
+            800: '#166534',
+            900: '#14532D',
+            muted: 'rgba(34, 197, 94, 0.1)',
           },
           warning: {
             DEFAULT: '#F59E0B',
@@ -103,8 +130,7 @@ const config: Config = {
             700: '#B45309',
             800: '#92400E',
             900: '#78350F',
-            muted: 'rgba(245, 158, 11, 0.12)',
-            bg: '#451A03',
+            muted: 'rgba(245, 158, 11, 0.1)',
           },
           danger: {
             DEFAULT: '#EF4444',
@@ -118,8 +144,7 @@ const config: Config = {
             700: '#B91C1C',
             800: '#991B1B',
             900: '#7F1D1D',
-            muted: 'rgba(239, 68, 68, 0.12)',
-            bg: '#7F1D1D',
+            muted: 'rgba(239, 68, 68, 0.1)',
           },
           info: {
             DEFAULT: '#3B82F6',
@@ -133,29 +158,21 @@ const config: Config = {
             700: '#1D4ED8',
             800: '#1E40AF',
             900: '#1E3A8A',
-            muted: 'rgba(59, 130, 246, 0.12)',
-            bg: '#1E3A8A',
+            muted: 'rgba(59, 130, 246, 0.1)',
           }
         },
-        // Semantic color mapping for dark theme
-        background: {
-          primary: '#0D1117',   // Main background
-          secondary: '#161B22', // Card backgrounds
-          tertiary: '#21262D',  // Elevated surfaces
-          overlay: 'rgba(0, 0, 0, 0.8)', // Modal overlays
-        },
-        border: {
-          primary: '#30363D',   // Default borders
-          secondary: '#21262D', // Subtle borders
-          accent: '#00BFFF',    // Highlighted borders (refined)
-          muted: '#484F58',     // Very subtle borders
-        },
-        text: {
-          primary: '#F0F6FC',   // Main text (WCAG AA compliant)
-          secondary: '#C9D1D9', // Secondary text
-          muted: '#7D8590',     // Muted text
-          accent: '#00BFFF',    // Accent text (refined)
-          inverse: '#0D1117',   // Text on light backgrounds
+        // Course colors for the colorful cards
+        courses: {
+          orange: '#F97316',
+          blue: '#3B82F6',
+          purple: '#8B5CF6',
+          green: '#22C55E',
+          pink: '#EC4899',
+          yellow: '#F59E0B',
+          red: '#EF4444',
+          indigo: '#6366F1',
+          emerald: '#10B981',
+          cyan: '#06B6D4',
         },
       },
       fontFamily: {
@@ -183,24 +200,12 @@ const config: Config = {
         'display-xl': ['4.5rem', { lineHeight: '1', fontWeight: '700', letterSpacing: '-0.025em' }],
       },
       boxShadow: {
-        // Refined glow effects (reduced intensity)
-        'glow-cyan': '0 0 15px rgba(0, 191, 255, 0.2)',
-        'glow-purple': '0 0 15px rgba(124, 58, 237, 0.2)',
-        'glow-green': '0 0 15px rgba(16, 185, 129, 0.2)',
-        'glow-pink': '0 0 15px rgba(236, 72, 153, 0.2)',
-        'glow-yellow': '0 0 15px rgba(245, 158, 11, 0.2)',
-        'glow-blue': '0 0 15px rgba(59, 130, 246, 0.2)',
-        // Standard elevation shadows
-        'dark-soft': '0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.24)',
-        'dark-medium': '0 4px 16px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.3)',
-        'dark-strong': '0 8px 24px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.35)',
-        'dark-xl': '0 16px 48px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.4)',
-        // Focus and interaction shadows
-        'focus-ring': '0 0 0 2px rgba(0, 191, 255, 0.5)',
-        'focus-ring-danger': '0 0 0 2px rgba(239, 68, 68, 0.5)',
-        'focus-ring-success': '0 0 0 2px rgba(16, 185, 129, 0.5)',
-        'inner-glow': 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-        'inner-border': 'inset 0 0 0 1px rgba(255, 255, 255, 0.1)',
+        'card': '0 20px 45px -30px rgba(15, 23, 42, 0.35)',
+        'card-soft': '0 14px 35px -28px rgba(15, 23, 42, 0.45)',
+        'card-hover': '0 25px 55px -25px rgba(37, 99, 235, 0.35)',
+        'focus-ring': '0 0 0 3px rgba(37, 99, 235, 0.35)',
+        'focus-ring-danger': '0 0 0 3px rgba(239, 68, 68, 0.35)',
+        'focus-ring-success': '0 0 0 3px rgba(34, 197, 94, 0.35)',
       },
       borderRadius: {
         'code': '0.375rem', // 6px for code blocks

@@ -21,67 +21,64 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary: cn(
-    'bg-gradient-to-r from-semantic-primary-500 to-semantic-primary-400',
-    'text-white font-semibold',
-    'border border-semantic-primary-500/30',
-    'shadow-dark-soft',
-    'hover:from-semantic-primary-400 hover:to-semantic-primary-300 hover:shadow-glow-cyan',
+    'bg-brand-500 text-white font-semibold',
+    'border border-brand-500',
+    'shadow-card',
+    'hover:bg-brand-600 hover:shadow-card-hover',
     'hover:scale-[1.02] active:scale-[0.98]',
-    'focus-visible:ring-2 focus-visible:ring-semantic-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background-primary',
+    'focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base',
     'transition-all duration-150'
   ),
   secondary: cn(
-    'bg-semantic-secondary-600 text-text-primary font-semibold',
-    'border border-semantic-secondary-500/30',
-    'shadow-dark-soft',
-    'hover:bg-semantic-secondary-500 hover:shadow-dark-medium',
+    'bg-secondary-500 text-white font-semibold',
+    'border border-secondary-500',
+    'shadow-card',
+    'hover:bg-secondary-600 hover:shadow-card-hover',
     'hover:scale-[1.02] active:scale-[0.98]',
-    'focus-visible:ring-2 focus-visible:ring-semantic-secondary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background-primary',
+    'focus-visible:ring-2 focus-visible:ring-secondary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base',
     'transition-all duration-150'
   ),
   ghost: cn(
-    'bg-transparent text-text-primary',
+    'bg-transparent text-muted-600',
     'border border-transparent',
-    'hover:bg-dark-700 hover:border-border-primary',
+    'hover:bg-muted-100 hover:border-muted-200 hover:text-muted-900',
     'hover:scale-[1.02] active:scale-[0.98]',
-    'focus-visible:ring-2 focus-visible:ring-text-muted focus-visible:ring-offset-2 focus-visible:ring-offset-background-primary',
+    'focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base',
     'transition-all duration-150'
   ),
   danger: cn(
-    'bg-gradient-to-r from-semantic-danger-500 to-semantic-danger-400',
-    'text-white font-semibold',
-    'border border-semantic-danger-500/30',
-    'shadow-dark-soft',
-    'hover:from-semantic-danger-400 hover:to-semantic-danger-300 hover:shadow-glow-pink',
+    'bg-red-500 text-white font-semibold',
+    'border border-red-500',
+    'shadow-card',
+    'hover:bg-red-600 hover:shadow-card-hover',
     'hover:scale-[1.02] active:scale-[0.98]',
-    'focus-visible:ring-2 focus-visible:ring-semantic-danger-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background-primary',
+    'focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white',
     'transition-all duration-150'
   ),
   success: cn(
-    'bg-gradient-to-r from-semantic-success-500 to-semantic-success-400',
-    'text-white font-semibold',
-    'border border-semantic-success-500/30',
-    'shadow-dark-soft',
-    'hover:from-semantic-success-400 hover:to-semantic-success-300 hover:shadow-glow-green',
+    'bg-green-500 text-white font-semibold',
+    'border border-green-500',
+    'shadow-card',
+    'hover:bg-green-600 hover:shadow-card-hover',
     'hover:scale-[1.02] active:scale-[0.98]',
-    'focus-visible:ring-2 focus-visible:ring-semantic-success-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background-primary',
+    'focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white',
     'transition-all duration-150'
   ),
   outline: cn(
-    'bg-transparent text-text-primary',
-    'border border-border-primary',
-    'hover:bg-dark-700 hover:border-semantic-primary-500',
-    'hover:text-semantic-primary-500',
+    'bg-transparent text-gray-700',
+    'border border-gray-300',
+    'hover:bg-gray-50 hover:border-primary-500',
+    'hover:text-primary-600',
     'hover:scale-[1.02] active:scale-[0.98]',
-    'focus-visible:ring-2 focus-visible:ring-semantic-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background-primary',
+    'focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white',
     'transition-all duration-150'
   ),
   terminal: cn(
-    'bg-dark-800 text-neon-green font-mono',
-    'border border-neon-green/30',
-    'hover:bg-dark-700 hover:shadow-glow-green',
+    'bg-gray-800 text-green-400 font-mono',
+    'border border-green-400/30',
+    'hover:bg-gray-700 hover:shadow-card-hover',
     'hover:scale-[1.02] active:scale-[0.98]',
-    'focus-visible:ring-2 focus-visible:ring-neon-green focus-visible:ring-offset-2 focus-visible:ring-offset-background-primary',
+    'focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white',
     'transition-all duration-150'
   ),
 };
@@ -94,13 +91,13 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 const glowClasses: Record<ButtonVariant, string> = {
-  primary: 'shadow-glow-cyan animate-glow-pulse',
-  secondary: 'shadow-glow-purple animate-glow-pulse',
+  primary: 'shadow-card-hover',
+  secondary: 'shadow-card-soft',
   ghost: '',
-  danger: 'shadow-glow-pink animate-glow-pulse',
-  success: 'shadow-glow-green animate-glow-pulse',
+  danger: 'shadow-card-soft',
+  success: 'shadow-card-soft',
   outline: '',
-  terminal: 'shadow-glow-green animate-glow-pulse',
+  terminal: 'shadow-card-soft',
 };
 
 export function buttonClasses({

@@ -1,16 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/AuthGuard';
 import Footer from '@/components/Footer';
 import { PageShell } from '@/components/ui/PageShell';
 import { GradientHeader } from '@/components/ui/GradientHeader';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
+import { CourseCard } from '@/components/common/CourseCard';
 
 interface Course {
   _id: string;
@@ -154,75 +153,85 @@ function CourseManagementContent() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleEditCourse = useCallback((course: Course) => {
+    pushToast({ title: `Edit ${course.name}`, description: 'Editing courses will arrive soon.', intent: 'info' });
+  }, [pushToast]);
+
+  const handleArchiveCourse = useCallback((course: Course) => {
+    pushToast({ title: `Archive ${course.name}`, description: 'Contact support to archive a course.', intent: 'warning' });
+  }, [pushToast]);
+
   const courseCards = useMemo(() => {
     if (courses.length === 0) {
       return (
-        <Card className="border border-white/40 p-10 text-center shadow-glass">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-brand-500/15 text-brand-600">
-            <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        <div className="rounded-2xl border border-muted-200 bg-white p-12 text-center shadow-card dark:border-muted-800 dark:bg-muted-900/80">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:bg-brand-500/15 dark:text-brand-200">
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v12m6-6H6" />
             </svg>
           </div>
-          <h2 className="mt-4 text-xl font-semibold text-ink-900">No courses yet</h2>
-          <p className="mt-2 text-sm text-ink-500">Create a course for one of your classes to start coaching.</p>
-        </Card>
+          <h2 className="mt-4 text-lg font-semibold text-muted-900 dark:text-white">No courses yet</h2>
+          <p className="mt-2 text-sm text-muted-500 dark:text-muted-300">Create your first course to give learners a clear path.</p>
+        </div>
       );
     }
 
     return (
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {courses.map((course) => (
-          <Card key={course._id} className="border border-white/40 p-6 shadow-soft">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-semibold text-ink-900">{course.name}</h3>
-                {course.description ? <p className="mt-1 text-sm text-ink-400">{course.description}</p> : null}
-              </div>
-              <span className="rounded-full bg-brand-500/15 px-3 py-1 text-xs font-semibold text-brand-600">
-                {course.duration}
-              </span>
-            </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {courses.map((course) => {
+          const enrolment = course.studentIds.length || course.enrolledCount || 0;
+          const completion = course.maxStudents > 0 ? Math.round((enrolment / course.maxStudents) * 100) : 0;
 
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-ink-400">
-              <span className="rounded-full bg-white/80 px-3 py-1">Class · {course.classId.name}</span>
-              {course.subject ? <span className="rounded-full bg-white/80 px-3 py-1">{course.subject}</span> : null}
-              <span className="rounded-full bg-white/80 px-3 py-1">Max {course.maxStudents} students</span>
-            </div>
-
-            <div className="mt-5 grid grid-cols-3 gap-3 rounded-xl border border-white/40 bg-white/80 px-4 py-3 text-center text-sm">
-              <div>
-                <p className="text-lg font-semibold text-brand-600">{course.studentIds.length}</p>
-                <p className="text-xs text-ink-400">Enrolled</p>
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-accent-emerald">{course.availableSpots}</p>
-                <p className="text-xs text-ink-400">Spots left</p>
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-accent-emerald">{course.materials?.length ?? 0}</p>
-                <p className="text-xs text-ink-400">Resources</p>
-              </div>
-            </div>
-
-            <div className="mt-6 flex items-center justify-between text-sm text-brand-600">
-              <Link href={`/dashboard/classes/${course.classId._id}`} className="font-semibold">
-                View class →
-              </Link>
-              <span className="text-ink-400">Created {new Date(course.createdAt).toLocaleDateString()}</span>
-            </div>
-          </Card>
-        ))}
+          return (
+            <CourseCard
+              key={course._id}
+              title={course.name}
+              description={course.description}
+              classLabel={`Class · ${course.classId.name}`}
+              subject={course.subject}
+              duration={course.duration}
+              mentorLabel={course.mentorId?.name}
+              progress={completion}
+              studentsEnrolled={enrolment}
+              capacity={course.maxStudents}
+              resources={course.materials?.length ?? 0}
+              imageLabel={course.subject ?? course.name}
+              createdAt={new Date(course.createdAt).toLocaleDateString()}
+              href={`/dashboard/classes/${course.classId._id}`}
+              actions={[
+                {
+                  label: `Edit ${course.name}`,
+                  icon: (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 012.651 2.651l-1.688 1.688M8.25 20.25h-3a.75.75 0 01-.75-.75v-3l10.607-10.607 3.75 3.75L8.25 20.25z" />
+                    </svg>
+                  ),
+                  onClick: () => handleEditCourse(course),
+                },
+                {
+                  label: `Archive ${course.name}`,
+                  icon: (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519l-.621 9.584a1 1 0 001 1.067h4.484a1 1 0 001-1.067l-.621-9.584M14.121 7.519V6a2.121 2.121 0 10-4.242 0v1.519M4 7.5h16" />
+                    </svg>
+                  ),
+                  onClick: () => handleArchiveCourse(course),
+                },
+              ]}
+            />
+          );
+        })}
       </div>
     );
-  }, [courses]);
+  }, [courses, handleArchiveCourse, handleEditCourse]);
 
   if (loading) {
     return (
       <PageShell>
         <GradientHeader title="Loading courses" description="Collecting course data, please hang tight." />
-        <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="h-48 animate-pulse rounded-2xl bg-white/50" />
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="h-48 animate-pulse rounded-2xl border border-muted-200 bg-muted-100 dark:border-muted-800 dark:bg-muted-900/60" />
           ))}
         </div>
       </PageShell>
@@ -244,8 +253,8 @@ function CourseManagementContent() {
       <section className="mt-10">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-brand-300">Overview</p>
-            <h2 className="text-xl font-semibold text-ink-900">{courses.length} courses</h2>
+            <p className="text-sm font-semibold uppercase tracking-wider text-muted-500">Overview</p>
+            <h2 className="text-xl font-semibold text-muted-900 dark:text-white">{courses.length} courses</h2>
           </div>
           <Button variant="ghost" onClick={() => router.push('/dashboard')}>
             Back to dashboard
@@ -275,38 +284,38 @@ function CourseManagementContent() {
       >
         <form id="create-course-form" className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-ink-500">Course name *</label>
+            <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Course name *</label>
             <input
               name="name"
               value={formData.name}
               onChange={handleInputChange}
               required
               placeholder="Design Thinking Fundamentals"
-              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-ink-500">Description</label>
+            <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Description</label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleInputChange}
               rows={3}
               placeholder="Explain what students will gain from this course."
-              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
             />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-ink-500">Assign to class *</label>
+              <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Assign to class *</label>
               <select
                 name="classId"
                 value={formData.classId}
                 onChange={handleInputChange}
                 required
-                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
               >
                 <option value="">Select class</option>
                 {classes.map((cls) => (
@@ -317,25 +326,25 @@ function CourseManagementContent() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-ink-500">Subject</label>
+              <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Subject</label>
               <input
                 name="subject"
                 value={formData.subject}
                 onChange={handleInputChange}
                 placeholder="Leadership"
-                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
               />
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-ink-500">Duration *</label>
+              <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Duration *</label>
               <select
                 name="duration"
                 value={formData.duration}
                 onChange={handleInputChange}
-                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
               >
                 {durationOptions.map((option) => (
                   <option key={option} value={option}>
@@ -345,49 +354,49 @@ function CourseManagementContent() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-ink-500">Maximum students</label>
+              <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Maximum students</label>
               <input
                 type="number"
                 min={1}
                 name="maxStudents"
                 value={formData.maxStudents}
                 onChange={handleInputChange}
-                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
               />
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-ink-500">Start date</label>
+              <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Start date</label>
               <input
                 type="date"
                 name="startDate"
                 value={formData.startDate}
                 onChange={handleInputChange}
-                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-ink-500">End date</label>
+              <label className="text-sm font-medium text-muted-600 dark:text-muted-300">End date</label>
               <input
                 type="date"
                 name="endDate"
                 value={formData.endDate}
                 onChange={handleInputChange}
-                className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+                className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-ink-500">Syllabus URL</label>
+            <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Syllabus URL</label>
             <input
               name="syllabus"
               value={formData.syllabus}
               onChange={handleInputChange}
               placeholder="https://..."
-              className="w-full rounded-xl border border-white/40 bg-white/90 px-4 py-3 text-sm text-ink-700 shadow-inset focus:border-brand-300 focus:outline-none"
+              className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
             />
           </div>
         </form>

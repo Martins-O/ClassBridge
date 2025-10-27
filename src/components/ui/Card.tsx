@@ -10,38 +10,40 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 const variantClasses = {
   default: cn(
-    'bg-background-secondary',
-    'border border-border-primary',
-    'shadow-dark-soft'
+    'bg-white',
+    'border border-muted-200',
+    'shadow-card',
+    'dark:bg-muted-900/80 dark:border-muted-800'
   ),
   glass: cn(
-    'glass-dark',
-    'backdrop-blur-dark',
-    'border border-border-primary/50'
+    'backdrop-blur-sm bg-white/70 dark:bg-muted-900/60',
+    'border border-muted-200/60 dark:border-muted-800/60'
   ),
   terminal: cn(
-    'bg-dark-800',
-    'border border-neon-green/30',
-    'shadow-dark-medium',
-    'font-mono text-neon-green'
+    'bg-muted-900 text-emerald-400',
+    'border border-emerald-500/30',
+    'shadow-card',
+    'font-mono'
   ),
   glow: cn(
-    'bg-background-secondary',
-    'border border-semantic-primary-500/30',
-    'shadow-glow-cyan'
+    'bg-white',
+    'border border-brand-500/20',
+    'shadow-card-hover',
+    'dark:bg-muted-900/80'
   ),
   elevated: cn(
-    'bg-background-tertiary',
-    'border border-border-primary',
-    'shadow-dark-strong'
+    'bg-white',
+    'border border-muted-200',
+    'shadow-card-soft',
+    'dark:bg-muted-900/80 dark:border-muted-800'
   ),
 };
 
 const neonBorderClasses = {
-  cyan: 'border-semantic-primary-500 shadow-glow-cyan',
-  purple: 'border-neon-purple shadow-glow-purple',
-  green: 'border-neon-green shadow-glow-green',
-  pink: 'border-neon-pink shadow-glow-pink',
+  cyan: 'border-brand-500 shadow-card-hover',
+  purple: 'border-secondary-500 shadow-card-soft',
+  green: 'border-emerald-500 shadow-card-soft',
+  pink: 'border-rose-500 shadow-card-soft',
   none: '',
 };
 
@@ -70,9 +72,9 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
           // Interactive effects with accessibility
           interactive && cn(
             'cursor-pointer',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-semantic-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background-primary',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base',
             'motion-safe:transition-all motion-safe:duration-200',
-            'motion-safe:hover:scale-[1.02] motion-safe:hover:shadow-dark-medium',
+            'motion-safe:hover:scale-[1.02] motion-safe:hover:shadow-card-hover',
             'motion-safe:active:scale-[0.98]',
             'motion-reduce:transition-none motion-reduce:hover:scale-100'
           ),
@@ -116,8 +118,8 @@ export const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivEleme
     <div
       ref={ref}
       className={cn(
-        'px-6 py-4 border-b border-border-primary',
-        'bg-background-tertiary/50',
+        'px-6 py-4 border-b border-muted-200',
+        'bg-muted-100/60 dark:border-muted-800 dark:bg-muted-900/60',
         className
       )}
       {...props}
@@ -139,11 +141,7 @@ export const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivEleme
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn(
-        'px-6 py-4 border-t border-border-primary',
-        'bg-background-tertiary/30',
-        className
-      )}
+      className={cn('px-6 py-4 border-t border-muted-200 bg-muted-100/40 dark:border-muted-800 dark:bg-muted-900/50', className)}
       {...props}
     />
   )
