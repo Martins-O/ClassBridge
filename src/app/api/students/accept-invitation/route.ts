@@ -3,7 +3,7 @@ import connectDB from '@/lib/mongodb';
 import StudentInvitation from '@/models/StudentInvitation';
 import User from '@/models/User';
 import Class from '@/models/Class';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 // Function to generate unique student ID
 async function generateStudentId(schoolId: string): Promise<string> {

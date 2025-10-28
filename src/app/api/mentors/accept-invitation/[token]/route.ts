@@ -3,7 +3,7 @@ import connectDB from '@/lib/mongodb';
 import MentorInvitation from '@/models/MentorInvitation';
 import User from '@/models/User';
 import School from '@/models/School';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 export async function GET(
   request: NextRequest,
