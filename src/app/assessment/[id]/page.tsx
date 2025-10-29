@@ -77,29 +77,6 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
     }
   }, [assessment, attempt]);
 
-  const fetchAssessment = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/assessments/${params.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAssessment(data.assessment);
-
-        // Start a new attempt
-        await startNewAttempt();
-      } else {
-        setError('Assessment not found or not accessible');
-      }
-    } catch {
-      setError('Failed to load assessment');
-    } finally {
-      setLoading(false);
-    }
-  }, [params.id]);
-
-  useEffect(() => {
-    fetchAssessment();
-  }, [params.id, fetchAssessment]);
-
   const startNewAttempt = useCallback(async () => {
     try {
       const response = await fetch(`/api/assessments/${params.id}/attempts`, {
@@ -121,6 +98,29 @@ function AssessmentTakeContent({ params }: { params: { id: string } }) {
       setError('Failed to start assessment');
     }
   }, [params.id]);
+
+  const fetchAssessment = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/assessments/${params.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAssessment(data.assessment);
+
+        // Start a new attempt
+        await startNewAttempt();
+      } else {
+        setError('Assessment not found or not accessible');
+      }
+    } catch {
+      setError('Failed to load assessment');
+    } finally {
+      setLoading(false);
+    }
+  }, [params.id, startNewAttempt]);
+
+  useEffect(() => {
+    fetchAssessment();
+  }, [params.id, fetchAssessment]);
 
   const updateAnswer = (questionId: string, answer: string | number | string[]) => {
     setAnswers(prev => {

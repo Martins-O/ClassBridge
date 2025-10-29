@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { CourseCard } from '@/components/common/CourseCard';
+import { archiveCourse, updateCourse } from '@/lib/api/courses';
 
 interface Course {
   _id: string;
@@ -63,6 +64,7 @@ const INITIAL_FORM = {
   endDate: '',
   maxStudents: 30,
   syllabus: '',
+  isActive: true,
 };
 
 function CourseManagementContent() {
@@ -74,8 +76,27 @@ function CourseManagementContent() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState(INITIAL_FORM);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editFormData, setEditFormData] = useState(INITIAL_FORM);
+  const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);
+  const [archiveSubmitting, setArchiveSubmitting] = useState(false);
 
   const durationOptions = ['1 week', '2 weeks', '1 month', '2 months', '3 months', '6 months'];
+
+  const courseToForm = useCallback((course: Course) => ({
+    name: course.name ?? '',
+    description: course.description ?? '',
+    classId: course.classId?._id ?? '',
+    subject: course.subject ?? '',
+    duration: course.duration ?? '1 month',
+    startDate: course.startDate ? course.startDate.slice(0, 10) : '',
+    endDate: course.endDate ? course.endDate.slice(0, 10) : '',
+    maxStudents: course.maxStudents ?? 30,
+    syllabus: course.syllabus ?? '',
+    isActive: course.isActive,
+  }), []);
 
   const fetchUserAndData = useCallback(async () => {
     try {
@@ -126,10 +147,12 @@ function CourseManagementContent() {
     setSubmitting(true);
 
     try {
+      const { isActive: _ignoredIsActive, ...createPayload } = formData;
+      void _ignoredIsActive;
       const response = await fetch('/api/courses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(createPayload),
       });
 
       if (response.ok) {
@@ -153,13 +176,59 @@ function CourseManagementContent() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleEditInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = event.target;
+    setEditFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingCourse) return;
+
+    setEditSubmitting(true);
+    try {
+      await updateCourse(editingCourse._id, {
+        ...editFormData,
+        startDate: editFormData.startDate || null,
+        endDate: editFormData.endDate || null,
+      });
+      pushToast({ title: 'Course updated', description: `${editFormData.name} has been refreshed.`, intent: 'success' });
+      setShowEditForm(false);
+      setEditingCourse(null);
+      await fetchUserAndData();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update course';
+      pushToast({ title: 'Unable to update course', description: message, intent: 'danger' });
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
+  const handleArchiveConfirm = async () => {
+    if (!confirmArchiveId) return;
+    setArchiveSubmitting(true);
+    try {
+      await archiveCourse(confirmArchiveId);
+      pushToast({ title: 'Course archived', description: 'Learners will no longer see this course.', intent: 'info' });
+      setConfirmArchiveId(null);
+      await fetchUserAndData();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to archive course';
+      pushToast({ title: 'Archive failed', description: message, intent: 'danger' });
+    } finally {
+      setArchiveSubmitting(false);
+    }
+  };
+
   const handleEditCourse = useCallback((course: Course) => {
-    pushToast({ title: `Edit ${course.name}`, description: 'Editing courses will arrive soon.', intent: 'info' });
-  }, [pushToast]);
+    setEditingCourse(course);
+    setEditFormData(courseToForm(course));
+    setShowEditForm(true);
+  }, [courseToForm]);
 
   const handleArchiveCourse = useCallback((course: Course) => {
-    pushToast({ title: `Archive ${course.name}`, description: 'Contact support to archive a course.', intent: 'warning' });
-  }, [pushToast]);
+    setConfirmArchiveId(course._id);
+  }, []);
 
   const courseCards = useMemo(() => {
     if (courses.length === 0) {
@@ -198,6 +267,7 @@ function CourseManagementContent() {
               imageLabel={course.subject ?? course.name}
               createdAt={new Date(course.createdAt).toLocaleDateString()}
               href={`/dashboard/classes/${course.classId._id}`}
+              className={course.isActive ? undefined : 'opacity-60'}
               actions={[
                 {
                   label: `Edit ${course.name}`,
@@ -400,6 +470,189 @@ function CourseManagementContent() {
             />
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        open={showEditForm}
+        onClose={() => {
+          setShowEditForm(false);
+          setEditingCourse(null);
+        }}
+        title="Edit course"
+        description={editingCourse ? `Make quick adjustments to ${editingCourse.name}.` : 'Update course details.'}
+        actions={
+          <>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowEditForm(false);
+                setEditingCourse(null);
+              }}
+              disabled={editSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" form="edit-course-form" disabled={editSubmitting}>
+              {editSubmitting ? 'Saving…' : 'Save changes'}
+            </Button>
+          </>
+        }
+      >
+        <form id="edit-course-form" className="space-y-4" onSubmit={handleEditSubmit}>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Course name *</label>
+            <input
+              name="name"
+              value={editFormData.name}
+              onChange={handleEditInputChange}
+              required
+              placeholder="Design Thinking Fundamentals"
+              className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Description</label>
+            <textarea
+              name="description"
+              value={editFormData.description}
+              onChange={handleEditInputChange}
+              rows={3}
+              placeholder="Explain what students will gain from this course."
+              className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Assign to class *</label>
+              <select
+                name="classId"
+                value={editFormData.classId}
+                onChange={handleEditInputChange}
+                required
+                className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
+              >
+                <option value="">Select class</option>
+                {classes.map((cls) => (
+                  <option key={cls._id} value={cls._id}>
+                    {cls.name} · {cls.academicYear}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Subject</label>
+              <input
+                name="subject"
+                value={editFormData.subject}
+                onChange={handleEditInputChange}
+                placeholder="Leadership"
+                className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Duration *</label>
+              <select
+                name="duration"
+                value={editFormData.duration}
+                onChange={handleEditInputChange}
+                className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
+              >
+                {durationOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Maximum students</label>
+              <input
+                type="number"
+                min={1}
+                name="maxStudents"
+                value={editFormData.maxStudents}
+                onChange={handleEditInputChange}
+                className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Start date</label>
+              <input
+                type="date"
+                name="startDate"
+                value={editFormData.startDate}
+                onChange={handleEditInputChange}
+                className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-600 dark:text-muted-300">End date</label>
+              <input
+                type="date"
+                name="endDate"
+                value={editFormData.endDate}
+                onChange={handleEditInputChange}
+                className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-600 dark:text-muted-300">Syllabus URL</label>
+            <input
+              name="syllabus"
+              value={editFormData.syllabus}
+              onChange={handleEditInputChange}
+              placeholder="https://..."
+              className="w-full rounded-xl border border-muted-200 bg-white px-4 py-3 text-sm text-muted-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-muted-700 dark:bg-muted-900/70 dark:text-muted-100"
+            />
+          </div>
+
+          <div className="flex items-start justify-between gap-3 rounded-xl border border-muted-200 bg-white px-4 py-3 dark:border-muted-700 dark:bg-muted-900/60">
+            <div>
+              <p className="text-sm font-semibold text-muted-900 dark:text-white">Course visibility</p>
+              <p className="text-xs text-muted-500 dark:text-muted-300">Deactivate to hide this course from student dashboards.</p>
+            </div>
+            <label className="inline-flex items-center gap-2 text-sm font-medium text-muted-600 dark:text-muted-300">
+              <input
+                type="checkbox"
+                checked={Boolean(editFormData.isActive)}
+                onChange={(event) => setEditFormData((prev) => ({ ...prev, isActive: event.target.checked }))}
+                className="h-4 w-4 rounded border-muted-300 text-brand-600 focus:ring-brand-500"
+              />
+              <span>{editFormData.isActive ? 'Active' : 'Inactive'}</span>
+            </label>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        open={Boolean(confirmArchiveId)}
+        onClose={() => setConfirmArchiveId(null)}
+        title="Archive course"
+        description="Archived courses are hidden from student dashboards but remain in your records."
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmArchiveId(null)} disabled={archiveSubmitting}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleArchiveConfirm} disabled={archiveSubmitting}>
+              {archiveSubmitting ? 'Archiving…' : 'Archive course'}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-muted-600 dark:text-muted-300">
+          This course will be removed from active enrolment lists. You can re-enable it later from the edit panel.
+        </p>
       </Modal>
     </PageShell>
   );

@@ -33,6 +33,12 @@ export interface MentorInvitationData {
   inviterName: string;
 }
 
+export interface PasswordResetEmailData {
+  recipientEmail: string;
+  recipientName?: string;
+  resetToken: string;
+}
+
 export async function sendEmail(emailData: EmailData): Promise<boolean> {
   try {
     const sendSmtpEmail = new brevo.SendSmtpEmail();
@@ -242,6 +248,64 @@ If you didn't expect this invitation, you can safely ignore this email.
     subject: `Invitation to join ${data.className} at ${data.schoolName}`,
     htmlContent,
     textContent
+  };
+}
+
+export function generatePasswordResetEmail(data: PasswordResetEmailData): EmailData {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const resetUrl = `${baseUrl}/reset-password/${data.resetToken}`;
+  const name = data.recipientName ?? 'there';
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Reset your ClassBridge password</title>
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }
+        .container { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 20px 40px rgba(37, 99, 235, 0.08); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #2563eb, #7c3aed); color: #ffffff; padding: 28px 32px; }
+        .content { padding: 32px; color: #0f172a; }
+        .button { display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 9999px; font-weight: 600; margin: 24px 0; }
+        .button:hover { background: #1d4ed8; }
+        .footer { padding: 20px 32px 32px; font-size: 13px; color: #64748b; }
+        .note { margin-top: 24px; padding: 16px; background: #f1f5f9; border-radius: 10px; border: 1px solid #e2e8f0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1 style="margin: 0; font-size: 22px;">Reset your ClassBridge password</h1>
+        </div>
+        <div class="content">
+          <p>Hi ${name},</p>
+          <p>We received a request to reset the password for your ClassBridge account. Use the button below to choose a new password. This link is valid for the next hour.</p>
+          <p style="text-align: center;">
+            <a class="button" href="${resetUrl}">Create a new password</a>
+          </p>
+          <p>If you did not request a password reset, you can safely ignore this email. Your existing password will remain unchanged.</p>
+          <p class="note">
+            Need help? Contact your school administrator or reply to this email to reach the ClassBridge support team.
+          </p>
+        </div>
+        <div class="footer">
+          <p>&copy; ${new Date().getFullYear()} ClassBridge. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const textContent = `Hi ${name},\n\nUse the link below to reset your ClassBridge password. This link is valid for one hour.\n\n${resetUrl}\n\nIf you did not request this, you can ignore this email.`;
+
+  return {
+    to: data.recipientEmail,
+    toName: data.recipientName,
+    subject: 'Reset your ClassBridge password',
+    htmlContent,
+    textContent,
   };
 }
 
