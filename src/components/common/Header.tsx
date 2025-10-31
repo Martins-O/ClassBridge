@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useId, useMemo, useState, useEffect } from 'react';
+import { ReactNode, useId, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/ThemeProvider';
 

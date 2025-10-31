@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Button, LoadingButton } from '@/components/ui/Button';
+import { PublicHeader } from '@/components/PublicHeader';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -37,65 +38,17 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white">
-      {/* Header */}
-      <header className="bg-primary-500 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                <svg viewBox="0 0 40 40" className="w-6 h-6 text-primary-500" fill="none">
-                  <rect x="8" y="8" width="24" height="24" rx="2" stroke="currentColor" strokeWidth="2" />
-                  <rect x="3" y="22" width="2" height="8" fill="currentColor" rx="1" />
-                  <rect x="35" y="22" width="2" height="8" fill="currentColor" rx="1" />
-                  <rect x="19" y="17" width="2" height="13" fill="currentColor" rx="1" />
-                </svg>
-              </div>
-              <span className="text-xl font-bold">ClassBridge</span>
-            </Link>
-
-            {/* Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link href="/" className="text-white hover:text-primary-100 transition-colors">Home</Link>
-              <Link href="/#features" className="text-white hover:text-primary-100 transition-colors">Features</Link>
-              <Link href="/about" className="text-white hover:text-primary-100 transition-colors">About</Link>
-              <Link href="/contact" className="text-white hover:text-primary-100 transition-colors">Contact</Link>
-            </nav>
-
-            {/* CTA Buttons */}
-            <div className="flex items-center gap-4">
-              <Link href="/login">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="!border-2 !border-white !text-white hover:!bg-white hover:!text-primary-600"
-                >
-                  Sign in
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="!bg-white !text-primary-600 hover:!bg-primary-50 hover:!text-primary-700 font-semibold"
-                >
-                  Get Started
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white dark:from-muted-900 dark:to-muted-950">
+      <PublicHeader />
 
       {/* Hero Section */}
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
             Get in Touch
           </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+          <p className="text-xl text-gray-600 dark:text-muted-300 mb-8">
+            Have questions? We&apos;d love to hear from you. Send us a message and we&apos;ll respond as soon as possible.
           </p>
         </div>
       </section>
@@ -105,19 +58,19 @@ export default function ContactPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Contact Form */}
-            <div className="bg-white rounded-2xl p-8 shadow-card">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Send us a message</h2>
+            <div className="bg-white dark:bg-muted-900 rounded-2xl p-8 shadow-card">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Send us a message</h2>
               
               {submitted && (
                 <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                   <p className="text-green-800 font-medium">✓ Message sent successfully!</p>
-                  <p className="text-green-600 text-sm mt-1">We'll get back to you soon.</p>
+                  <p className="text-green-600 text-sm mt-1">We&apos;ll get back to you soon.</p>
                 </div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-muted-300 mb-2">
                     Your Name *
                   </label>
                   <input
@@ -133,7 +86,7 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-muted-300 mb-2">
                     Email Address *
                   </label>
                   <input
@@ -149,7 +102,7 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-muted-300 mb-2">
                     Subject *
                   </label>
                   <select
@@ -170,7 +123,7 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-muted-300 mb-2">
                     Message *
                   </label>
                   <textarea
@@ -198,8 +151,8 @@ export default function ContactPage() {
 
             {/* Contact Information */}
             <div className="space-y-8">
-              <div className="bg-white rounded-2xl p-8 shadow-card">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Contact Information</h3>
+              <div className="bg-white dark:bg-muted-900 rounded-2xl p-8 shadow-card">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Contact Information</h3>
                 
                 <div className="space-y-6">
                   <div className="flex items-start gap-4">
@@ -209,9 +162,9 @@ export default function ContactPage() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Email</h4>
-                      <p className="text-gray-600">support@classbridge.com</p>
-                      <p className="text-gray-600">sales@classbridge.com</p>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Email</h4>
+                      <p className="text-gray-600 dark:text-muted-300">support@classbridge.com</p>
+                      <p className="text-gray-600 dark:text-muted-300">sales@classbridge.com</p>
                     </div>
                   </div>
 
@@ -222,9 +175,9 @@ export default function ContactPage() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Phone</h4>
-                      <p className="text-gray-600">+1 (555) 123-4567</p>
-                      <p className="text-gray-600 text-sm">Mon-Fri, 9am-6pm EST</p>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Phone</h4>
+                      <p className="text-gray-600 dark:text-muted-300">+1 (555) 123-4567</p>
+                      <p className="text-gray-600 dark:text-muted-300 text-sm">Mon-Fri, 9am-6pm EST</p>
                     </div>
                   </div>
 
@@ -236,9 +189,9 @@ export default function ContactPage() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Office</h4>
-                      <p className="text-gray-600">123 Education Street</p>
-                      <p className="text-gray-600">San Francisco, CA 94102</p>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Office</h4>
+                      <p className="text-gray-600 dark:text-muted-300">123 Education Street</p>
+                      <p className="text-gray-600 dark:text-muted-300">San Francisco, CA 94102</p>
                     </div>
                   </div>
                 </div>
@@ -265,10 +218,10 @@ export default function ContactPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 mt-16">
+      <footer className="bg-gray-900 dark:bg-muted-950 dark:border-t dark:border-muted-800 text-white py-12 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <p className="text-gray-400">
+            <p className="text-gray-400 dark:text-muted-400">
               © 2025 ClassBridge. All rights reserved.
             </p>
           </div>

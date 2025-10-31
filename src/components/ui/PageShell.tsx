@@ -17,7 +17,7 @@ export function PageShell({ className, children, maxWidth = 'xl' }: PageShellPro
   return (
     <div
       className={cn(
-        'min-h-screen bg-surface-base px-4 pb-20 pt-16 sm:px-6 lg:px-10',
+        'min-h-screen bg-surface-base dark:bg-muted-950 px-4 pb-20 pt-16 sm:px-6 lg:px-10',
         className
       )}
     >
