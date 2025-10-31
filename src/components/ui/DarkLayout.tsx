@@ -63,6 +63,10 @@ export function DashboardLayout({
       key: 'notifications',
       ariaLabel: 'View notifications',
       badge: 3,
+      onClick: () => {
+        // TODO: Implement notifications panel
+        alert('Notifications feature coming soon!');
+      },
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082A2 2 0 0113 18H7a2 2 0 01-1.857-2.918l.857-1.714V10a6 6 0 0112 0v3.368l.857 1.714A2 2 0 0117 18h-4" />
@@ -73,6 +77,10 @@ export function DashboardLayout({
     {
       key: 'messages',
       ariaLabel: 'View messages',
+      onClick: () => {
+        // TODO: Implement messages panel
+        alert('Messages feature coming soon!');
+      },
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -83,6 +91,10 @@ export function DashboardLayout({
     {
       key: 'profile',
       ariaLabel: user ? `${user.name}'s profile` : 'Profile',
+      onClick: () => {
+        // Navigate to profile page
+        window.location.href = '/dashboard/profile';
+      },
       icon: (
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-200">
           {user?.avatarInitials ?? user?.name?.slice(0, 2).toUpperCase() ?? 'CB'}

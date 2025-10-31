@@ -1,12 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import {NextRequest, NextResponse} from 'next/server';
 import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import PasswordResetToken from '@/models/PasswordResetToken';
-import {
-  ValidationResult,
-  validateString,
-} from '@/lib/validation';
+import {validateString, ValidationResult,} from '@/lib/validation';
 
 export async function GET(
   _request: NextRequest,
@@ -64,8 +61,7 @@ export async function POST(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const hashedPassword = await bcrypt.hash(body.password, 12);
-    user.password = hashedPassword;
+    user.password = await bcrypt.hash(body.password, 12);
     await user.save();
 
     resetRecord.used = true;

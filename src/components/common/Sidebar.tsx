@@ -76,7 +76,7 @@ export function Sidebar({ sections, isOpen = true, onClose, className, activePat
           {onClose && (
             <button
               type="button"
-              className="rounded-lg p-2 text-muted-500 transition hover:bg-muted-100 hover:text-muted-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-muted-300 dark:hover:bg-muted-800"
+              className="rounded-lg p-2 text-muted-500 transition hover:bg-muted-100 hover:text-muted-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-muted-300 dark:hover:bg-muted-800 lg:hidden"
               aria-label="Close navigation"
               onClick={onClose}
             >

@@ -1,7 +1,8 @@
 'use client';
 
-import { ReactNode, useEffect, useId, useMemo, useState } from 'react';
+import { ReactNode, useId, useMemo, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/components/ThemeProvider';
 
 interface HeaderAction {
   key: string;
@@ -22,38 +23,12 @@ interface HeaderProps {
 
 const ICON_BUTTON_BASE = 'relative inline-flex h-10 w-10 items-center justify-center rounded-xl text-muted-500 transition hover:bg-muted-100 hover:text-muted-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-muted-300 dark:hover:bg-muted-800 dark:hover:text-white';
 
-function useThemePreference() {
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    const root = window.document.documentElement;
-    const saved = localStorage.getItem('classbridge-theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const nextDark = saved ? saved === 'dark' : prefersDark;
-    root.classList.toggle('dark', nextDark);
-    root.setAttribute('data-theme', nextDark ? 'dark' : 'light');
-    setIsDark(nextDark);
-  }, []);
-
-  const toggleTheme = () => {
-    setIsDark((prev) => {
-      const next = !prev;
-      const root = window.document.documentElement;
-      root.classList.toggle('dark', next);
-      root.setAttribute('data-theme', next ? 'dark' : 'light');
-      localStorage.setItem('classbridge-theme', next ? 'dark' : 'light');
-      return next;
-    });
-  };
-
-  return { isDark, toggleTheme };
-}
-
 export function Header({ title, subtitle, onToggleSidebar, actions, className, renderSearchResult }: HeaderProps) {
   const [query, setQuery] = useState('');
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const searchId = useId();
-  const { isDark, toggleTheme } = useThemePreference();
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
 
   const searchResults = useMemo(() => {
     if (!query || !renderSearchResult) return null;
@@ -93,7 +68,7 @@ export function Header({ title, subtitle, onToggleSidebar, actions, className, r
           {onToggleSidebar && (
             <button
               type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-muted-200 text-muted-600 transition hover:border-brand-500 hover:text-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-muted-700 dark:text-muted-200 dark:hover:text-white"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-muted-200 text-muted-600 transition hover:border-brand-500 hover:text-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-muted-700 dark:text-muted-200 dark:hover:text-white lg:hidden"
               onClick={onToggleSidebar}
               aria-label="Open navigation"
             >
