@@ -59,10 +59,7 @@ const MentorInvitationSchema = new Schema({
 
 // Index for efficient queries
 MentorInvitationSchema.index({ email: 1, schoolId: 1 });
-MentorInvitationSchema.index({ token: 1 });
-MentorInvitationSchema.index({ expiresAt: 1 });
 MentorInvitationSchema.index({ status: 1 });
-
 // Remove expired invitations automatically
 MentorInvitationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 

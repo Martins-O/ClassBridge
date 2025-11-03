@@ -34,6 +34,53 @@ interface StudentStats {
   averageGrade: number;
 }
 
+interface SchoolProfile {
+  _id: string;
+  name: string;
+  address?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  description?: string;
+  subscriptionType?: string;
+}
+
+interface ClassSnapshot {
+  _id: string;
+  name: string;
+  subject?: string;
+  academicYear?: string;
+  semester?: string;
+  cohort?: string;
+  duration?: string;
+  isActive?: boolean;
+  studentIds?: string[];
+  mentorIds?: string[];
+}
+
+interface MentorSnapshot {
+  _id: string;
+  name: string;
+  email: string;
+  isActive?: boolean;
+  assignedClasses?: Array<{ _id: string; name: string }>;
+}
+
+interface InvitationSnapshot {
+  _id: string;
+  name: string;
+  email: string;
+  status?: string;
+  createdAt: string;
+  expiresAt: string;
+  classId?: {
+    _id: string;
+    name: string;
+    academicYear?: string;
+    semester?: string;
+  };
+}
+
 type QuickAction = {
   title: string;
   description: string;
@@ -62,6 +109,11 @@ function DashboardContent() {
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [pendingRequests, setPendingRequests] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [schoolProfile, setSchoolProfile] = useState<SchoolProfile | null>(null);
+  const [classSnapshots, setClassSnapshots] = useState<ClassSnapshot[]>([]);
+  const [mentorSnapshots, setMentorSnapshots] = useState<MentorSnapshot[]>([]);
+  const [recentInvitations, setRecentInvitations] = useState<InvitationSnapshot[]>([]);
+  const [adminLoading, setAdminLoading] = useState(false);
 
   const resolveQuickActions = useCallback((currentUser: User | null): QuickAction[] => {
     if (!currentUser) return [];
@@ -209,6 +261,63 @@ function DashboardContent() {
     fetchStats();
   }, [fetchUser, fetchStats]);
 
+  useEffect(() => {
+    if (!user || user.role !== 'school_admin') return;
+
+    let ignore = false;
+
+    const loadSchoolAdminData = async () => {
+      setAdminLoading(true);
+      try {
+        const [schoolRes, classesRes, mentorsRes] = await Promise.all([
+          user.schoolId ? fetch(`/api/schools/${user.schoolId}`) : Promise.resolve(null),
+          fetch('/api/classes'),
+          fetch(`/api/mentors${user.schoolId ? `?schoolId=${user.schoolId}` : ''}`),
+        ]);
+
+        if (ignore) return;
+
+        let schoolData: SchoolProfile | null = null;
+        if (schoolRes && schoolRes.ok) {
+          const schoolJson = await schoolRes.json();
+          schoolData = (schoolJson.school ?? null) as SchoolProfile | null;
+        }
+
+        let classData: ClassSnapshot[] = [];
+        if (classesRes.ok) {
+          const classesJson = await classesRes.json();
+          classData = (classesJson.classes ?? []) as ClassSnapshot[];
+        }
+
+        let mentorData: MentorSnapshot[] = [];
+        if (mentorsRes.ok) {
+          const mentorsJson = await mentorsRes.json();
+          mentorData = (mentorsJson.mentors ?? []) as MentorSnapshot[];
+        }
+
+        if (!ignore) {
+          setSchoolProfile(schoolData);
+          setClassSnapshots(classData);
+          setMentorSnapshots(mentorData);
+        }
+      } catch (error) {
+        if (!ignore) {
+          console.error('Failed to load school admin data:', error);
+        }
+      } finally {
+        if (!ignore) {
+          setAdminLoading(false);
+        }
+      }
+    };
+
+    loadSchoolAdminData();
+
+    return () => {
+      ignore = true;
+    };
+  }, [user]);
+
   const fetchPendingRequests = useCallback(async () => {
     if (!user) return;
     if (user.role !== 'school_admin' && user.role !== 'mentor') return;
@@ -217,7 +326,8 @@ function DashboardContent() {
       const response = await fetch('/api/students/invitations');
       if (!response.ok) return;
       const data = await response.json();
-      const invitations = (data.invitations ?? []) as { status?: string }[];
+      const invitations = (data.invitations ?? []) as InvitationSnapshot[];
+      setRecentInvitations(invitations.slice(0, 5));
       const pending = invitations.filter((invitation) => invitation.status?.toLowerCase() === 'pending').length;
       setPendingRequests(pending);
     } catch (error) {
@@ -590,7 +700,10 @@ function DashboardContent() {
     ? `You are signed in as ${user.role.replace('_', ' ')}.`
     : 'Preparing personalised insights for your role.';
 
-  if (!user && !loading) {
+  const isSchoolAdmin = user?.role === 'school_admin';
+  const isLoading = loading || (isSchoolAdmin && adminLoading);
+
+  if (!user && !isLoading) {
     return (
       <DashboardLayout
         title="Session expired"

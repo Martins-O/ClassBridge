@@ -23,6 +23,8 @@ interface StudentStats {
   averageGrade: number;
 }
 
+type PossibleId = Types.ObjectId | string | null | undefined;
+
 const EMPTY_STATS: DashboardStats = {
   totalClasses: 0,
   totalSchools: 0,
@@ -47,11 +49,15 @@ function toObjectId(value: unknown): Types.ObjectId | undefined {
   }
 }
 
-function toStringSet(values: Array<Types.ObjectId | string | undefined | null>): Set<string> {
+function addIdToSet(set: Set<string>, value: PossibleId) {
+  if (!value) return;
+  set.add(value instanceof Types.ObjectId ? value.toString() : String(value));
+}
+
+function toStringSet(values: PossibleId[]): Set<string> {
   const set = new Set<string>();
-  values.forEach((value) => {
-    if (!value) return;
-    set.add(value instanceof Types.ObjectId ? value.toString() : String(value));
+  values.forEach((value: PossibleId) => {
+    addIdToSet(set, value);
   });
   return set;
 }
@@ -131,13 +137,11 @@ export async function GET(request: NextRequest) {
       const schoolIds = new Set<string>();
 
       mentorClasses.forEach((classDoc) => {
-        classDoc.studentIds?.forEach((studentId) => {
-          if (!studentId) return;
-          studentIds.add(studentId.toString());
+        classDoc.studentIds?.forEach((studentId: PossibleId) => {
+          addIdToSet(studentIds, studentId);
         });
-        classDoc.mentorIds?.forEach((mentorId) => {
-          if (!mentorId) return;
-          mentorIds.add(mentorId.toString());
+        classDoc.mentorIds?.forEach((mentorId: PossibleId) => {
+          addIdToSet(mentorIds, mentorId);
         });
         if (classDoc.schoolId) {
           schoolIds.add(classDoc.schoolId.toString());
@@ -177,8 +181,12 @@ export async function GET(request: NextRequest) {
     const schoolIds = new Set<string>();
 
     studentClasses.forEach((classDoc) => {
-      classDoc.mentorIds?.forEach((mentorId) => mentorIds.add(mentorId.toString()));
-      classDoc.studentIds?.forEach((studentId) => peerIds.add(studentId.toString()));
+      classDoc.mentorIds?.forEach((mentorId: PossibleId) => {
+        addIdToSet(mentorIds, mentorId);
+      });
+      classDoc.studentIds?.forEach((studentId: PossibleId) => {
+        addIdToSet(peerIds, studentId);
+      });
       if (classDoc.schoolId) {
         schoolIds.add(classDoc.schoolId.toString());
       }
@@ -207,8 +215,8 @@ export async function GET(request: NextRequest) {
 
     const [
       activeAssessments,
-      pendingAttempts,
-      completedAttempts,
+      pendingAttemptCount,
+      completedAttemptCount,
       gradeAggregate,
     ] = await Promise.all([
       Assessment.countDocuments(assessmentQuery),
@@ -224,7 +232,8 @@ export async function GET(request: NextRequest) {
       ? Math.round(gradeAggregate[0].avgPercentage)
       : 0;
 
-    const pendingAssessments = Math.max(activeAssessments - completedAttempts, pendingAttempts);
+    const pendingAssessments = Math.max(activeAssessments - completedAttemptCount, pendingAttemptCount);
+    const completedAssessments = completedAttemptCount;
 
     stats = {
       totalClasses: studentClasses.length,

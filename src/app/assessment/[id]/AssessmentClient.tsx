@@ -1,6 +1,6 @@
 'use client';
 
-import { AssessmentTakeContent } from './page';
+import { AssessmentTakeContent } from './AssessmentTakeContent';
 import AuthGuard from '@/components/AuthGuard';
 
 export default function AssessmentClient({ id }: { id: string }) {

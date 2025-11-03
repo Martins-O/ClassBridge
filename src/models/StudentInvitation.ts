@@ -65,7 +65,6 @@ const StudentInvitationSchema = new Schema({
 
 // Create indexes for better performance
 StudentInvitationSchema.index({ email: 1, classId: 1 });
-StudentInvitationSchema.index({ token: 1 });
-StudentInvitationSchema.index({ expiresAt: 1 });
+StudentInvitationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 export default mongoose.models.StudentInvitation || mongoose.model<IStudentInvitation>('StudentInvitation', StudentInvitationSchema);

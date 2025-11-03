@@ -192,7 +192,7 @@ const config: Config = {
         '4xl': ['2.25rem', { lineHeight: '2.5rem' }],    // 36px
         '5xl': ['3rem', { lineHeight: '1' }],            // 48px
         '6xl': ['3.75rem', { lineHeight: '1' }],         // 60px
-        'code': ['0.875rem', { lineHeight: '1.5', fontFamily: 'JetBrains Mono' }],
+        'code': ['0.875rem', { lineHeight: '1.5' }],
         // Display sizes for hero text
         'display-sm': ['2.25rem', { lineHeight: '2.5rem', fontWeight: '700', letterSpacing: '-0.025em' }],
         'display-md': ['2.875rem', { lineHeight: '3rem', fontWeight: '700', letterSpacing: '-0.025em' }],

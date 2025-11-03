@@ -32,8 +32,8 @@ const PasswordResetTokenSchema = new Schema({
   timestamps: true,
 });
 
-PasswordResetTokenSchema.index({ token: 1 });
 PasswordResetTokenSchema.index({ userId: 1, expiresAt: 1 });
+PasswordResetTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 export default models.PasswordResetToken
   || model<IPasswordResetToken>('PasswordResetToken', PasswordResetTokenSchema);

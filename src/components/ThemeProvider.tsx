@@ -40,11 +40,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     applyTheme(newTheme);
   };
 
-  // Prevent flash of unstyled content
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
+  // Always provide context so consumers can safely call the hook.
+  // While the theme is initializing, keep rendering children so SSR works.
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}

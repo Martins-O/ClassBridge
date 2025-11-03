@@ -1,7 +1,5 @@
 'use client';
 
-"use client";
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { AssessmentLayout } from '@/components/ui/AssessmentLayout';
@@ -47,14 +45,12 @@ interface AssessmentAttempt {
   timeSpent?: number;
 }
 
+type AnswerValue = Answer['answer'];
+
 export function AssessmentTakeContent({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [attempt, setAttempt] = useState<AssessmentAttempt | null>(null);
-  type Answer = {
-    questionId: string;
-    answer: any;
-  };
 
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -65,25 +61,7 @@ export function AssessmentTakeContent({ params }: { params: { id: string } }) {
   const [error, setError] = useState<string | null>(null);
   const [visitedQuestions, setVisitedQuestions] = useState<Set<number>>(new Set([0]));
   const submitRef = useRef<(() => void) | null>(null);
-  const saveTimeoutRef = useRef<NodeJS.Timeout>();
-
-  const fetchAssessment = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/assessments/${params.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAssessment(data.assessment);
-        await startNewAttempt();
-      } else {
-        setError('Failed to load assessment');
-      }
-    } catch (err) {
-      setError('An error occurred while loading the assessment');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [params.id]);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startNewAttempt = useCallback(async () => {
     try {
@@ -104,37 +82,23 @@ export function AssessmentTakeContent({ params }: { params: { id: string } }) {
     }
   }, [params.id]);
 
-  // Auto-save answers when they change
-  const handleAnswerChange = useCallback((questionId: string, answer: any) => {
-    setAnswers(prev => {
-      const existingIndex = prev.findIndex(a => a.questionId === questionId);
-      const newAnswers = existingIndex >= 0
-        ? prev.map((a, i) => i === existingIndex ? { ...a, answer } : a)
-        : [...prev, { questionId, answer }];
-      
-      // Auto-save with debounce
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
+  const fetchAssessment = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/assessments/${params.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAssessment(data.assessment);
+        await startNewAttempt();
+      } else {
+        setError('Failed to load assessment');
       }
-      
-      saveTimeoutRef.current = setTimeout(async () => {
-        if (attempt?._id) {
-          try {
-            setSaving(true);
-            await saveProgress();
-            toast.success('Progress saved', { icon: <CheckCircle className="w-5 h-5 text-green-500" /> });
-          } catch (err) {
-            console.error('Failed to save progress:', err);
-            toast.error('Failed to save progress');
-          } finally {
-            setSaving(false);
-          }
-        }
-      }, 1000);
-      
-      return newAnswers;
-    });
-  }, [attempt?._id]);
+    } catch (err) {
+      setError('An error occurred while loading the assessment');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [params.id, startNewAttempt]);
 
   const navigateToQuestion = useCallback((index: number) => {
     if (!assessment) return;
@@ -189,6 +153,38 @@ export function AssessmentTakeContent({ params }: { params: { id: string } }) {
     }
   }, [attempt?._id, answers, currentQuestionIndex, assessment?.timeLimit, timeRemaining]);
 
+  // Auto-save answers when they change
+  const handleAnswerChange = useCallback((questionId: string, answer: AnswerValue) => {
+    setAnswers(prev => {
+      const existingIndex = prev.findIndex(a => a.questionId === questionId);
+      const newAnswers = existingIndex >= 0
+        ? prev.map((a, i) => i === existingIndex ? { ...a, answer } : a)
+        : [...prev, { questionId, answer }];
+
+      // Auto-save with debounce
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      saveTimeoutRef.current = setTimeout(async () => {
+        if (attempt?._id) {
+          try {
+            setSaving(true);
+            await saveProgress();
+            toast.success('Progress saved', { icon: <CheckCircle className="w-5 h-5 text-green-500" /> });
+          } catch (err) {
+            console.error('Failed to save progress:', err);
+            toast.error('Failed to save progress');
+          } finally {
+            setSaving(false);
+          }
+        }
+      }, 1000);
+
+      return newAnswers;
+    });
+  }, [attempt?._id, saveProgress]);
+
   const handleSubmit = useCallback(async () => {
     if (!attempt || !assessment) return;
     
@@ -234,6 +230,12 @@ export function AssessmentTakeContent({ params }: { params: { id: string } }) {
       setSubmitting(false);
     }
   }, [attempt, assessment, answers, timeRemaining, params.id, router]);
+
+  useEffect(() => {
+    submitRef.current = () => {
+      void handleSubmit();
+    };
+  }, [handleSubmit]);
 
   // Timer effect with warnings
   useEffect(() => {
@@ -299,6 +301,28 @@ export function AssessmentTakeContent({ params }: { params: { id: string } }) {
     };
   }, [fetchAssessment, attempt?._id, answers, currentQuestionIndex, assessment?.timeLimit, timeRemaining]);
 
+  const currentQuestion = assessment?.questions[currentQuestionIndex];
+  const isLastQuestion = assessment ? currentQuestionIndex === assessment.questions.length - 1 : false;
+
+  const handleKeyboardNext = useCallback(() => {
+    if (isLastQuestion) {
+      void handleSubmit();
+    } else {
+      handleNext();
+    }
+  }, [handleSubmit, handleNext, isLastQuestion]);
+
+  const handleKeyboardSave = useCallback(() => {
+    if (saving || submitting) return;
+    void saveProgress();
+  }, [saveProgress, saving, submitting]);
+
+  useKeyboardNavigation({
+    onPrevious: handlePrevious,
+    onNext: handleKeyboardNext,
+    onSave: handleKeyboardSave,
+  });
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
@@ -338,7 +362,7 @@ export function AssessmentTakeContent({ params }: { params: { id: string } }) {
     );
   }
 
-  if (!assessment) {
+  if (!assessment || !currentQuestion) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
@@ -347,9 +371,6 @@ export function AssessmentTakeContent({ params }: { params: { id: string } }) {
       </div>
     );
   }
-
-  const currentQuestion = assessment.questions[currentQuestionIndex];
-  const isLastQuestion = currentQuestionIndex === (assessment.questions?.length || 0) - 1;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -547,7 +568,11 @@ export function AssessmentTakeContent({ params }: { params: { id: string } }) {
 }
 
 // Helper functions for rendering different question types
-function renderQuestionInput(question: Question, answers: Answer[], onChange: (questionId: string, answer: any) => void) {
+function renderQuestionInput(
+  question: Question,
+  answers: Answer[],
+  onChange: (questionId: string, answer: AnswerValue) => void
+) {
   const answer = answers.find(a => a.questionId === question.id)?.answer;
   
   switch (question.type) {
@@ -674,38 +699,33 @@ function isAnswerValid(question: Question, answers: Answer[]): boolean {
 }
 
 // Add keyboard navigation for better accessibility
-function useKeyboardNavigation() {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target && 
-          (e.target as HTMLElement).tagName.toLowerCase() === 'input' || 
-          (e.target as HTMLElement).tagName.toLowerCase() === 'textarea' ||
-          (e.target as HTMLElement).isContentEditable) {
-        return; // Don't interfere with form inputs
-      }
-      
-      if (e.key === 'ArrowLeft' || (e.key === 'p' && e.altKey)) {
-        const prevButton = document.querySelector('button[aria-label="Previous question"]') as HTMLButtonElement;
-        if (prevButton && !prevButton.disabled) {
-          prevButton.click();
-        }
-      } else if (e.key === 'ArrowRight' || (e.key === 'n' && e.altKey)) {
-        const nextButton = document.querySelector('button[aria-label="Next question"]') as HTMLButtonElement;
-        if (nextButton && !nextButton.disabled) {
-          nextButton.click();
-        }
-      } else if (e.key === 's' && e.altKey) {
-        const saveButton = document.querySelector('button[aria-label="Save progress"]') as HTMLButtonElement;
-        if (saveButton && !saveButton.disabled) {
-          saveButton.click();
-        }
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+interface KeyboardNavigationHandlers {
+  onPrevious: () => void;
+  onNext: () => void | Promise<void>;
+  onSave: () => void | Promise<void>;
 }
 
-// Add this hook to your component
-useKeyboardNavigation();
+function useKeyboardNavigation({ onPrevious, onNext, onSave }: KeyboardNavigationHandlers) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tagName = target.tagName.toLowerCase();
+        if (tagName === 'input' || tagName === 'textarea' || target.isContentEditable) {
+          return; // Don't interfere with form inputs
+        }
+      }
+
+      if (e.key === 'ArrowLeft' || (e.key === 'p' && e.altKey)) {
+        onPrevious();
+      } else if (e.key === 'ArrowRight' || (e.key === 'n' && e.altKey)) {
+        void onNext();
+      } else if (e.key === 's' && e.altKey) {
+        void onSave();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onPrevious, onNext, onSave]);
+}
