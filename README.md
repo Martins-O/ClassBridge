@@ -1,45 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+The repository is now split into dedicated frontend and backend workspaces:
 
-## Configuration
+- `Frontend/` – Next.js application (original survey client)
+- `Backend/` – Node.js + TypeScript API skeleton with MongoDB utilities
 
-- Set `SESSION_SECRET` in your runtime environment to enable signed authentication cookies. A fallback is used in development, but production deployments must define this value explicitly.
-
-## Getting Started
-
-First, run the development server:
+## Frontend (Next.js)
 
 ```bash
+cd Frontend
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app boots on [http://localhost:3000](http://localhost:3000). Environment files such as `.env.local` now live inside the `Frontend/` directory. Set `BACKEND_URL` (defaults to `http://localhost:4000`) if the API runs elsewhere; requests to `/api/*` are proxied to this backend URL via `next.config.ts`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Backend (Node + TypeScript)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cd Backend
+npm install
+npm run dev
+```
 
-## Learn More
+The Express server listens on port `4000` by default. Copy `.env.example` to `.env` inside `Backend/` to customise the port or MongoDB connection string.
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run build` compiles TypeScript to `dist/`
+- `npm run start` runs the compiled server
+- `npm run reset:db` drops the configured MongoDB database (replaces the old `scripts/reset-database.js` helper)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Cookies are used for authentication, so set `CORS_ORIGIN` (comma-separated) to the frontend origins that should receive credentials.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-## Local Database
-
-- Local MongoDB data is stored in the `data/` directory, which is ignored from version control.
-- If you need to clear the local database, run `node scripts/reset-database.js`.
+Local MongoDB data files and logs have been moved under `Backend/data/` and `Backend/logs/` and remain ignored by git.
