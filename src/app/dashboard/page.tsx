@@ -728,6 +728,533 @@ function DashboardContent() {
     );
   }
 
+  if (isSchoolAdmin && user) {
+    const schoolName = schoolProfile?.name ?? 'your school';
+    const adminTitle = `${greeting}, ${user.name.split(' ')[0]}!`;
+    const adminSubtitle = schoolProfile
+      ? `Here's what's happening across ${schoolName}.`
+      : 'Monitor your school-wide activity and take the next best step.';
+
+    const adminHighlightCards = [
+      {
+        label: 'Classes running',
+        value: formatNumber(stats.totalClasses),
+        helper: 'Active cohorts this term',
+        icon: (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+          </svg>
+        ),
+        tone: 'bg-brand-500/15 text-brand-600 dark:bg-brand-500/20 dark:text-brand-200',
+      },
+      {
+        label: 'Mentors engaged',
+        value: formatNumber(stats.totalMentors),
+        helper: 'Guiding your learners',
+        icon: (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5.121 17.804A7 7 0 1118.88 17.8L12 21l-6.879-3.196z" />
+          </svg>
+        ),
+        tone: 'bg-secondary-500/15 text-secondary-600 dark:bg-secondary-500/20 dark:text-secondary-200',
+      },
+      {
+        label: 'Students enrolled',
+        value: formatNumber(stats.totalStudents),
+        helper: 'Across all classes',
+        icon: (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.5a2.75 2.75 0 110 5.5 2.75 2.75 0 010-5.5z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 20.25A5.25 5.25 0 0112 15a5.25 5.25 0 015.25 5.25" />
+          </svg>
+        ),
+        tone: 'bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-200',
+      },
+      {
+        label: 'Invites pending',
+        value: formatNumber(pendingRequests),
+        helper: 'Awaiting acceptance',
+        icon: (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3c-.07.63-.1 1.28-.1 1.94 0 5.23 2.52 9.9 6.43 12.84.76.56 1.41 1.17 1.96 1.82" />
+          </svg>
+        ),
+        tone: 'bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-200',
+      },
+    ];
+
+    const topClasses = classSnapshots.slice(0, 3);
+    const openInvites = recentInvitations.slice(0, 4);
+    const mentorHighlights = mentorSnapshots.slice(0, 3);
+
+    const classesNeedingMentor = classSnapshots.filter((klass) => (klass.mentorIds?.length ?? 0) === 0).length;
+    const invitesExpiringSoon = recentInvitations.filter((invite) => {
+      if (invite.status?.toLowerCase() !== 'pending') return false;
+      const expiresIn = new Date(invite.expiresAt).getTime() - Date.now();
+      return expiresIn > 0 && expiresIn <= 72 * 60 * 60 * 1000;
+    }).length;
+    const pendingInvitesLabel = pendingRequests === 1 ? 'invite' : 'invites';
+
+    const adminTasks = [
+      pendingRequests > 0
+        ? {
+            id: 'pending-invites',
+            label: 'Review pending invitations',
+            detail: `${pendingRequests} ${pendingInvitesLabel} awaiting action`,
+            href: '/dashboard/invitations',
+            tone: 'bg-brand-500/10 text-brand-600 dark:bg-brand-500/20 dark:text-brand-200',
+            icon: (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l9 6 9-6m-9 6v7" />
+              </svg>
+            ),
+          }
+        : null,
+      classesNeedingMentor > 0
+        ? {
+            id: 'mentor-coverage',
+            label: 'Assign mentors to uncovered classes',
+            detail: `${classesNeedingMentor} class${classesNeedingMentor === 1 ? '' : 'es'} need mentor coverage`,
+            href: '/dashboard/classes',
+            tone: 'bg-secondary-500/10 text-secondary-600 dark:bg-secondary-500/20 dark:text-secondary-200',
+            icon: (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            ),
+          }
+        : null,
+      invitesExpiringSoon > 0
+        ? {
+            id: 'expiring-invites',
+            label: 'Follow up on expiring invitations',
+            detail: `${invitesExpiringSoon} pending invite${invitesExpiringSoon === 1 ? ' is' : 's are'} expiring soon`,
+            href: '/dashboard/invitations',
+            tone: 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-200',
+            icon: (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l3 3" />
+              </svg>
+            ),
+          }
+        : null,
+    ].filter(Boolean) as Array<{
+      id: string;
+      label: string;
+      detail: string;
+      href: string;
+      tone: string;
+      icon: ReactNode;
+    }>;
+
+    if (adminTasks.length < 3) {
+      adminTasks.push(
+        {
+          id: 'grade-trends',
+          label: 'Review grade trends',
+          detail: 'Check assessment outcomes to celebrate wins and course-correct early.',
+          href: '/dashboard/grades',
+          tone: 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-200',
+          icon: (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4-4 4 4 8-8" />
+            </svg>
+          ),
+        },
+        {
+          id: 'mentor-recognition',
+          label: 'Share a mentor spotlight',
+          detail: 'Highlight mentor impact to boost morale and engagement.',
+          href: '/dashboard/mentor',
+          tone: 'bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-200',
+          icon: (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6l3 3-3 3m0 0l-3-3 3-3m0 6v6" />
+            </svg>
+          ),
+        },
+      );
+    }
+
+    const adminQuickActions = quickActions.slice(0, 3);
+
+    const renderAdminSkeleton = (
+      <section className="space-y-8">
+        <div className="h-48 animate-pulse rounded-3xl bg-muted-200/60 dark:bg-muted-800/60" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="h-32 animate-pulse rounded-2xl bg-muted-200/60 dark:bg-muted-800/60" />
+          ))}
+        </div>
+        <div className="h-64 animate-pulse rounded-2xl bg-muted-200/60 dark:bg-muted-800/60" />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="h-60 animate-pulse rounded-2xl bg-muted-200/60 dark:bg-muted-800/60" />
+          <div className="h-60 animate-pulse rounded-2xl bg-muted-200/60 dark:bg-muted-800/60" />
+        </div>
+      </section>
+    );
+
+    const getInvitationStatusStyles = (status?: string) => {
+      const safeStatus = status?.toLowerCase();
+      if (safeStatus === 'accepted') {
+        return 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-200';
+      }
+      if (safeStatus === 'expired') {
+        return 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-200';
+      }
+      return 'bg-brand-500/10 text-brand-600 dark:bg-brand-500/20 dark:text-brand-200';
+    };
+
+    return (
+      <DashboardLayout
+        title={adminTitle}
+        subtitle={adminSubtitle}
+        sidebarSections={sidebarSections}
+        user={{ name: user.name, role: user.role }}
+        rightSidebar={rightSidebarProps}
+      >
+        {isLoading ? (
+          renderAdminSkeleton
+        ) : (
+          <section className="space-y-8">
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+              <div className="rounded-3xl border border-muted-200 bg-gradient-to-br from-brand-500/10 via-primary-500/5 to-secondary-500/10 p-8 shadow-card dark:border-muted-800 dark:from-brand-500/10 dark:via-primary-500/10 dark:to-secondary-500/10">
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                  <div className="space-y-4">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-600 dark:bg-white/10 dark:text-brand-200">
+                      <span>School admin workspace</span>
+                      {schoolProfile?.subscriptionType && (
+                        <span className="rounded-full bg-brand-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-brand-600 dark:bg-brand-500/20 dark:text-brand-200">
+                          {schoolProfile.subscriptionType}
+                        </span>
+                      )}
+                    </div>
+                    <h1 className="text-3xl font-semibold text-muted-900 dark:text-white sm:text-4xl">
+                      {schoolProfile?.name ?? 'Welcome back'}
+                    </h1>
+                    <p className="max-w-xl text-sm text-muted-600 dark:text-muted-300">
+                      Keep tabs on learner momentum, mentor coverage, and onboarding in one place. Action insights right when they matter.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-1 text-xs font-semibold text-brand-600 shadow-sm dark:bg-white/10 dark:text-brand-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h10M4 18h7" />
+                        </svg>
+                        {formatNumber(stats.totalClasses)} classes
+                      </span>
+                      <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-1 text-xs font-semibold text-secondary-600 shadow-sm dark:bg-white/10 dark:text-secondary-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5.121 17.804A7 7 0 1118.88 17.8L12 21l-6.879-3.196z" />
+                        </svg>
+                        {formatNumber(stats.totalMentors)} mentors
+                      </span>
+                      <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-1 text-xs font-semibold text-amber-600 shadow-sm dark:bg-white/10 dark:text-amber-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l3 3" />
+                        </svg>
+                        {formatNumber(pendingRequests)} pending
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <Link
+                      href="/dashboard/school"
+                      className="inline-flex items-center justify-center rounded-xl border border-white/40 bg-white/80 px-4 py-2 text-sm font-semibold text-brand-600 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-white/10 dark:bg-white/10 dark:text-brand-200 dark:hover:bg-white/15"
+                    >
+                      Manage school profile
+                    </Link>
+                    <Link
+                      href="/dashboard/invitations"
+                      className="inline-flex items-center justify-center rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                    >
+                      Invite learners
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-muted-200 bg-white p-6 shadow-card dark:border-muted-800 dark:bg-muted-900/80">
+                <h2 className="text-lg font-semibold text-muted-900 dark:text-white">Operational health</h2>
+                <p className="mt-1 text-sm text-muted-500 dark:text-muted-300">Monitor engagement across classrooms and mentorship.</p>
+                <div className="mt-6 space-y-5">
+                  <div>
+                    <div className="flex items-center justify-between text-sm text-muted-600 dark:text-muted-300">
+                      <span>Assessment completion</span>
+                      <span className="font-semibold text-muted-900 dark:text-white">{completionRate}%</span>
+                    </div>
+                    <ProgressBar progress={completionRate} className="mt-2" ariaLabel="Assessment completion rate" />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between text-sm text-muted-600 dark:text-muted-300">
+                      <span>Mentor engagement</span>
+                      <span className="font-semibold text-muted-900 dark:text-white">{formatNumber(stats.totalMentors)}</span>
+                    </div>
+                    <ProgressBar
+                      progress={Math.min(100, stats.totalMentors * 5)}
+                      className="mt-2"
+                      ariaLabel="Mentor engagement"
+                      indicatorClassName="bg-secondary-500"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between text-sm text-muted-600 dark:text-muted-300">
+                      <span>Student participation</span>
+                      <span className="font-semibold text-muted-900 dark:text-white">{formatNumber(stats.totalStudents)}</span>
+                    </div>
+                    <ProgressBar
+                      progress={Math.min(100, stats.totalStudents * 2)}
+                      className="mt-2"
+                      ariaLabel="Student participation"
+                      indicatorClassName="bg-emerald-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {adminHighlightCards.map((card) => (
+                <div
+                  key={card.label}
+                  className="rounded-2xl border border-muted-200 bg-white p-6 shadow-card transition hover:-translate-y-0.5 hover:shadow-card-hover dark:border-muted-800 dark:bg-muted-900/80"
+                >
+                  <div className="flex items-center gap-4">
+                    <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${card.tone}`}>
+                      {card.icon}
+                    </span>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-500 dark:text-muted-400">{card.label}</p>
+                      <p className="mt-1 text-2xl font-semibold text-muted-900 dark:text-white">{card.value}</p>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-xs text-muted-500 dark:text-muted-400">{card.helper}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-2xl border border-muted-200 bg-white p-6 shadow-card dark:border-muted-800 dark:bg-muted-900/80">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-muted-900 dark:text-white">Quick actions</h2>
+                  <p className="mt-1 text-sm text-muted-500 dark:text-muted-300">Accelerate common workflows in a click.</p>
+                </div>
+                <Link
+                  href="/dashboard/classes"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 transition hover:text-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                >
+                  View all tools
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5l6 6-6 6m-9-6h14.25" />
+                  </svg>
+                </Link>
+              </div>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {adminQuickActions.map((action) => (
+                  <Link
+                    key={action.title}
+                    href={action.href}
+                    className="group flex h-full flex-col justify-between rounded-xl border border-muted-200 bg-surface-base/60 p-5 transition hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-card-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-muted-800 dark:bg-muted-900/60"
+                  >
+                    <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-brand-500/10 text-brand-600 transition group-hover:bg-brand-500 group-hover:text-white dark:bg-brand-500/20 dark:text-brand-200">
+                      {action.icon}
+                    </span>
+                    <div className="mt-4 space-y-2">
+                      <p className="text-sm font-semibold text-muted-900 dark:text-white">{action.title}</p>
+                      <p className="text-sm text-muted-600 dark:text-muted-300">{action.description}</p>
+                    </div>
+                  </Link>
+                ))}
+                {adminQuickActions.length === 0 && (
+                  <div className="col-span-full rounded-xl border border-dashed border-muted-200 p-6 text-center text-sm text-muted-500 dark:border-muted-800 dark:text-muted-300">
+                    No quick actions yet. Configure your school profile to unlock shortcuts.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+              <div className="rounded-2xl border border-muted-200 bg-white p-6 shadow-card dark:border-muted-800 dark:bg-muted-900/80">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-muted-900 dark:text-white">Active cohorts</h2>
+                    <p className="mt-1 text-sm text-muted-500 dark:text-muted-300">Top classes and coverage at a glance.</p>
+                  </div>
+                  <Link
+                    href="/dashboard/classes"
+                    className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-600 transition hover:text-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  >
+                    Manage classes
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5l6 6-6 6m-9-6h14.25" />
+                    </svg>
+                  </Link>
+                </div>
+                <ul className="mt-6 space-y-4">
+                  {topClasses.map((klass) => {
+                    const studentCount = klass.studentIds?.length ?? 0;
+                    const mentorCount = klass.mentorIds?.length ?? 0;
+                    const statusTone = klass.isActive ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-200' : 'bg-muted-200 text-muted-600 dark:bg-muted-800 dark:text-muted-300';
+                    return (
+                      <li key={klass._id} className="rounded-xl border border-muted-200 bg-surface-base/70 p-4 dark:border-muted-800 dark:bg-muted-900/60">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-muted-900 dark:text-white">{klass.name}</p>
+                            <p className="text-xs text-muted-500 dark:text-muted-300">
+                              {[klass.subject, klass.academicYear, klass.semester].filter(Boolean).join(' • ') || 'General programme'}
+                            </p>
+                          </div>
+                          <span className={`inline-flex h-7 items-center justify-center rounded-full px-3 text-xs font-semibold ${statusTone}`}>
+                            {klass.isActive ? 'Active' : 'Paused'}
+                          </span>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-500 dark:text-muted-300">
+                          <span className="inline-flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M7 20v-1a4 4 0 018 0v1M12 11a3 3 0 100-6 3 3 0 000 6z" />
+                            </svg>
+                            {formatNumber(mentorCount)} mentor{mentorCount === 1 ? '' : 's'}
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h-1a4 4 0 00-8 0H7a2 2 0 01-2-2v-5a2 2 0 012-2h10a2 2 0 012 2v5a2 2 0 01-2 2z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 9a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            {formatNumber(studentCount)} learner{studentCount === 1 ? '' : 's'}
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  })}
+                  {topClasses.length === 0 && (
+                    <li className="rounded-xl border border-dashed border-muted-200 p-6 text-sm text-muted-500 dark:border-muted-800 dark:text-muted-300">
+                      No classes found yet. Create your first cohort to see insights here.
+                    </li>
+                  )}
+                </ul>
+              </div>
+
+              <div className="rounded-2xl border border-muted-200 bg-white p-6 shadow-card dark:border-muted-800 dark:bg-muted-900/80">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-muted-900 dark:text-white">Latest invitations</h2>
+                    <p className="mt-1 text-sm text-muted-500 dark:text-muted-300">Track who has joined and who still needs a nudge.</p>
+                  </div>
+                  <Link
+                    href="/dashboard/invitations"
+                    className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-600 transition hover:text-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  >
+                    View all
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5l6 6-6 6m-9-6h14.25" />
+                    </svg>
+                  </Link>
+                </div>
+                <ul className="mt-6 space-y-4">
+                  {openInvites.map((invite) => (
+                    <li key={invite._id} className="rounded-xl border border-muted-200 bg-surface-base/70 p-4 dark:border-muted-800 dark:bg-muted-900/60">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-muted-900 dark:text-white">{invite.name}</p>
+                          <p className="text-xs text-muted-500 dark:text-muted-300">{invite.email}</p>
+                          <p className="mt-1 text-[11px] uppercase tracking-wide text-muted-400 dark:text-muted-500">
+                            {invite.classId?.name ?? 'General invite'}
+                          </p>
+                        </div>
+                        <span className={`inline-flex h-7 items-center justify-center rounded-full px-3 text-xs font-semibold ${getInvitationStatusStyles(invite.status)}`}>
+                          {(invite.status ?? 'Pending').replace('_', ' ')}
+                        </span>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-4 text-[11px] uppercase tracking-wide text-muted-400 dark:text-muted-500">
+                        <span>Sent {new Date(invite.createdAt).toLocaleDateString()}</span>
+                        <span>Expires {new Date(invite.expiresAt).toLocaleDateString()}</span>
+                      </div>
+                    </li>
+                  ))}
+                  {openInvites.length === 0 && (
+                    <li className="rounded-xl border border-dashed border-muted-200 p-6 text-sm text-muted-500 dark:border-muted-800 dark:text-muted-300">
+                      No invitations yet. Invite students or mentors to kickstart engagement.
+                    </li>
+                  )}
+                </ul>
+              </div>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+              <div className="rounded-2xl border border-muted-200 bg-white p-6 shadow-card dark:border-muted-800 dark:bg-muted-900/80">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-muted-900 dark:text-white">Mentor spotlight</h2>
+                    <p className="mt-1 text-sm text-muted-500 dark:text-muted-300">Recognise mentors driving impact this week.</p>
+                  </div>
+                  <Link
+                    href="/dashboard/mentor"
+                    className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-600 transition hover:text-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  >
+                    Manage mentors
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5l6 6-6 6m-9-6h14.25" />
+                    </svg>
+                  </Link>
+                </div>
+                <ul className="mt-6 space-y-4">
+                  {mentorHighlights.map((mentor) => (
+                    <li key={mentor._id} className="flex items-start justify-between gap-4 rounded-xl border border-muted-200 bg-surface-base/70 p-4 dark:border-muted-800 dark:bg-muted-900/60">
+                      <div>
+                        <p className="text-sm font-semibold text-muted-900 dark:text-white">{mentor.name}</p>
+                        <p className="text-xs text-muted-500 dark:text-muted-300">{mentor.email}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-muted-900 dark:text-white">{formatNumber(mentor.assignedClasses?.length ?? 0)} class{(mentor.assignedClasses?.length ?? 0) === 1 ? '' : 'es'}</p>
+                        <p className="text-xs text-muted-500 dark:text-muted-300">{mentor.isActive === false ? 'Inactive' : 'Active mentor'}</p>
+                      </div>
+                    </li>
+                  ))}
+                  {mentorHighlights.length === 0 && (
+                    <li className="rounded-xl border border-dashed border-muted-200 p-6 text-sm text-muted-500 dark:border-muted-800 dark:text-muted-300">
+                      Invite your first mentor to see coaching insights appear here.
+                    </li>
+                  )}
+                </ul>
+              </div>
+
+              <div className="rounded-2xl border border-muted-200 bg-white p-6 shadow-card dark:border-muted-800 dark:bg-muted-900/80">
+                <h2 className="text-lg font-semibold text-muted-900 dark:text-white">Operational checklist</h2>
+                <p className="mt-1 text-sm text-muted-500 dark:text-muted-300">Stay on top of the actions that keep everything moving.</p>
+                <ul className="mt-6 space-y-4">
+                  {adminTasks.map((task) => (
+                    <li key={task.id} className="flex items-start gap-3">
+                      <span className={`mt-1 flex h-8 w-8 items-center justify-center rounded-lg ${task.tone}`}>
+                        {task.icon}
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-muted-900 dark:text-white">{task.label}</p>
+                        <p className="text-xs text-muted-500 dark:text-muted-300">{task.detail}</p>
+                        <Link
+                          href={task.href}
+                          className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 transition hover:text-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                        >
+                          Go to task
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5l6 6-6 6m-9-6h14.25" />
+                          </svg>
+                        </Link>
+                      </div>
+                    </li>
+                  ))}
+                  {adminTasks.length === 0 && (
+                    <li className="rounded-xl border border-dashed border-muted-200 p-6 text-sm text-muted-500 dark:border-muted-800 dark:text-muted-300">
+                      You're all caught up. Check back later for personalised recommendations.
+                    </li>
+                  )}
+                </ul>
+              </div>
+            </div>
+          </section>
+        )}
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout
       title={layoutTitle}
