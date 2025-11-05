@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+/Frontend/node_modules
+/Backend/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -14,11 +16,12 @@
 /coverage
 
 # next.js
-/.next/
-/out/
+/Frontend/.next/
+/Frontend/out/
 
 # production
 /build
+/Backend/dist
 
 # misc
 .DS_Store
@@ -40,6 +43,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# local database artifacts
-mongodb.log
-data/
+# backend artifacts
+/Backend/logs/
+/Backend/data/
+
+.idea
+.claude
+.qodo
