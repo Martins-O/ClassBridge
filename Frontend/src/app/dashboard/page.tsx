@@ -695,12 +695,202 @@ function DashboardContent() {
     ];
   }, [pendingRequests, stats, studentStats, user]);
 
+  const isSuperAdmin = user?.role === 'super_admin';
+  const isSchoolAdmin = user?.role === 'school_admin';
+
+  const superAdminMetrics = useMemo(() => {
+    const classesPerSchool = stats.totalSchools > 0 ? stats.totalClasses / stats.totalSchools : 0;
+    const activationProgress = Math.min(100, Math.round((classesPerSchool / 5) * 100));
+    const mentorToStudentRatio = stats.totalMentors > 0 ? stats.totalStudents / stats.totalMentors : null;
+    const mentorCoverageProgress =
+      stats.totalStudents > 0 && stats.totalMentors > 0
+        ? Math.min(100, Math.round((stats.totalMentors / stats.totalStudents) * 2000))
+        : 0;
+    const learnerLoadProgress =
+      stats.totalSchools > 0
+        ? Math.min(100, Math.round(((stats.totalStudents / stats.totalSchools) / 250) * 100))
+        : 0;
+
+    return {
+      classesPerSchool,
+      activationProgress: Number.isFinite(activationProgress) ? activationProgress : 0,
+      mentorToStudentRatio,
+      mentorCoverageProgress,
+      learnerLoadProgress,
+    };
+  }, [stats.totalClasses, stats.totalMentors, stats.totalSchools, stats.totalStudents]);
+
+  const superAdminOverviewCards = useMemo(
+    () =>
+      isSuperAdmin
+        ? [
+            {
+              id: 'schools',
+              label: 'Schools live',
+              value: formatNumber(stats.totalSchools),
+              helper: 'Organisations with active workspaces',
+            },
+            {
+              id: 'classes',
+              label: 'Active cohorts',
+              value: formatNumber(stats.totalClasses),
+              helper: 'Classes currently running',
+            },
+            {
+              id: 'mentors',
+              label: 'Mentor community',
+              value: formatNumber(stats.totalMentors),
+              helper: 'Guiding students weekly',
+            },
+            {
+              id: 'students',
+              label: 'Learners supported',
+              value: formatNumber(stats.totalStudents),
+              helper: 'Students with access',
+            },
+          ]
+        : [],
+    [isSuperAdmin, stats.totalClasses, stats.totalMentors, stats.totalSchools, stats.totalStudents],
+  );
+
+  const superAdminHeroHighlights = useMemo(
+    () =>
+      isSuperAdmin
+        ? [
+            {
+              id: 'network-size',
+              label: 'Network size',
+              value: formatNumber(stats.totalSchools),
+              helper: 'Schools connected',
+            },
+            {
+              id: 'learner-population',
+              label: 'Learner population',
+              value: formatNumber(stats.totalStudents),
+              helper: 'Students onboarded',
+            },
+            {
+              id: 'mentor-coverage',
+              label: 'Mentor coverage',
+              value: formatNumber(stats.totalMentors),
+              helper: 'Active mentors',
+            },
+          ]
+        : [],
+    [isSuperAdmin, stats.totalMentors, stats.totalSchools, stats.totalStudents],
+  );
+
+  const superAdminHealthChecks = useMemo(() => {
+    if (!isSuperAdmin) return [];
+
+    const mentorRatioDisplay =
+      superAdminMetrics.mentorToStudentRatio && Number.isFinite(superAdminMetrics.mentorToStudentRatio)
+        ? `1:${Math.max(1, Math.round(superAdminMetrics.mentorToStudentRatio))}`
+        : 'Add mentors';
+
+    return [
+      {
+        id: 'activation',
+        label: 'Activation coverage',
+        value: `${superAdminMetrics.classesPerSchool.toFixed(1)} classes / school`,
+        helper: 'Target 5 classes per school',
+        progress: superAdminMetrics.activationProgress,
+        indicator: 'bg-brand-500',
+      },
+      {
+        id: 'mentor',
+        label: 'Mentor capacity',
+        value: mentorRatioDisplay,
+        helper: 'Students per mentor',
+        progress: superAdminMetrics.mentorCoverageProgress,
+        indicator: 'bg-secondary-500',
+      },
+      {
+        id: 'learner',
+        label: 'Learner load',
+        value: formatNumber(stats.totalStudents),
+        helper: 'Avg 250 students per school',
+        progress: superAdminMetrics.learnerLoadProgress,
+        indicator: 'bg-emerald-500',
+      },
+    ];
+  }, [isSuperAdmin, stats.totalStudents, superAdminMetrics]);
+
+  const superAdminFocusQueue = useMemo(
+    () =>
+      isSuperAdmin
+        ? [
+            {
+              id: 'onboarding',
+              label: 'Onboarding pipeline',
+              detail: 'Confirm school contracts and baseline data.',
+              metric: `${formatNumber(stats.totalSchools)} schools`,
+              href: '/dashboard/schools',
+              tone: 'bg-brand-500/10 text-brand-600 dark:bg-brand-500/15 dark:text-brand-200',
+              icon: (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h10m-2 6h8" />
+                </svg>
+              ),
+            },
+            {
+              id: 'mentors',
+              label: 'Mentor resourcing',
+              detail: 'Track coverage across all classrooms.',
+              metric:
+                superAdminMetrics.mentorToStudentRatio && Number.isFinite(superAdminMetrics.mentorToStudentRatio)
+                  ? `1:${Math.max(1, Math.round(superAdminMetrics.mentorToStudentRatio))}`
+                  : 'No mentors yet',
+              href: '/dashboard/mentor',
+              tone: 'bg-secondary-500/10 text-secondary-600 dark:bg-secondary-500/15 dark:text-secondary-200',
+              icon: (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 7h14M5 12h14M5 17h8" />
+                </svg>
+              ),
+            },
+            {
+              id: 'quality',
+              label: 'Quality assurance',
+              detail: 'Spot classes without mentors or assessments.',
+              metric: `${formatNumber(stats.totalClasses)} classes`,
+              href: '/dashboard/classes',
+              tone: 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-200',
+              icon: (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l3 3" />
+                </svg>
+              ),
+            },
+          ]
+        : [],
+    [isSuperAdmin, stats.totalClasses, stats.totalSchools, superAdminMetrics.mentorToStudentRatio],
+  );
+
+  const superAdminActionCards = useMemo(() => {
+    if (!isSuperAdmin) return [];
+    const curated = [...quickActions];
+
+    if (curated.length < 3) {
+      curated.push({
+        title: 'Review invitations',
+        description: 'Make sure every school has access to the right people.',
+        href: '/dashboard/invitations',
+        icon: (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3" />
+          </svg>
+        ),
+      });
+    }
+
+    return curated.slice(0, 3);
+  }, [isSuperAdmin, quickActions]);
+
   const layoutTitle = user ? `${greeting}, ${user.name.split(' ')[0]}!` : 'Loading your dashboard';
   const layoutSubtitle = user
     ? `You are signed in as ${user.role.replace('_', ' ')}.`
     : 'Preparing personalised insights for your role.';
-
-  const isSchoolAdmin = user?.role === 'school_admin';
   const isLoading = loading || (isSchoolAdmin && adminLoading);
 
   if (!user && !isLoading) {
@@ -1251,6 +1441,166 @@ function DashboardContent() {
             </div>
           </section>
         )}
+      </DashboardLayout>
+    );
+  }
+
+  if (isSuperAdmin && user) {
+    const firstName = user.name.split(' ')[0];
+
+    return (
+      <DashboardLayout
+        title={`${greeting}, ${firstName}!`}
+        subtitle="A calmer view of what matters across the network."
+        sidebarSections={sidebarSections}
+        user={{ name: user.name, role: user.role }}
+      >
+        <section className="space-y-10">
+          <div className="rounded-3xl border border-muted-200 bg-gradient-to-br from-brand-50 via-white to-white p-8 shadow-card dark:border-muted-800 dark:from-muted-900 dark:via-muted-900/70 dark:to-muted-900/40">
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-2xl">
+                <p className="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-200">Super admin overview</p>
+                <h1 className="mt-2 text-3xl font-semibold text-muted-900 dark:text-white">{greeting}, {firstName}</h1>
+                <p className="mt-3 text-sm text-muted-600 dark:text-muted-300">
+                  Monitor adoption, resourcing and learner reach without the noise. Use the focus queue to
+                  jump straight to the next high-leverage action.
+                </p>
+              </div>
+              <div className="grid w-full gap-4 sm:grid-cols-3 lg:max-w-lg">
+                {superAdminHeroHighlights.map((highlight) => (
+                  <div
+                    key={highlight.id}
+                    className="rounded-2xl border border-white/60 bg-white/80 p-4 text-sm shadow-card dark:border-muted-800/80 dark:bg-muted-900/60"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-500 dark:text-muted-400">{highlight.label}</p>
+                    <p className="mt-2 text-xl font-semibold text-muted-900 dark:text-white">{highlight.value}</p>
+                    <p className="text-[11px] uppercase tracking-wide text-muted-400 dark:text-muted-500">{highlight.helper}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-muted-900 dark:text-white">Network snapshot</h2>
+                <p className="text-sm text-muted-500 dark:text-muted-300">High-level numbers with more breathing room.</p>
+              </div>
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-500 dark:text-muted-400">Updated live</span>
+            </div>
+            <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {superAdminOverviewCards.map((card) => (
+                <div
+                  key={card.id}
+                  className="rounded-2xl border border-muted-200 bg-white/90 p-5 shadow-card dark:border-muted-800 dark:bg-muted-900/80"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-500 dark:text-muted-400">{card.label}</p>
+                  <p className="mt-3 text-3xl font-semibold text-muted-900 dark:text-white">{card.value}</p>
+                  <p className="mt-2 text-xs text-muted-500 dark:text-muted-300">{card.helper}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+            <div className="rounded-2xl border border-muted-200 bg-white p-6 shadow-card dark:border-muted-800 dark:bg-muted-900/80">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold text-muted-900 dark:text-white">Platform health</h2>
+                  <p className="text-sm text-muted-500 dark:text-muted-300">Three signals to confirm stability.</p>
+                </div>
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted-500 dark:text-muted-400">Auto refreshed</span>
+              </div>
+              <div className="mt-6 space-y-5">
+                {superAdminHealthChecks.map((check) => (
+                  <div key={check.id} className="rounded-2xl border border-muted-100 bg-surface-base/70 p-4 dark:border-muted-800 dark:bg-muted-900/70">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-500 dark:text-muted-400">{check.label}</p>
+                        <p className="mt-1 text-xl font-semibold text-muted-900 dark:text-white">{check.value}</p>
+                      </div>
+                      <p className="text-xs text-muted-500 dark:text-muted-300">{check.helper}</p>
+                    </div>
+                    <ProgressBar
+                      progress={check.progress}
+                      className="mt-3"
+                      ariaLabel={`${check.label} progress`}
+                      indicatorClassName={check.indicator}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-muted-200 bg-white p-6 shadow-card dark:border-muted-800 dark:bg-muted-900/80">
+              <h2 className="text-lg font-semibold text-muted-900 dark:text-white">Focus queue</h2>
+              <p className="mt-1 text-sm text-muted-500 dark:text-muted-300">Prioritised workstreams for this week.</p>
+              <ul className="mt-6 space-y-4">
+                {superAdminFocusQueue.map((item) => (
+                  <li key={item.id} className="flex gap-3 rounded-2xl border border-dashed border-muted-200 p-4 dark:border-muted-800">
+                    <span className={`flex h-10 w-10 items-center justify-center rounded-2xl ${item.tone}`}>{item.icon}</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-muted-900 dark:text-white">{item.label}</p>
+                      <p className="text-xs text-muted-500 dark:text-muted-300">{item.detail}</p>
+                      <Link
+                        href={item.href}
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 transition hover:text-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                      >
+                        Open
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5l6 6-6 6m-9-6h14.25" />
+                        </svg>
+                      </Link>
+                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-500 dark:text-muted-400">{item.metric}</span>
+                  </li>
+                ))}
+                {superAdminFocusQueue.length === 0 && (
+                  <li className="rounded-2xl border border-dashed border-muted-200 p-4 text-sm text-muted-500 dark:border-muted-800 dark:text-muted-300">
+                    Everything looks steady. We&apos;ll surface the next priority automatically.
+                  </li>
+                )}
+              </ul>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-muted-200 bg-white p-6 shadow-card dark:border-muted-800 dark:bg-muted-900/80">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-muted-900 dark:text-white">Operating playbook</h2>
+                <p className="text-sm text-muted-500 dark:text-muted-300">Curated actions that keep momentum high.</p>
+              </div>
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-500 dark:text-muted-400">Takes under 5 min</span>
+            </div>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {superAdminActionCards.map((action) => (
+                <Link
+                  key={action.title}
+                  href={action.href}
+                  className="group rounded-2xl border border-muted-200 bg-surface-base/80 p-4 transition hover:-translate-y-0.5 hover:border-brand-200 hover:bg-white hover:shadow-card-hover dark:border-muted-800 dark:bg-muted-900/70"
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 transition group-hover:bg-brand-500/20 dark:text-brand-200">
+                    {action.icon}
+                  </span>
+                  <p className="mt-4 text-sm font-semibold text-muted-900 dark:text-white">{action.title}</p>
+                  <p className="mt-1 text-xs text-muted-500 dark:text-muted-300">{action.description}</p>
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 transition group-hover:text-brand-500">
+                    Go now
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5l6 6-6 6m-9-6h14.25" />
+                    </svg>
+                  </span>
+                </Link>
+              ))}
+              {superAdminActionCards.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-muted-200 p-6 text-sm text-muted-500 dark:border-muted-800 dark:text-muted-300">
+                  No quick actions right now. Check back after new activity.
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
       </DashboardLayout>
     );
   }
