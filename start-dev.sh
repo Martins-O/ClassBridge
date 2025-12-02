@@ -28,12 +28,26 @@ cleanup() {
 
 trap cleanup INT TERM EXIT
 
+ensure_dependencies() {
+  local dir="$1"
+  if [[ ! -d "$dir/node_modules" ]]; then
+    echo "Installing dependencies in $dir"
+    npm --prefix "$dir" install
+  fi
+}
+
+ensure_dependencies "$BACKEND_DIR"
+ensure_dependencies "$FRONTEND_DIR"
+
 npm --prefix "$BACKEND_DIR" run dev &
 BACKEND_PID=$!
-echo "Backend dev server started (PID $BACKEND_PID)"
+print_started() {
+  echo "$1 dev server started (PID $2)"
+}
+print_started "Backend" "$BACKEND_PID"
 
 npm --prefix "$FRONTEND_DIR" run dev &
 FRONTEND_PID=$!
-echo "Frontend dev server started (PID $FRONTEND_PID)"
+print_started "Frontend" "$FRONTEND_PID"
 
 wait -n
