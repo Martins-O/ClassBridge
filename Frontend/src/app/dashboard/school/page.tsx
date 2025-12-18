@@ -151,27 +151,27 @@ export default function SchoolProfilePage() {
         <div className="form-grid">
           <label className="field">
             <span>School name</span>
-            <input name="name" required value={profile.name} onChange={handleChange} placeholder="ClassBridge Academy" />
+            <input name="name" required value={profile.name ?? ''} onChange={handleChange} placeholder="ClassBridge Academy" />
           </label>
           <label className="field">
             <span>School email</span>
-            <input name="email" type="email" required value={profile.email} onChange={handleChange} />
+            <input name="email" type="email" required value={profile.email ?? ''} onChange={handleChange} />
           </label>
           <label className="field">
             <span>Phone</span>
-            <input name="phone" value={profile.phone} onChange={handleChange} placeholder="+1 (555) 123-4567" />
+            <input name="phone" value={profile.phone ?? ''} onChange={handleChange} placeholder="+1 (555) 123-4567" />
           </label>
           <label className="field">
             <span>Website</span>
-            <input name="website" value={profile.website} onChange={handleChange} placeholder="https://" />
+            <input name="website" value={profile.website ?? ''} onChange={handleChange} placeholder="https://" />
           </label>
           <label className="field" style={{ gridColumn: '1 / -1' }}>
             <span>Address</span>
-            <input name="address" value={profile.address} onChange={handleChange} placeholder="123 Learning Way" />
+            <input name="address" value={profile.address ?? ''} onChange={handleChange} placeholder="123 Learning Way" />
           </label>
           <label className="field">
             <span>Subscription</span>
-            <select name="subscriptionType" value={profile.subscriptionType} onChange={handleChange}>
+            <select name="subscriptionType" value={profile.subscriptionType ?? ''} onChange={handleChange}>
               <option value="">Select plan</option>
               {subscriptionOptions.map((option) => (
                 <option key={option} value={option}>
@@ -187,7 +187,7 @@ export default function SchoolProfilePage() {
           <textarea
             name="description"
             rows={4}
-            value={profile.description}
+            value={profile.description ?? ''}
             onChange={handleChange}
             placeholder="Share your mission, programs, or notes for families."
           />

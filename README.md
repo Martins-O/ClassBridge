@@ -83,6 +83,7 @@ Requests to `/api/*` from the Next.js app are proxied to the backend URL defined
 | `npm run build` | Create an optimised production build. |
 | `npm run start` | Serve the production build. |
 | `npm run lint` | Run ESLint with the project rules. |
+| `npm run test` | Run unit tests via Vitest. |
 
 The app lives in `Frontend/src` using the App Router, Tailwind CSS, and React Server Components.
 
