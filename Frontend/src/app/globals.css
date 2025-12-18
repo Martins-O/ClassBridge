@@ -807,3 +807,197 @@ body {
   background: rgba(239, 68, 68, 0.25);
   border-color: rgba(239, 68, 68, 0.6);
 }
+
+/* ========================================
+   Checkbox List
+   ======================================== */
+
+.checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--dark-600);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.checkbox-item:hover {
+  background: var(--dark-700);
+  border-color: var(--primary);
+}
+
+.checkbox-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.checkbox-item__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.checkbox-item__content strong {
+  color: var(--foreground);
+}
+
+.checkbox-item__content small {
+  font-size: 0.875rem;
+}
+
+/* ========================================
+   Assessment Components
+   ======================================== */
+
+.dashboard__grid--cards {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.assessment-card {
+  background: var(--dark-800);
+  border: 1px solid var(--dark-600);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: all 150ms ease;
+}
+
+.assessment-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.assessment-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.assessment-card__header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--foreground);
+}
+
+.assessment-card__description {
+  color: var(--foreground-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.assessment-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.assessment-card__actions {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--dark-600);
+}
+
+/* Question Builder */
+
+.question-builder {
+  background: var(--dark-700);
+  border: 1px solid var(--dark-600);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.question-builder__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.option-item {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.option-item input {
+  flex: 1;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+  margin-bottom: 0.5rem;
+}
+
+/* Question Preview */
+
+.questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.question-preview {
+  background: var(--dark-700);
+  border: 1px solid var(--dark-600);
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.question-preview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.question-preview__text {
+  color: var(--foreground);
+  margin: 0 0 0.75rem 0;
+  line-height: 1.5;
+}
+
+.question-preview__options {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.question-preview__options li {
+  padding: 0.5rem 0.75rem;
+  background: var(--dark-800);
+  border: 1px solid var(--dark-600);
+  border-radius: 6px;
+  font-size: 0.875rem;
+}

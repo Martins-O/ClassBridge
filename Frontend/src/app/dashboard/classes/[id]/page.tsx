@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import MentorAssignmentModal from './components/MentorAssignmentModal';
 
 interface Class {
     _id: string;
@@ -25,6 +26,9 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     const [classData, setClassData] = useState<Class | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [showAssignModal, setShowAssignModal] = useState(false);
+    const [schoolId, setSchoolId] = useState('');
+
 
     useEffect(() => {
         const unwrapParams = async () => {
@@ -47,6 +51,10 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
 
             if (response.ok) {
                 setClassData(data.class);
+                // Get school ID for mentor assignment
+                if (data.class.schoolId) {
+                    setSchoolId(typeof data.class.schoolId === 'string' ? data.class.schoolId : data.class.schoolId._id);
+                }
             } else {
                 setError(data.error || 'Failed to load class');
             }
@@ -56,6 +64,7 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
             setLoading(false);
         }
     };
+
 
     const handleDelete = async () => {
         if (!confirm('Are you sure you want to delete this class? This action cannot be undone.')) {
@@ -113,6 +122,9 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="dashboard__hero-actions">
                     <button className="btn btn--ghost" onClick={() => router.push('/dashboard/classes')}>
                         Back to classes
+                    </button>
+                    <button className="btn btn--primary" onClick={() => setShowAssignModal(true)}>
+                        Assign Mentors
                     </button>
                     <button className="btn btn--error" onClick={handleDelete}>
                         Delete Class
@@ -211,6 +223,15 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
                     )}
                 </div>
             </section>
+
+            <MentorAssignmentModal
+                isOpen={showAssignModal}
+                onClose={() => setShowAssignModal(false)}
+                onSuccess={fetchClass}
+                classId={classId}
+                currentMentorIds={classData.mentors.map(m => m._id)}
+                schoolId={schoolId}
+            />
         </main>
     );
 }
