@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import StudentInviteModal from './components/StudentInviteModal';
 
 interface UserPayload {
   user: {
@@ -49,6 +50,7 @@ export default function DashboardPage() {
   const [invitations, setInvitations] = useState<InvitationSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -102,6 +104,18 @@ export default function DashboardPage() {
 
     return () => controller.abort();
   }, []);
+
+  const refreshInvitations = async () => {
+    try {
+      const response = await fetch('/api/students/invitations');
+      if (response.ok) {
+        const data = await response.json();
+        setInvitations(data.invitations || []);
+      }
+    } catch {
+      // Silently fail refresh
+    }
+  };
 
   const signOut = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -180,8 +194,8 @@ export default function DashboardPage() {
             <article>
               <h3>Invite students</h3>
               <p>Send secure invitations so learners can join your workspace.</p>
-              <button className="btn btn--ghost" type="button" disabled>
-                Send invite (coming soon)
+              <button className="btn btn--ghost" type="button" onClick={() => setShowInviteModal(true)}>
+                Send invite
               </button>
             </article>
             <article>
@@ -280,6 +294,12 @@ export default function DashboardPage() {
           </li>
         </ul>
       </section>
+
+      <StudentInviteModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        onSuccess={refreshInvitations}
+      />
     </main>
   );
 }
