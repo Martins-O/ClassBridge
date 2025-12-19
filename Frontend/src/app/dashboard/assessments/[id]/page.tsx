@@ -138,6 +138,9 @@ export default function AssessmentDetailPage({ params }: { params: Promise<{ id:
                     <button className="btn btn--primary" onClick={() => router.push(`/dashboard/assessments/${assessmentId}/take`)}>
                         Take Assessment
                     </button>
+                    <button className="btn btn--ghost" onClick={() => router.push(`/dashboard/assessments/${assessmentId}/edit`)}>
+                        Edit
+                    </button>
                     <button className="btn btn--ghost" onClick={toggleActive}>
                         {assessment.isActive ? 'Deactivate' : 'Activate'}
                     </button>
