@@ -90,12 +90,12 @@ export default function StudentsPage() {
                     )}
 
                     <section className="dashboard__grid">
-                        <div className="dashboard__card">
+                        <div className="dashboard__card dashboard__card--full">
                             {students.length === 0 ? (
-                                <div className="text-center py-8">
+                                <div style={{ textAlign: 'center', padding: '3rem 0' }}>
                                     <p className="eyebrow">No students found</p>
                                     <h2>Get started by inviting your first student</h2>
-                                    <p className="u-margin-top-sm u-margin-bottom-md">
+                                    <p className="dashboard__muted" style={{ marginTop: '0.5rem', marginBottom: '1.5rem' }}>
                                         Invite students to join your classes via email.
                                     </p>
                                     <button className="btn btn--primary" onClick={() => setShowInviteModal(true)}>
@@ -104,7 +104,7 @@ export default function StudentsPage() {
                                 </div>
                             ) : (
                                 <div className="table">
-                                    <div className="table__head">
+                                    <div className="table__head" style={{ gridTemplateColumns: '1.5fr 1.5fr 1fr 1fr 0.8fr' }}>
                                         <span>Name</span>
                                         <span>Email</span>
                                         <span>Joined</span>
@@ -112,12 +112,12 @@ export default function StudentsPage() {
                                         <span>Actions</span>
                                     </div>
                                     {filteredStudents.length === 0 ? (
-                                        <div className="table__empty">
-                                            <p>No students match your search.</p>
+                                        <div style={{ padding: '2rem', textAlign: 'center' }}>
+                                            <p className="dashboard__muted">No students match your search.</p>
                                         </div>
                                     ) : (
                                         filteredStudents.map((student) => (
-                                            <div key={student._id} className="table__row">
+                                            <div key={student._id} className="table__row" style={{ gridTemplateColumns: '1.5fr 1.5fr 1fr 1fr 0.8fr' }}>
                                                 <span><strong>{student.name}</strong></span>
                                                 <span>{student.email}</span>
                                                 <span>{new Date(student.createdAt).toLocaleDateString()}</span>

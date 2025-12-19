@@ -102,14 +102,6 @@ export default function GradesPage() {
 
     const canCreateGrades = user && ['mentor', 'school_admin'].includes(user.role);
 
-    if (loading && !grades.length && !user) {
-        return (
-            <main className="dashboard">
-                <div className="dashboard__card">Loading grades...</div>
-            </main>
-        );
-    }
-
     return (
         <main className="dashboard">
             <section className="dashboard__hero">
@@ -123,98 +115,122 @@ export default function GradesPage() {
                     </p>
                 </div>
                 <div className="dashboard__hero-actions">
+                    <button className="btn btn--ghost" onClick={() => router.push('/dashboard')}>
+                        Back to dashboard
+                    </button>
                     {canCreateGrades && (
                         <>
-                            <button className="btn btn--primary" onClick={() => router.push('/dashboard/grades/bulk')}>
-                                Bulk Grade Entry
+                            <button className="btn btn--ghost" onClick={() => router.push('/dashboard/grades/bulk')}>
+                                Bulk Entry
                             </button>
-                            <button className="btn btn--ghost" onClick={() => router.push('/dashboard/grades/create')}>
-                                + New Grade Entry
+                            <button className="btn btn--primary" onClick={() => router.push('/dashboard/grades/create')}>
+                                + New Grade
                             </button>
                         </>
                     )}
                 </div>
             </section>
 
-            <section className="dashboard__card">
-                <div className="dashboard__card-header">
-                    {/* Filters */}
-                    <div className="flex gap-4 flex-wrap w-full items-end">
-                        {classes.length > 0 && (
-                            <label className="field">
-                                <span className="text-sm font-medium text-gray-400">Filter by Class</span>
-                                <select
-                                    value={selectedClass}
-                                    onChange={(e) => setSelectedClass(e.target.value)}
-                                    style={{ minWidth: '200px' }}
-                                >
-                                    <option value="">All Classes</option>
-                                    {classes.map(cls => (
-                                        <option key={cls._id} value={cls._id}>{cls.name}</option>
-                                    ))}
-                                </select>
-                            </label>
-                        )}
-
-                        <label className="field">
-                            <span className="text-sm font-medium text-gray-400">Grade Type</span>
-                            <select
-                                value={selectedType}
-                                onChange={(e) => setSelectedType(e.target.value)}
-                                style={{ minWidth: '150px' }}
-                            >
-                                <option value="">All Types</option>
-                                <option value="assignment">Assignment</option>
-                                <option value="quiz">Quiz</option>
-                                <option value="exam">Exam</option>
-                                <option value="project">Project</option>
-                                <option value="participation">Participation</option>
-                                <option value="final">Final Grade</option>
-                            </select>
-                        </label>
-                    </div>
+            {loading && !grades.length ? (
+                <div className="dashboard__card" style={{ textAlign: 'center', padding: '4rem' }}>
+                    <p className="eyebrow">Syncing records...</p>
+                    <h2>Loading grades...</h2>
                 </div>
+            ) : error ? (
+                <div className="dashboard__card">
+                    <p className="alert alert--error">{error}</p>
+                    <button className="btn btn--primary u-margin-top-md" onClick={fetchGrades}>
+                        Retry loading
+                    </button>
+                </div>
+            ) : (
+                <section className="dashboard__grid">
+                    <div className="dashboard__card dashboard__card--full">
+                        <div className="dashboard__card-header" style={{ marginBottom: '2rem' }}>
+                            <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                                {classes.length > 0 && (
+                                    <div className="field" style={{ marginBottom: 0 }}>
+                                        <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filter by Class</label>
+                                        <select
+                                            value={selectedClass}
+                                            onChange={(e) => setSelectedClass(e.target.value)}
+                                            style={{ minWidth: '200px' }}
+                                        >
+                                            <option value="">All Classes</option>
+                                            {classes.map(cls => (
+                                                <option key={cls._id} value={cls._id}>{cls.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
 
-                {loading && <p className="p-4 text-gray-400">Updating grades list...</p>}
-
-                {!loading && grades.length === 0 ? (
-                    <div className="proof u-margin-top-md">
-                        <div className="proof__lead">No grade records found matching the selected criteria.</div>
-                    </div>
-                ) : (
-                    <div className="table u-margin-top-md">
-                        <div className="table__head" style={{ gridTemplateColumns: user?.role === 'student' ? '2fr 1.5fr 1fr 1fr 1fr' : '2fr 2fr 1.5fr 1fr 1fr 1fr' }}>
-                            <span>Title</span>
-                            {user?.role !== 'student' && <span>Student</span>}
-                            <span>Class</span>
-                            <span>Type</span>
-                            <span>Score</span>
-                            <span>Date</span>
-                        </div>
-                        {grades.map((grade) => {
-                            const studentName = typeof grade.studentId === 'object' ? grade.studentId.name : 'Unknown Student';
-                            const className = typeof grade.classId === 'object' ? grade.classId.name : 'Unknown Class';
-
-                            return (
-                                <div key={grade._id} className="table__row" style={{ gridTemplateColumns: user?.role === 'student' ? '2fr 1.5fr 1fr 1fr 1fr' : '2fr 2fr 1.5fr 1fr 1fr 1fr' }}>
-                                    <span>
-                                        <strong>{grade.title}</strong>
-                                    </span>
-                                    {user?.role !== 'student' && <span>{studentName}</span>}
-                                    <span>{className}</span>
-                                    <span>
-                                        <span className="badge badge--pending">{grade.gradeType}</span>
-                                    </span>
-                                    <span className={getGradeColorClass(grade.letterGrade)}>
-                                        {grade.points}/{grade.maxPoints} ({grade.letterGrade || `${grade.percentage}%`})
-                                    </span>
-                                    <span>{new Date(grade.gradedDate).toLocaleDateString()}</span>
+                                <div className="field" style={{ marginBottom: 0 }}>
+                                    <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Grade Type</label>
+                                    <select
+                                        value={selectedType}
+                                        onChange={(e) => setSelectedType(e.target.value)}
+                                        style={{ minWidth: '150px' }}
+                                    >
+                                        <option value="">All Types</option>
+                                        <option value="assignment">Assignment</option>
+                                        <option value="quiz">Quiz</option>
+                                        <option value="exam">Exam</option>
+                                        <option value="project">Project</option>
+                                        <option value="participation">Participation</option>
+                                        <option value="final">Final Grade</option>
+                                    </select>
                                 </div>
-                            );
-                        })}
+                            </div>
+                        </div>
+
+                        {loading ? (
+                            <div style={{ padding: '2rem', textAlign: 'center' }}>
+                                <p className="dashboard__muted">Updating list...</p>
+                            </div>
+                        ) : grades.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+                                <p className="eyebrow">No records found</p>
+                                <h2>No grade records match the criteria</h2>
+                                <p className="dashboard__muted" style={{ marginTop: '0.5rem' }}>
+                                    Try adjusting your filters or adding a new grade entry.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="table">
+                                <div className="table__head" style={{ gridTemplateColumns: user?.role === 'student' ? '2fr 1.5fr 1fr 1fr 1fr' : '2fr 2fr 1.5fr 1fr 1fr 1fr' }}>
+                                    <span>Title</span>
+                                    {user?.role !== 'student' && <span>Student</span>}
+                                    <span>Class</span>
+                                    <span>Type</span>
+                                    <span>Score</span>
+                                    <span>Date</span>
+                                </div>
+                                {grades.map((grade) => {
+                                    const studentName = typeof grade.studentId === 'object' ? grade.studentId.name : 'Unknown Student';
+                                    const className = typeof grade.classId === 'object' ? grade.classId.name : 'Unknown Class';
+
+                                    return (
+                                        <div key={grade._id} className="table__row" style={{ gridTemplateColumns: user?.role === 'student' ? '2fr 1.5fr 1fr 1fr 1fr' : '2fr 2fr 1.5fr 1fr 1fr 1fr' }}>
+                                            <span>
+                                                <strong>{grade.title}</strong>
+                                            </span>
+                                            {user?.role !== 'student' && <span>{studentName}</span>}
+                                            <span>{className}</span>
+                                            <span>
+                                                <span className="badge badge--pending" style={{ textTransform: 'capitalize' }}>{grade.gradeType}</span>
+                                            </span>
+                                            <span style={{ fontWeight: 700 }}>
+                                                {grade.points}/{grade.maxPoints} <span className="dashboard__muted">({grade.letterGrade || `${grade.percentage}%`})</span>
+                                            </span>
+                                            <span>{new Date(grade.gradedDate).toLocaleDateString()}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
-                )}
-            </section>
+                </section>
+            )}
         </main>
     );
 }

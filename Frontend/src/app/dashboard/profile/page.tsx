@@ -142,14 +142,14 @@ export default function ProfilePage() {
             <section className="dashboard__hero">
                 <div>
                     <p className="eyebrow">User Profile</p>
-                    <h1>{user?.name}</h1>
+                    <h1>{user?.name || 'My Profile'}</h1>
                     <p className="dashboard__muted">{user?.email}</p>
                 </div>
                 <div className="dashboard__hero-actions">
                     <button className="btn btn--ghost" onClick={() => router.push('/dashboard')}>
                         Back to dashboard
                     </button>
-                    {!editing && (
+                    {!editing && user && (
                         <button className="btn btn--primary" onClick={() => setEditing(true)}>
                             Edit Profile
                         </button>
@@ -158,44 +158,45 @@ export default function ProfilePage() {
             </section>
 
             <section className="dashboard__grid">
-                <div className="dashboard__card">
-                    {success && <p className="auth-card__success">{success}</p>}
-                    {error && <p className="auth-card__error">{error}</p>}
+                <div className="dashboard__card dashboard__card--full">
+                    {success && <p className="alert alert--success u-margin-bottom-md">{success}</p>}
+                    {error && <p className="alert alert--error u-margin-bottom-md">{error}</p>}
 
                     {editing ? (
-                        <form onSubmit={handleSubmit}>
-                            <p className="form-section-title">Edit Profile</p>
+                        <form onSubmit={handleSubmit} className="u-max-width-md">
+                            <h2 className="form-section-title">Update Your Information</h2>
 
                             <label className="field">
-                                <span>Name *</span>
+                                <span>Display Name *</span>
                                 <input
                                     type="text"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
+                                    placeholder="Enter your full name"
                                     required
                                     disabled={submitting}
                                 />
                             </label>
 
                             <label className="field">
-                                <span>Email</span>
-                                <input type="email" value={user?.email} disabled />
-                                <small className="dashboard__muted">Email cannot be changed</small>
+                                <span>Email Address</span>
+                                <input type="email" value={user?.email} disabled style={{ backgroundColor: '#f8fafc', cursor: 'not-allowed' }} />
+                                <small className="dashboard__muted">Contact support to change your primary email.</small>
                             </label>
 
                             <label className="field">
-                                <span>Phone</span>
+                                <span>Phone Number</span>
                                 <input
                                     type="tel"
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
-                                    placeholder="Optional"
+                                    placeholder="+1 (555) 000-0000"
                                     disabled={submitting}
                                 />
                             </label>
 
                             <label className="field">
-                                <span>Bio</span>
+                                <span>Work Bio</span>
                                 <textarea
                                     value={bio}
                                     onChange={(e) => setBio(e.target.value)}
@@ -204,7 +205,9 @@ export default function ProfilePage() {
                                     maxLength={500}
                                     disabled={submitting}
                                 />
-                                <small className="dashboard__muted">{bio.length}/500 characters</small>
+                                <small className="dashboard__muted" style={{ textAlign: 'right', display: 'block' }}>
+                                    {bio.length}/500 characters
+                                </small>
                             </label>
 
                             <label className="field">
@@ -213,7 +216,7 @@ export default function ProfilePage() {
                                     type="url"
                                     value={profileImage}
                                     onChange={(e) => setProfileImage(e.target.value)}
-                                    placeholder="https://example.com/image.jpg"
+                                    placeholder="https://example.com/avatar.jpg"
                                     disabled={submitting}
                                 />
                             </label>
@@ -225,62 +228,64 @@ export default function ProfilePage() {
                                     onClick={handleCancel}
                                     disabled={submitting}
                                 >
-                                    Cancel
+                                    Discard Changes
                                 </button>
                                 <button type="submit" className="btn btn--primary" disabled={submitting}>
-                                    {submitting ? 'Saving...' : 'Save Changes'}
+                                    {submitting ? 'Saving...' : 'Save Profile'}
                                 </button>
                             </div>
                         </form>
                     ) : (
                         <div className="info-grid">
                             <div className="info-item">
-                                <span className="info-item__label">Name</span>
-                                <strong>{user?.name}</strong>
+                                <span className="info-item__label">Full Name</span>
+                                <p style={{ fontSize: '1.125rem', fontWeight: 600 }}>{user?.name}</p>
                             </div>
 
                             <div className="info-item">
-                                <span className="info-item__label">Email</span>
-                                <strong>{user?.email}</strong>
+                                <span className="info-item__label">Email Address</span>
+                                <p style={{ fontSize: '1.125rem', fontWeight: 600 }}>{user?.email}</p>
                             </div>
 
                             <div className="info-item">
-                                <span className="info-item__label">Role</span>
-                                <strong>{user?.role.replace('_', ' ').toUpperCase()}</strong>
+                                <span className="info-item__label">Access Level</span>
+                                <span className="badge badge--active" style={{ width: 'fit-content', marginTop: '0.25rem' }}>
+                                    {(user?.role || '').replace('_', ' ').toUpperCase()}
+                                </span>
                             </div>
 
                             {user?.phone && (
                                 <div className="info-item">
-                                    <span className="info-item__label">Phone</span>
-                                    <strong>{user.phone}</strong>
+                                    <span className="info-item__label">Phone Number</span>
+                                    <p style={{ fontSize: '1.125rem', fontWeight: 600 }}>{user.phone}</p>
                                 </div>
                             )}
 
                             {user?.bio && (
-                                <div className="info-item">
-                                    <span className="info-item__label">Bio</span>
-                                    <p>{user.bio}</p>
+                                <div className="info-item" style={{ gridColumn: 'span 2' }}>
+                                    <span className="info-item__label">Biography</span>
+                                    <p className="dashboard__muted" style={{ lineHeight: 1.6 }}>{user.bio}</p>
                                 </div>
                             )}
 
                             {user?.schoolId && (
                                 <div className="info-item">
-                                    <span className="info-item__label">School</span>
-                                    <strong>{user.schoolId.name}</strong>
+                                    <span className="info-item__label">Institution</span>
+                                    <strong style={{ display: 'block', marginTop: '0.25rem' }}>{user.schoolId.name}</strong>
                                 </div>
                             )}
 
                             {user?.studentId && (
                                 <div className="info-item">
-                                    <span className="info-item__label">Student ID</span>
-                                    <strong>{user.studentId}</strong>
+                                    <span className="info-item__label">Academic ID</span>
+                                    <strong style={{ display: 'block', marginTop: '0.25rem' }}>{user.studentId}</strong>
                                 </div>
                             )}
 
                             <div className="info-item">
-                                <span className="info-item__label">Status</span>
-                                <span className={`badge badge--${user?.isActive ? 'active' : 'inactive'}`}>
-                                    {user?.isActive ? 'Active' : 'Inactive'}
+                                <span className="info-item__label">Account Status</span>
+                                <span className={`badge badge--${user?.isActive ? 'active' : 'inactive'}`} style={{ width: 'fit-content', marginTop: '0.25rem' }}>
+                                    {user?.isActive ? 'Active Member' : 'Inactive'}
                                 </span>
                             </div>
                         </div>

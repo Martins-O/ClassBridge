@@ -99,7 +99,6 @@ export default function ClassesPage() {
                 </div>
             ) : (
                 <>
-
                     {classes.length > 0 && (
                         <section className="dashboard__search">
                             <div className="search-bar">
@@ -115,19 +114,21 @@ export default function ClassesPage() {
                     )}
 
                     <section className="dashboard__grid">
-                        {classes.length === 0 ? (
-                            <div className="dashboard__card">
-                                <p className="eyebrow">No classes yet</p>
-                                <h2>Get started by creating your first class</h2>
-                                <p>Classes help you organize students and mentors into cohorts for the academic year.</p>
-                                <Link href="/dashboard/classes/create" className="btn btn--primary">
-                                    Create your first class
-                                </Link>
-                            </div>
-                        ) : (
-                            <div className="dashboard__card">
+                        <div className="dashboard__card dashboard__card--full">
+                            {classes.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+                                    <p className="eyebrow">No classes yet</p>
+                                    <h2>Get started by creating your first class</h2>
+                                    <p className="dashboard__muted" style={{ marginTop: '0.5rem', marginBottom: '1.5rem' }}>
+                                        Classes help you organize students and mentors into cohorts.
+                                    </p>
+                                    <Link href="/dashboard/classes/create" className="btn btn--primary">
+                                        Create your first class
+                                    </Link>
+                                </div>
+                            ) : (
                                 <div className="table">
-                                    <div className="table__head">
+                                    <div className="table__head" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 0.8fr' }}>
                                         <span>Class Name</span>
                                         <span>Academic Year</span>
                                         <span>Students</span>
@@ -135,23 +136,23 @@ export default function ClassesPage() {
                                         <span>Actions</span>
                                     </div>
                                     {filteredClasses.length === 0 ? (
-                                        <div className="table__empty">
-                                            <p>No classes match your search.</p>
+                                        <div style={{ padding: '2rem', textAlign: 'center' }}>
+                                            <p className="dashboard__muted">No classes match your search.</p>
                                         </div>
                                     ) : (
                                         filteredClasses.map((cls) => (
-                                            <div key={cls._id} className="table__row">
+                                            <div key={cls._id} className="table__row" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 0.8fr' }}>
                                                 <span>
                                                     <strong>{cls.name}</strong>
-                                                    {cls.subject && <small className="dashboard__muted">{cls.subject}</small>}
+                                                    {cls.subject && <small className="dashboard__muted" style={{ display: 'block' }}>{cls.subject}</small>}
                                                 </span>
                                                 <span>
                                                     {cls.academicYear}
-                                                    {cls.semester && ` • ${cls.semester}`}
+                                                    {cls.semester && <small className="dashboard__muted" style={{ display: 'block' }}>{cls.semester}</small>}
                                                 </span>
                                                 <span>
                                                     {cls.students.length}
-                                                    {cls.maxStudents && ` / ${cls.maxStudents}`}
+                                                    {cls.maxStudents && <small className="dashboard__muted" style={{ display: 'block' }}>/ {cls.maxStudents} max</small>}
                                                 </span>
                                                 <span>{cls.mentors.length}</span>
                                                 <span>
@@ -165,9 +166,11 @@ export default function ClassesPage() {
                                             </div>
                                         )))}
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </section>
-                </main>
-            );
+                </>
+            )}
+        </main>
+    );
 }

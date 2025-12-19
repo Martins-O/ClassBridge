@@ -47,27 +47,6 @@ export default function CoursesPage() {
         (course.code && course.code.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
-    if (loading) {
-        return (
-            <main className="dashboard">
-                <div className="dashboard__card">Loading courses...</div>
-            </main>
-        );
-    }
-
-    if (error) {
-        return (
-            <main className="dashboard">
-                <div className="dashboard__card">
-                    <p className="auth-card__error">{error}</p>
-                    <button className="btn btn--primary" onClick={() => router.push('/dashboard')}>
-                        Back to dashboard
-                    </button>
-                </div>
-            </main>
-        );
-    }
-
     return (
         <main className="dashboard">
             <section className="dashboard__hero">
@@ -86,66 +65,84 @@ export default function CoursesPage() {
                 </div>
             </section>
 
-            {courses.length > 0 && (
-                <section className="dashboard__search">
-                    <SearchBar
-                        value={searchQuery}
-                        onChange={setSearchQuery}
-                        placeholder="Search courses by name or code..."
-                    />
-                </section>
-            )}
+            {loading ? (
+                <div className="dashboard__card" style={{ textAlign: 'center', padding: '4rem' }}>
+                    <p className="eyebrow">Syncing catalog...</p>
+                    <h2>Loading courses...</h2>
+                </div>
+            ) : error ? (
+                <div className="dashboard__card">
+                    <p className="alert alert--error">{error}</p>
+                    <button className="btn btn--primary u-margin-top-md" onClick={fetchCourses}>
+                        Retry loading
+                    </button>
+                </div>
+            ) : (
+                <>
+                    {courses.length > 0 && (
+                        <section className="dashboard__search">
+                            <SearchBar
+                                value={searchQuery}
+                                onChange={setSearchQuery}
+                                placeholder="Search courses by name or code..."
+                            />
+                        </section>
+                    )}
 
-            <section className="dashboard__grid">
-                {courses.length === 0 ? (
-                    <div className="dashboard__card">
-                        <p className="eyebrow">No courses yet</p>
-                        <h2>Get started by creating your first course</h2>
-                        <p>Courses define the curriculum offerings at your school.</p>
-                        <Link href="/dashboard/courses/create" className="btn btn--primary">
-                            Create your first course
-                        </Link>
-                    </div>
-                ) : (
-                    <div className="dashboard__card">
-                        <div className="table">
-                            <div className="table__head">
-                                <span>Course Code</span>
-                                <span>Course Name</span>
-                                <span>Credits</span>
-                                <span>Status</span>
-                                <span>Actions</span>
-                            </div>
-                            {filteredCourses.length === 0 ? (
-                                <div className="table__empty">
-                                    <p>No courses match your search.</p>
+                    <section className="dashboard__grid">
+                        <div className="dashboard__card dashboard__card--full">
+                            {courses.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+                                    <p className="eyebrow">No courses yet</p>
+                                    <h2>Get started by creating your first course</h2>
+                                    <p className="dashboard__muted" style={{ marginTop: '0.5rem', marginBottom: '1.5rem' }}>
+                                        Courses define the curriculum offerings at your school.
+                                    </p>
+                                    <Link href="/dashboard/courses/create" className="btn btn--primary">
+                                        Create your first course
+                                    </Link>
                                 </div>
                             ) : (
-                                filteredCourses.map((course) => (
-                                    <div key={course._id} className="table__row">
-                                        <span><strong>{course.code || '—'}</strong></span>
-                                        <span>{course.name}</span>
-                                        <span>{course.credits || '—'}</span>
-                                        <span>
-                                            <span className={`badge badge--${course.isActive ? 'active' : 'inactive'}`}>
-                                                {course.isActive ? 'Active' : 'Inactive'}
-                                            </span>
-                                        </span>
-                                        <span>
-                                            <Link
-                                                href={`/dashboard/courses/${course._id}`}
-                                                className="btn btn--ghost btn--sm"
-                                            >
-                                                View
-                                            </Link>
-                                        </span>
+                                <div className="table">
+                                    <div className="table__head" style={{ gridTemplateColumns: '1fr 2fr 0.8fr 1fr 0.8fr' }}>
+                                        <span>Course Code</span>
+                                        <span>Course Name</span>
+                                        <span>Credits</span>
+                                        <span>Status</span>
+                                        <span>Actions</span>
                                     </div>
-                                ))
+                                    {filteredCourses.length === 0 ? (
+                                        <div style={{ padding: '2rem', textAlign: 'center' }}>
+                                            <p className="dashboard__muted">No courses match your search.</p>
+                                        </div>
+                                    ) : (
+                                        filteredCourses.map((course) => (
+                                            <div key={course._id} className="table__row" style={{ gridTemplateColumns: '1fr 2fr 0.8fr 1fr 0.8fr' }}>
+                                                <span><strong>{course.code || '—'}</strong></span>
+                                                <span>{course.name}</span>
+                                                <span>{course.credits || '—'}</span>
+                                                <span>
+                                                    <span className={`badge badge--${course.isActive ? 'active' : 'inactive'}`}>
+                                                        {course.isActive ? 'Active' : 'Inactive'}
+                                                    </span>
+                                                </span>
+                                                <span>
+                                                    <Link
+                                                        href={`/dashboard/courses/${course._id}`}
+                                                        className="btn btn--ghost btn--sm"
+                                                    >
+                                                        View
+                                                    </Link>
+                                                </span>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
                             )}
                         </div>
-                    </div>
-                )}
-            </section>
+                    </section>
+                </>
+            )}
         </main>
     );
 }

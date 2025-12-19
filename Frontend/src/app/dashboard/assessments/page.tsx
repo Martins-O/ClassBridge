@@ -50,27 +50,6 @@ export default function AssessmentsPage() {
         a.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    if (loading) {
-        return (
-            <main className="dashboard">
-                <div className="dashboard__card">Loading assessments...</div>
-            </main>
-        );
-    }
-
-    if (error) {
-        return (
-            <main className="dashboard">
-                <div className="dashboard__card">
-                    <p className="auth-card__error">{error}</p>
-                    <button className="btn btn--primary" onClick={() => router.push('/dashboard')}>
-                        Back to dashboard
-                    </button>
-                </div>
-            </main>
-        );
-    }
-
     return (
         <main className="dashboard">
             <section className="dashboard__hero">
@@ -89,62 +68,88 @@ export default function AssessmentsPage() {
                 </div>
             </section>
 
-            {assessments.length > 0 && (
-                <section className="dashboard__search">
-                    <SearchBar
-                        value={searchQuery}
-                        onChange={setSearchQuery}
-                        placeholder="Search assessments..."
-                    />
-                </section>
-            )}
+            {loading ? (
+                <div className="dashboard__card" style={{ textAlign: 'center', padding: '4rem' }}>
+                    <p className="eyebrow">Syncing rubric...</p>
+                    <h2>Loading assessments...</h2>
+                </div>
+            ) : error ? (
+                <div className="dashboard__card">
+                    <p className="alert alert--error">{error}</p>
+                    <button className="btn btn--primary u-margin-top-md" onClick={fetchAssessments}>
+                        Retry loading
+                    </button>
+                </div>
+            ) : (
+                <>
+                    {assessments.length > 0 && (
+                        <section className="dashboard__search">
+                            <SearchBar
+                                value={searchQuery}
+                                onChange={setSearchQuery}
+                                placeholder="Search assessments..."
+                            />
+                        </section>
+                    )}
 
-            <section className="dashboard__grid">
-                {assessments.length === 0 ? (
-                    <div className="dashboard__card">
-                        <p className="eyebrow">No assessments yet</p>
-                        <h2>Get started by creating your first assessment</h2>
-                        <p>Assessments help you measure student and mentor competencies.</p>
-                        <Link href="/dashboard/assessments/create" className="btn btn--primary">
-                            Create your first assessment
-                        </Link>
-                    </div>
-                ) : (
-                    <>
-                        {filteredAssessments.length === 0 ? (
-                            <div className="dashboard__card">
-                                <p className="dashboard__muted">No assessments match your search.</p>
-                            </div>
-                        ) : (
-                            <div className="dashboard__grid dashboard__grid--cards">
-                                {filteredAssessments.map((assessment) => (
-                                    <div key={assessment._id} className="assessment-card">
-                                        <div className="assessment-card__header">
-                                            <h3>{assessment.title}</h3>
-                                            <span className={`badge badge--${assessment.isActive ? 'active' : 'inactive'}`}>
-                                                {assessment.isActive ? 'Active' : 'Inactive'}
-                                            </span>
+                    <section className="dashboard__grid">
+                        <div className="dashboard__card dashboard__card--full" style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: 0 }}>
+                            {assessments.length === 0 ? (
+                                <div className="dashboard__card" style={{ textAlign: 'center', padding: '3rem 0' }}>
+                                    <p className="eyebrow">No assessments yet</p>
+                                    <h2>Get started by creating your first assessment</h2>
+                                    <p className="dashboard__muted" style={{ marginTop: '0.5rem', marginBottom: '1.5rem' }}>
+                                        Assessments help you measure student and mentor competencies.
+                                    </p>
+                                    <Link href="/dashboard/assessments/create" className="btn btn--primary">
+                                        Create your first assessment
+                                    </Link>
+                                </div>
+                            ) : (
+                                <>
+                                    {filteredAssessments.length === 0 ? (
+                                        <div className="dashboard__card" style={{ textAlign: 'center', padding: '2rem' }}>
+                                            <p className="dashboard__muted">No assessments match your search.</p>
                                         </div>
-                                        <p className="assessment-card__description">{assessment.description}</p>
-                                        <div className="assessment-card__meta">
-                                            <span className="badge badge--pending">{assessment.assessmentType.replace('_', ' ')}</span>
-                                            <span className="dashboard__muted">{assessment.questions.length} questions</span>
+                                    ) : (
+                                        <div className="dashboard__grid--cards">
+                                            {filteredAssessments.map((assessment) => (
+                                                <div key={assessment._id} className="assessment-card">
+                                                    <div className="assessment-card__header">
+                                                        <h3>{assessment.title}</h3>
+                                                        <span className={`badge badge--${assessment.isActive ? 'active' : 'inactive'}`}>
+                                                            {assessment.isActive ? 'Active' : 'Inactive'}
+                                                        </span>
+                                                    </div>
+                                                    <p className="assessment-card__description">{assessment.description}</p>
+                                                    <div className="assessment-card__meta">
+                                                        <span className="badge badge--pending">{assessment.assessmentType.replace('_', ' ')}</span>
+                                                        <span className="dashboard__muted">{assessment.questions.length} questions</span>
+                                                    </div>
+                                                    <div className="assessment-card__actions">
+                                                        <Link
+                                                            href={`/dashboard/assessments/${assessment._id}`}
+                                                            className="btn btn--ghost btn--sm"
+                                                        >
+                                                            View Details
+                                                        </Link>
+                                                        <Link
+                                                            href={`/dashboard/assessments/${assessment._id}/edit`}
+                                                            className="btn btn--primary btn--sm"
+                                                        >
+                                                            Edit
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                        <div className="assessment-card__actions">
-                                            <Link
-                                                href={`/dashboard/assessments/${assessment._id}`}
-                                                className="btn btn--ghost btn--sm"
-                                            >
-                                                View Details
-                                            </Link>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </>
-                )}
-            </section>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </section>
+                </>
+            )}
         </main>
     );
 }
