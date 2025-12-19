@@ -104,6 +104,9 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                     <button className="btn btn--ghost" onClick={() => router.push('/dashboard/courses')}>
                         Back to courses
                     </button>
+                    <button className="btn btn--primary" onClick={() => router.push(`/dashboard/courses/${courseId}/edit`)}>
+                        Edit Course
+                    </button>
                     <button className="btn btn--error" onClick={handleDelete}>
                         Delete Course
                     </button>
