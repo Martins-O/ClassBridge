@@ -116,6 +116,7 @@ export default function StudentsPage() {
                                 <span>Email</span>
                                 <span>Joined</span>
                                 <span>Status</span>
+                                <span>Actions</span>
                             </div>
                             {filteredStudents.length === 0 ? (
                                 <div className="table__empty">
@@ -131,6 +132,14 @@ export default function StudentsPage() {
                                             <span className={`badge badge--${student.isActive ? 'active' : 'inactive'}`}>
                                                 {student.isActive ? 'Active' : 'Inactive'}
                                             </span>
+                                        </span>
+                                        <span>
+                                            <button
+                                                className="btn btn--ghost btn--sm"
+                                                onClick={() => router.push(`/dashboard/students/${student._id}`)}
+                                            >
+                                                View
+                                            </button>
                                         </span>
                                     </div>
                                 ))

@@ -42,6 +42,26 @@ interface InvitationSummary {
   expiresAt: string;
 }
 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserPayload['user'] | null>(null);
@@ -51,6 +71,44 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showInviteModal, setShowInviteModal] = useState(false);
+
+  // Chart Logic
+  const chartData = {
+    labels: classes.map(c => c.name),
+    datasets: [
+      {
+        label: 'Students per Class',
+        data: classes.map(c => c.studentIds?.length || 0),
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+        labels: { color: '#94a3b8' }
+      },
+      title: {
+        display: false,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: { color: '#94a3b8' },
+        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+      },
+      x: {
+        ticks: { color: '#94a3b8' },
+        grid: { display: false }
+      }
+    }
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -163,6 +221,7 @@ export default function DashboardPage() {
       <section className="dashboard__grid">
         {stats ? (
           <section className="dashboard__stats">
+            {/* ... stats cards ... */}
             <div className="stat-card">
               <div className="stat-card__icon">📚</div>
               <div className="stat-card__content">
@@ -197,6 +256,16 @@ export default function DashboardPage() {
             </div>
           </section>
         ) : null}
+
+        {classes.length > 0 && (
+          <div className="dashboard__card" style={{ gridColumn: 'span 2' }}>
+            <p className="eyebrow">Visual Insights</p>
+            <h2>Student Distribution</h2>
+            <div style={{ height: '300px', marginTop: '1.5rem' }}>
+              <Bar data={chartData} options={chartOptions} />
+            </div>
+          </div>
+        )}
 
         <div className="dashboard__card">
           <p className="eyebrow">Quick actions</p>

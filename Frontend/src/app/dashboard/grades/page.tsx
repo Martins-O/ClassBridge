@@ -124,9 +124,14 @@ export default function GradesPage() {
                 </div>
                 <div className="dashboard__hero-actions">
                     {canCreateGrades && (
-                        <button className="btn btn--primary" onClick={() => router.push('/dashboard/grades/create')}>
-                            + New Grade Entry
-                        </button>
+                        <>
+                            <button className="btn btn--primary" onClick={() => router.push('/dashboard/grades/bulk')}>
+                                Bulk Grade Entry
+                            </button>
+                            <button className="btn btn--ghost" onClick={() => router.push('/dashboard/grades/create')}>
+                                + New Grade Entry
+                            </button>
+                        </>
                     )}
                 </div>
             </section>

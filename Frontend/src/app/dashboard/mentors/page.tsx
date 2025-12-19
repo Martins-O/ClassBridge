@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import MentorInviteModal from './components/MentorInviteModal';
+import SearchBar from '../components/SearchBar';
 
 interface Mentor {
     _id: string;
@@ -15,7 +16,6 @@ interface Mentor {
 export default function MentorsPage() {
     const router = useRouter();
     const [mentors, setMentors] = useState<Mentor[]>([]);
-    const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [showInviteModal, setShowInviteModal] = useState(false);
@@ -56,6 +56,11 @@ export default function MentorsPage() {
         }
     };
 
+    const filteredMentors = mentors.filter(mentor =>
+        mentor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        mentor.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     if (loading) {
         return (
             <main className="dashboard">
@@ -95,6 +100,16 @@ export default function MentorsPage() {
                 </div>
             </section>
 
+            {mentors.length > 0 && (
+                <section className="dashboard__search">
+                    <SearchBar
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder="Search mentors by name or email..."
+                    />
+                </section>
+            )}
+
             <section className="dashboard__grid">
                 {mentors.length === 0 ? (
                     <div className="dashboard__card">
@@ -113,25 +128,40 @@ export default function MentorsPage() {
                                 <span>Email</span>
                                 <span>Assigned Classes</span>
                                 <span>Status</span>
+                                <span>Actions</span>
                             </div>
-                            {mentors.map((mentor) => (
-                                <div key={mentor._id} className="table__row">
-                                    <span><strong>{mentor.name}</strong></span>
-                                    <span>{mentor.email}</span>
-                                    <span>
-                                        {mentor.assignedClasses.length === 0 ? (
-                                            <span className="dashboard__muted">No classes</span>
-                                        ) : (
-                                            <span>{mentor.assignedClasses.length} classes</span>
-                                        )}
-                                    </span>
-                                    <span>
-                                        <span className={`badge badge--${mentor.isActive ? 'active' : 'inactive'}`}>
-                                            {mentor.isActive ? 'Active' : 'Inactive'}
-                                        </span>
-                                    </span>
+                            {filteredMentors.length === 0 ? (
+                                <div className="table__empty">
+                                    <p>No mentors match your search.</p>
                                 </div>
-                            ))}
+                            ) : (
+                                filteredMentors.map((mentor) => (
+                                    <div key={mentor._id} className="table__row">
+                                        <span><strong>{mentor.name}</strong></span>
+                                        <span>{mentor.email}</span>
+                                        <span>
+                                            {mentor.assignedClasses.length === 0 ? (
+                                                <span className="dashboard__muted">No classes</span>
+                                            ) : (
+                                                <span>{mentor.assignedClasses.length} classes</span>
+                                            )}
+                                        </span>
+                                        <span>
+                                            <span className={`badge badge--${mentor.isActive ? 'active' : 'inactive'}`}>
+                                                {mentor.isActive ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </span>
+                                        <span>
+                                            <button
+                                                className="btn btn--ghost btn--sm"
+                                                onClick={() => router.push(`/dashboard/mentors/${mentor._id}`)}
+                                            >
+                                                View
+                                            </button>
+                                        </span>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 )}

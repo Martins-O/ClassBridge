@@ -56,7 +56,7 @@ export async function PUT(
 
     // Verify mentor belongs to the same school as the current user
     if (currentUser.role === 'school_admin' &&
-        mentor.schoolId?.toString() !== currentUser.schoolId?.toString()) {
+      mentor.schoolId?.toString() !== currentUser.schoolId?.toString()) {
       return NextResponse.json(
         { error: 'You can only manage mentors from your own school' },
         { status: 403 }
@@ -162,7 +162,7 @@ export async function DELETE(
 
     // Verify mentor belongs to the same school as the current user
     if (currentUser.role === 'school_admin' &&
-        mentor.schoolId?.toString() !== currentUser.schoolId?.toString()) {
+      mentor.schoolId?.toString() !== currentUser.schoolId?.toString()) {
       return NextResponse.json(
         { error: 'You can only manage mentors from your own school' },
         { status: 403 }
@@ -184,7 +184,53 @@ export async function DELETE(
     });
 
   } catch {
-    // Error handling removed for production
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// GET /api/mentors/[id] - Fetch single mentor details
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await connectDB();
+
+    const userId = getUserIdFromRequest(request);
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const { id: mentorId } = await params;
+
+    // Fetch mentor details
+    const mentor = await User.findById(mentorId).select('-password');
+    if (!mentor || mentor.role !== 'mentor') {
+      return NextResponse.json(
+        { error: 'Mentor not found' },
+        { status: 404 }
+      );
+    }
+
+    // Get class assignments
+    const assignedClasses = await Class.find({
+      mentorIds: mentorId
+    }).select('name _id academicYear semester');
+
+    return NextResponse.json({
+      mentor: {
+        ...mentor.toObject(),
+        assignedClasses
+      }
+    });
+
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

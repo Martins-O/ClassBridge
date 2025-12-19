@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import NotificationCenter from './components/NotificationCenter';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -48,17 +49,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </nav>
 
                     <div className="flex items-center gap-4">
-                        {/* Mobile menu place holder / User menu placeholder */}
+                        <NotificationCenter />
+                        <div className="hidden md:block w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 shadow-lg shadow-cyan-500/20" />
                     </div>
                 </div>
             </header>
 
-            {/* 
-                We don't wrap children in .dashboard here because pages currently 
-                define <main className="dashboard"> themselves.
-                Over time, we should move that class here or adjust it.
-                For now, we just render children which contain their own layout structure.
-            */}
             {children}
         </div>
     );
