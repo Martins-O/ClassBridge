@@ -162,23 +162,40 @@ export default function DashboardPage() {
 
       <section className="dashboard__grid">
         {stats ? (
-          <div className="dashboard__card stats-card">
-            <p className="eyebrow">Platform snapshot</p>
-            <div className="stats">
-              <div>
-                <span>Total classes</span>
-                <strong>{stats.totalClasses}</strong>
-              </div>
-              <div>
-                <span>Students</span>
-                <strong>{stats.totalStudents}</strong>
-              </div>
-              <div>
-                <span>Mentors</span>
-                <strong>{stats.totalMentors}</strong>
+          <section className="dashboard__stats">
+            <div className="stat-card">
+              <div className="stat-card__icon">📚</div>
+              <div className="stat-card__content">
+                <p className="stat-card__label">Total Classes</p>
+                <h2 className="stat-card__value">{stats?.totalClasses || 0}</h2>
+                <p className="stat-card__trend">Active this semester</p>
               </div>
             </div>
-          </div>
+            <div className="stat-card">
+              <div className="stat-card__icon">👥</div>
+              <div className="stat-card__content">
+                <p className="stat-card__label">Total Students</p>
+                <h2 className="stat-card__value">{stats?.totalStudents || 0}</h2>
+                <p className="stat-card__trend">Enrolled students</p>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-card__icon">🎓</div>
+              <div className="stat-card__content">
+                <p className="stat-card__label">Total Mentors</p>
+                <h2 className="stat-card__value">{stats?.totalMentors || 0}</h2>
+                <p className="stat-card__trend">Active mentors</p>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-card__icon">📧</div>
+              <div className="stat-card__content">
+                <p className="stat-card__label">Pending Invites</p>
+                <h2 className="stat-card__value">{invitations.filter(i => i.status === 'pending').length}</h2>
+                <p className="stat-card__trend">Awaiting acceptance</p>
+              </div>
+            </div>
+          </section>
         ) : null}
 
         <div className="dashboard__card">

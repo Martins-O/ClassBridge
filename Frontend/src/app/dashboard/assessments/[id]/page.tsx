@@ -133,9 +133,12 @@ export default function AssessmentDetailPage({ params }: { params: Promise<{ id:
                 </div>
                 <div className="dashboard__hero-actions">
                     <button className="btn btn--ghost" onClick={() => router.push('/dashboard/assessments')}>
-                        Back to assessments
+                        Back
                     </button>
-                    <button className="btn btn--primary" onClick={toggleActive}>
+                    <button className="btn btn--primary" onClick={() => router.push(`/dashboard/assessments/${assessmentId}/take`)}>
+                        Take Assessment
+                    </button>
+                    <button className="btn btn--ghost" onClick={toggleActive}>
                         {assessment.isActive ? 'Deactivate' : 'Activate'}
                     </button>
                     <button className="btn btn--error" onClick={handleDelete}>

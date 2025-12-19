@@ -1001,3 +1001,183 @@ body {
   border-radius: 6px;
   font-size: 0.875rem;
 }
+
+/* ========================================
+   Enhanced Stat Cards
+   ======================================== */
+
+.stat-card {
+  background: linear-gradient(135deg, var(--dark-800) 0%, var(--dark-700) 100%);
+  border: 1px solid var(--dark-600);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  transition: all 200ms ease;
+}
+
+.stat-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.stat-card__icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.stat-card__content {
+  flex: 1;
+}
+
+.stat-card__label {
+  font-size: 0.875rem;
+  color: var(--foreground-muted);
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-card__value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin: 0 0 0.25rem 0;
+  line-height: 1;
+}
+
+.stat-card__trend {
+  font-size: 0.75rem;
+  color: var(--foreground-muted);
+  margin: 0;
+}
+
+/* Search Bar */
+
+.search-bar {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+}
+
+.search-bar input {
+  width: 100%;
+  padding-left: 2.5rem;
+}
+
+.search-bar__icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--foreground-muted);
+  pointer-events: none;
+}
+/* ========================================
+   Assessment Inputs
+   ======================================== */
+
+.radio-group,
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.radio-option,
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.radio-option:hover,
+.checkbox-option:hover {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+.radio-option input,
+.checkbox-option input {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: #38bdf8;
+}
+
+.rating-input {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.scale-input {
+  padding: 1rem 0;
+}
+
+.scale-input input[type="range"] {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--foreground-muted);
+  font-size: 0.875rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.question-preview {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.question-preview__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.question-preview__text {
+  font-size: 1.1rem;
+  color: var(--foreground);
+  margin-bottom: 1rem;
+}
+
+.question-preview__options {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.question-preview__options li {
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: var(--foreground-muted);
+}

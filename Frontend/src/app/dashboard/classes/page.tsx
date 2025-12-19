@@ -23,8 +23,11 @@ interface Class {
 export default function ClassesPage() {
     const router = useRouter();
     const [classes, setClasses] = useState<Class[]>([]);
+    const [filteredClasses, setFilteredClasses] = useState<Class[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+
 
     useEffect(() => {
         fetchClasses();
@@ -37,6 +40,7 @@ export default function ClassesPage() {
 
             if (response.ok) {
                 setClasses(data.classes || []);
+                setFilteredClasses(data.classes || []);
             } else {
                 setError(data.error || 'Failed to load classes');
             }
@@ -46,6 +50,22 @@ export default function ClassesPage() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (searchQuery.trim() === '') {
+            setFilteredClasses(classes);
+        } else {
+            const query = searchQuery.toLowerCase();
+            setFilteredClasses(
+                classes.filter(cls =>
+                    cls.name.toLowerCase().includes(query) ||
+                    cls.subject?.toLowerCase().includes(query) ||
+                    cls.academicYear.toLowerCase().includes(query)
+                )
+            );
+        }
+    }, [searchQuery, classes]);
+
 
     if (loading) {
         return (
@@ -86,6 +106,20 @@ export default function ClassesPage() {
                 </div>
             </section>
 
+            {classes.length > 0 && (
+                <section className="dashboard__search">
+                    <div className="search-bar">
+                        <span className="search-bar__icon">🔍</span>
+                        <input
+                            type="text"
+                            placeholder="Search classes by name, subject, or year..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                </section>
+            )}
+
             <section className="dashboard__grid">
                 {classes.length === 0 ? (
                     <div className="dashboard__card">
@@ -106,31 +140,36 @@ export default function ClassesPage() {
                                 <span>Mentors</span>
                                 <span>Actions</span>
                             </div>
-                            {classes.map((cls) => (
-                                <div key={cls._id} className="table__row">
-                                    <span>
-                                        <strong>{cls.name}</strong>
-                                        {cls.subject && <small className="dashboard__muted">{cls.subject}</small>}
-                                    </span>
-                                    <span>
-                                        {cls.academicYear}
-                                        {cls.semester && ` • ${cls.semester}`}
-                                    </span>
-                                    <span>
-                                        {cls.students.length}
-                                        {cls.maxStudents && ` / ${cls.maxStudents}`}
-                                    </span>
-                                    <span>{cls.mentors.length}</span>
-                                    <span>
-                                        <Link
-                                            href={`/dashboard/classes/${cls._id}`}
-                                            className="btn btn--ghost btn--sm"
-                                        >
-                                            View
-                                        </Link>
-                                    </span>
+                            {filteredClasses.length === 0 ? (
+                                <div className="table__empty">
+                                    <p>No classes match your search.</p>
                                 </div>
-                            ))}
+                            ) : (
+                                filteredClasses.map((cls) => (
+                                    <div key={cls._id} className="table__row">
+                                        <span>
+                                            <strong>{cls.name}</strong>
+                                            {cls.subject && <small className="dashboard__muted">{cls.subject}</small>}
+                                        </span>
+                                        <span>
+                                            {cls.academicYear}
+                                            {cls.semester && ` • ${cls.semester}`}
+                                        </span>
+                                        <span>
+                                            {cls.students.length}
+                                            {cls.maxStudents && ` / ${cls.maxStudents}`}
+                                        </span>
+                                        <span>{cls.mentors.length}</span>
+                                        <span>
+                                            <Link
+                                                href={`/dashboard/classes/${cls._id}`}
+                                                className="btn btn--ghost btn--sm"
+                                            >
+                                                View
+                                            </Link>
+                                        </span>
+                                    </div>
+                                )))}
                         </div>
                     </div>
                 )}

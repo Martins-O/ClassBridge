@@ -15,10 +15,12 @@ interface Mentor {
 export default function MentorsPage() {
     const router = useRouter();
     const [mentors, setMentors] = useState<Mentor[]>([]);
+    const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [schoolId, setSchoolId] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         fetchUserAndMentors();
