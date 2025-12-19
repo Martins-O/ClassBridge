@@ -41,23 +41,14 @@ export default function ProfilePage() {
             const meResponse = await fetch('/api/auth/me');
             const meData = await meResponse.json();
 
-            if (!meResponse.ok || !meData.user?._id) {
-                setError('Failed to load profile');
-                setLoading(false);
-                return;
-            }
-
-            const response = await fetch(`/api/users/${meData.user._id}`);
-            const data = await response.json();
-
-            if (response.ok && data.user) {
-                setUser(data.user);
-                setName(data.user.name || '');
-                setPhone(data.user.phone || '');
-                setBio(data.user.bio || '');
-                setProfileImage(data.user.profileImage || '');
+            if (meResponse.ok && meData.user) {
+                setUser(meData.user);
+                setName(meData.user.name || '');
+                setPhone(meData.user.phone || '');
+                setBio(meData.user.bio || '');
+                setProfileImage(meData.user.profileImage || '');
             } else {
-                setError(data.error || 'Failed to load profile');
+                setError(meData.error || 'Failed to load profile');
             }
         } catch {
             setError('Network error. Please try again.');
