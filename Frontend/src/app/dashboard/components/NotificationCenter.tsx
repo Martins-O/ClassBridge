@@ -123,10 +123,10 @@ export default function NotificationCenter() {
                     padding: 0.5rem;
                     border-radius: 50%;
                     transition: background 0.2s;
-                    color: var(--text);
+                    color: var(--foreground);
                 }
                 .notification-trigger:hover {
-                    background: var(--bg-accent);
+                    background: var(--dark-700);
                 }
                 .unread-badge {
                     position: absolute;
@@ -142,31 +142,32 @@ export default function NotificationCenter() {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    border: 2px solid var(--bg);
+                    border: 2px solid white;
                 }
                 .notification-dropdown {
                     position: absolute;
                     top: 100%;
                     right: 0;
                     width: 320px;
-                    background: var(--bg-card);
-                    border: 1px solid var(--border);
-                    border-radius: var(--radius-md);
-                    box-shadow: var(--shadow-lg);
+                    background: white;
+                    border: 1px solid var(--dark-600);
+                    border-radius: 16px;
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
                     z-index: 1000;
                     margin-top: 0.5rem;
                     overflow: hidden;
                 }
                 .notification-dropdown__header {
-                    padding: 1rem;
-                    border-bottom: 1px solid var(--border);
+                    padding: 1.25rem 1rem;
+                    border-bottom: 1px solid var(--dark-600);
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
                 }
                 .notification-dropdown__header h3 {
                     margin: 0;
-                    font-size: 1rem;
+                    font-size: 0.9rem;
+                    font-weight: 700;
                 }
                 .notification-dropdown__list {
                     max-height: 400px;
@@ -174,43 +175,45 @@ export default function NotificationCenter() {
                 }
                 .notification-item {
                     padding: 1rem;
-                    border-bottom: 1px solid var(--border);
+                    border-bottom: 1px solid var(--dark-700);
                     cursor: pointer;
                     transition: background 0.2s;
                 }
                 .notification-item:hover {
-                    background: var(--bg-accent);
+                    background: var(--dark-700);
                 }
                 .notification-item.unread {
-                    background: rgba(var(--primary-rgb), 0.05);
+                    background: #f0f7ff;
                     border-left: 3px solid var(--primary);
                 }
                 .notification-item--empty {
                     text-align: center;
-                    color: var(--text-muted);
+                    color: var(--foreground-muted);
                     padding: 2rem 1rem;
                     cursor: default;
                 }
                 .notification-item__title {
                     margin: 0 0 0.25rem;
                     font-size: 0.9rem;
-                    font-weight: 600;
+                    font-weight: 700;
+                    color: var(--foreground);
                 }
                 .notification-item__message {
                     margin: 0 0 0.5rem;
                     font-size: 0.85rem;
-                    color: var(--text-muted);
+                    color: var(--foreground-muted);
                     line-height: 1.4;
                 }
                 .notification-item__time {
                     font-size: 0.75rem;
-                    color: var(--text-muted);
+                    color: var(--foreground-muted);
                 }
                 .btn--link {
                     background: none;
                     border: none;
                     color: var(--primary);
                     font-size: 0.8rem;
+                    font-weight: 600;
                     cursor: pointer;
                     padding: 0;
                 }

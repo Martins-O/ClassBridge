@@ -79,19 +79,24 @@ export default function DashboardPage() {
       {
         label: 'Students per Class',
         data: classes.map(c => c.studentIds?.length || 0),
-        backgroundColor: 'rgba(54, 162, 235, 0.5)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1,
+        backgroundColor: 'rgba(37, 99, 235, 0.7)',
+        borderColor: 'rgba(37, 99, 235, 1)',
+        borderWidth: 2,
+        borderRadius: 8,
       },
     ],
   };
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top' as const,
-        labels: { color: '#94a3b8' }
+        labels: {
+          color: '#475569',
+          font: { weight: 'bold' as const }
+        }
       },
       title: {
         display: false,
@@ -100,11 +105,11 @@ export default function DashboardPage() {
     scales: {
       y: {
         beginAtZero: true,
-        ticks: { color: '#94a3b8' },
-        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+        ticks: { color: '#64748b' },
+        grid: { color: 'rgba(0, 0, 0, 0.05)' }
       },
       x: {
-        ticks: { color: '#94a3b8' },
+        ticks: { color: '#64748b' },
         grid: { display: false }
       }
     }

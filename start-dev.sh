@@ -1,53 +1,133 @@
 #!/usr/bin/env bash
+# ClassBridge Development Startup Script
+# Optimized for high-performance developer workflows
+
 set -euo pipefail
 
+# --- Colors & Styles ---
+BOLD='\033[1m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[0;33m'
+MAGENTA='\033[0;35m'
+NC='\033[0m' # No Color
+
+# --- Configuration ---
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 FRONTEND_DIR="$ROOT_DIR/Frontend"
 BACKEND_DIR="$ROOT_DIR/Backend"
+FRONTEND_PORT=3000
+BACKEND_PORT=4000
 
-if [[ ! -d "$FRONTEND_DIR" ]]; then
-  echo "Frontend directory not found: $FRONTEND_DIR" >&2
-  exit 1
-fi
+# --- Helper Functions ---
+log_info() { echo -e "${CYAN}${BOLD}[INFO]${NC} $1"; }
+log_success() { echo -e "${GREEN}${BOLD}[SUCCESS]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}${BOLD}[WARN]${NC} $1"; }
+log_error() { echo -e "${RED}${BOLD}[ERROR]${NC} $1"; }
 
-if [[ ! -d "$BACKEND_DIR" ]]; then
-  echo "Backend directory not found: $BACKEND_DIR" >&2
-  exit 1
-fi
+print_banner() {
+    echo -e "${MAGENTA}${BOLD}"
+    echo "  ____ _               ____  _     _     _             "
+    echo " / ___| | __ _ ___ ___| __ )| |__ (_) __| | __ _  ___ "
+    echo "| |   | |/ _\` / __/ __|  _ \\| '_ \\| |/ _\` |/ _\` |/ _ \\"
+    echo "| |___| | (_| \\__ \\__ \\ |_) | | | | | (_| | (_| |  __/"
+    echo " \\____|_|\\__,_|___/___/____/|_| |_|_|\\__,_|\\__, |\\___|"
+    echo "                                           |___/       "
+    echo -e "         ${CYAN}Development Environment Manager${NC}"
+    echo
+}
+
+check_port() {
+    local port=$1
+    if command -v lsof >/dev/null ; then
+        if lsof -Pi :"$port" -sTCP:LISTEN -t >/dev/null ; then
+            log_error "Port $port is already in use. Please free it and try again."
+            exit 1
+        fi
+    fi
+}
 
 cleanup() {
-  local exit_code=$?
-  if [[ -n "${FRONTEND_PID:-}" ]]; then
-    kill "$FRONTEND_PID" 2>/dev/null || true
-  fi
-  if [[ -n "${BACKEND_PID:-}" ]]; then
-    kill "$BACKEND_PID" 2>/dev/null || true
-  fi
-  exit "$exit_code"
+    echo
+    log_info "Shutting down development servers..."
+    if [[ -n "${FRONTEND_PID:-}" ]]; then
+        kill "$FRONTEND_PID" 2>/dev/null || true
+        log_info "Stopped Frontend (PID $FRONTEND_PID)"
+    fi
+    if [[ -n "${BACKEND_PID:-}" ]]; then
+        kill "$BACKEND_PID" 2>/dev/null || true
+        log_info "Stopped Backend (PID $BACKEND_PID)"
+    fi
+    log_success "Cleanup complete. See you next time!"
+    exit 0
 }
 
+# --- Initialization ---
+clear
+print_banner
 trap cleanup INT TERM EXIT
 
+# Check directories
+if [[ ! -d "$FRONTEND_DIR" ]] || [[ ! -d "$BACKEND_DIR" ]]; then
+    log_error "Frontend or Backend directories missing. Check your project structure."
+    exit 1
+fi
+
+# Port Validation
+log_info "Checking port availability..."
+check_port "$BACKEND_PORT"
+check_port "$FRONTEND_PORT"
+
+# Dependency Checks
 ensure_dependencies() {
-  local dir="$1"
-  if [[ ! -d "$dir/node_modules" ]]; then
-    echo "Installing dependencies in $dir"
-    npm --prefix "$dir" install
-  fi
+    local dir="$1"
+    local name="$2"
+    if [[ ! -d "$dir/node_modules" ]]; then
+        log_warn "Dependencies missing in $name. Running npm install..."
+        npm --prefix "$dir" install
+        log_success "$name dependencies installed."
+    else
+        log_info "$name dependencies verified."
+    fi
 }
 
-ensure_dependencies "$BACKEND_DIR"
-ensure_dependencies "$FRONTEND_DIR"
+# Env Check
+check_env() {
+    local dir="$1"
+    local name="$2"
+    if [[ ! -f "$dir/.env" ]] && [[ -f "$dir/.env.example" ]]; then
+        log_warn "$name .env file missing! Copying from .env.example..."
+        cp "$dir/.env.example" "$dir/.env"
+        log_warn "Please review $dir/.env and add your secrets."
+    fi
+}
 
-npm --prefix "$BACKEND_DIR" run dev &
+check_env "$BACKEND_DIR" "Backend"
+check_env "$FRONTEND_DIR" "Frontend"
+ensure_dependencies "$BACKEND_DIR" "Backend"
+ensure_dependencies "$FRONTEND_DIR" "Frontend"
+
+# --- Execution ---
+log_info "Starting ClassBridge services..."
+
+# Start Backend with line buffering for logs
+stdbuf -oL -eL npm --prefix "$BACKEND_DIR" run dev 2>&1 | stdbuf -oL -eL sed "s/^/${MAGENTA}[BACKEND]${NC} /" &
 BACKEND_PID=$!
-print_started() {
-  echo "$1 dev server started (PID $2)"
-}
-print_started "Backend" "$BACKEND_PID"
+log_success "Backend process started (PID $BACKEND_PID)"
 
-npm --prefix "$FRONTEND_DIR" run dev &
+# Wait for backend to potentially start up or just start frontend
+sleep 2
+
+# Start Frontend with line buffering for logs
+stdbuf -oL -eL npm --prefix "$FRONTEND_DIR" run dev 2>&1 | stdbuf -oL -eL sed "s/^/${CYAN}[FRONTEND]${NC} /" &
 FRONTEND_PID=$!
-print_started "Frontend" "$FRONTEND_PID"
+log_success "Frontend process started (PID $FRONTEND_PID)"
+
+echo
+log_info "Frontend: http://localhost:$FRONTEND_PORT"
+log_info "Backend:  http://localhost:$BACKEND_PORT"
+echo -e "${YELLOW}Press Ctrl+C to stop all services.${NC}"
+echo
 
 wait -n

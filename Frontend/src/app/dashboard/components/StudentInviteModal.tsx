@@ -152,21 +152,54 @@ export default function StudentInviteModal({ isOpen, onClose, onSuccess }: Stude
                         disabled={submitting}
                         aria-label="Close"
                     >
-                        ×
+                        &times;
                     </button>
                 </div>
 
-                <div className="modal__tabs" style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: '1rem' }}>
+                <div className="modal__tabs" style={{
+                    display: 'flex',
+                    borderBottom: '2px solid var(--dark-700)',
+                    background: 'var(--dark-700)',
+                    padding: '4px',
+                    margin: '1.5rem 1.5rem 0',
+                    borderRadius: '12px'
+                }}>
                     <button
+                        type="button"
                         className={`tab-btn ${mode === 'single' ? 'active' : ''}`}
-                        style={{ flex: 1, padding: '0.75rem', border: 'none', background: mode === 'single' ? 'var(--bg-accent)' : 'transparent', cursor: 'pointer', color: 'var(--text)' }}
+                        style={{
+                            flex: 1,
+                            padding: '0.6rem',
+                            border: 'none',
+                            background: mode === 'single' ? 'white' : 'transparent',
+                            cursor: 'pointer',
+                            borderRadius: '8px',
+                            fontWeight: 700,
+                            fontSize: '0.875rem',
+                            color: mode === 'single' ? 'var(--primary)' : 'var(--foreground-muted)',
+                            boxShadow: mode === 'single' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                            transition: 'all 200ms ease'
+                        }}
                         onClick={() => setMode('single')}
                     >
                         Single Invite
                     </button>
                     <button
+                        type="button"
                         className={`tab-btn ${mode === 'bulk' ? 'active' : ''}`}
-                        style={{ flex: 1, padding: '0.75rem', border: 'none', background: mode === 'bulk' ? 'var(--bg-accent)' : 'transparent', cursor: 'pointer', color: 'var(--text)' }}
+                        style={{
+                            flex: 1,
+                            padding: '0.6rem',
+                            border: 'none',
+                            background: mode === 'bulk' ? 'white' : 'transparent',
+                            cursor: 'pointer',
+                            borderRadius: '8px',
+                            fontWeight: 700,
+                            fontSize: '0.875rem',
+                            color: mode === 'bulk' ? 'var(--primary)' : 'var(--foreground-muted)',
+                            boxShadow: mode === 'bulk' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                            transition: 'all 200ms ease'
+                        }}
                         onClick={() => setMode('bulk')}
                     >
                         Bulk Invite
@@ -175,10 +208,10 @@ export default function StudentInviteModal({ isOpen, onClose, onSuccess }: Stude
 
                 <form onSubmit={handleSubmit}>
                     <div className="modal__body">
-                        {error && <p className="auth-card__error">{error}</p>}
-                        {success && <p className="auth-card__success">{success}</p>}
+                        {error && <p className="alert alert--error" style={{ marginBottom: '1.5rem' }}>{error}</p>}
+                        {success && <p className="alert alert--success" style={{ marginBottom: '1.5rem' }}>{success}</p>}
 
-                        <label className="field">
+                        <label className="field" style={{ marginBottom: '1.5rem' }}>
                             <span>Target Class</span>
                             {loadingClasses ? (
                                 <p>Loading classes...</p>
@@ -201,7 +234,7 @@ export default function StudentInviteModal({ isOpen, onClose, onSuccess }: Stude
 
                         {mode === 'single' ? (
                             <>
-                                <label className="field">
+                                <label className="field" style={{ marginBottom: '1.5rem' }}>
                                     <span>Student Name</span>
                                     <input
                                         type="text"
