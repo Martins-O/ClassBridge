@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import SearchBar from '../components/SearchBar';
 
 interface Assessment {
     _id: string;
@@ -21,6 +22,7 @@ export default function AssessmentsPage() {
     const [assessments, setAssessments] = useState<Assessment[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         fetchAssessments();
@@ -43,10 +45,15 @@ export default function AssessmentsPage() {
         }
     };
 
+    const filteredAssessments = assessments.filter(a =>
+        a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     if (loading) {
         return (
             <main className="dashboard">
-                <div className="dashboard__card">Loading assessments…</div>
+                <div className="dashboard__card">Loading assessments...</div>
             </main>
         );
     }
@@ -82,6 +89,16 @@ export default function AssessmentsPage() {
                 </div>
             </section>
 
+            {assessments.length > 0 && (
+                <section className="dashboard__search">
+                    <SearchBar
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder="Search assessments..."
+                    />
+                </section>
+            )}
+
             <section className="dashboard__grid">
                 {assessments.length === 0 ? (
                     <div className="dashboard__card">
@@ -93,31 +110,39 @@ export default function AssessmentsPage() {
                         </Link>
                     </div>
                 ) : (
-                    <div className="dashboard__grid dashboard__grid--cards">
-                        {assessments.map((assessment) => (
-                            <div key={assessment._id} className="assessment-card">
-                                <div className="assessment-card__header">
-                                    <h3>{assessment.title}</h3>
-                                    <span className={`badge badge--${assessment.isActive ? 'active' : 'inactive'}`}>
-                                        {assessment.isActive ? 'Active' : 'Inactive'}
-                                    </span>
-                                </div>
-                                <p className="assessment-card__description">{assessment.description}</p>
-                                <div className="assessment-card__meta">
-                                    <span className="badge badge--pending">{assessment.assessmentType.replace('_', ' ')}</span>
-                                    <span className="dashboard__muted">{assessment.questions.length} questions</span>
-                                </div>
-                                <div className="assessment-card__actions">
-                                    <Link
-                                        href={`/dashboard/assessments/${assessment._id}`}
-                                        className="btn btn--ghost btn--sm"
-                                    >
-                                        View Details
-                                    </Link>
-                                </div>
+                    <>
+                        {filteredAssessments.length === 0 ? (
+                            <div className="dashboard__card">
+                                <p className="dashboard__muted">No assessments match your search.</p>
                             </div>
-                        ))}
-                    </div>
+                        ) : (
+                            <div className="dashboard__grid dashboard__grid--cards">
+                                {filteredAssessments.map((assessment) => (
+                                    <div key={assessment._id} className="assessment-card">
+                                        <div className="assessment-card__header">
+                                            <h3>{assessment.title}</h3>
+                                            <span className={`badge badge--${assessment.isActive ? 'active' : 'inactive'}`}>
+                                                {assessment.isActive ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </div>
+                                        <p className="assessment-card__description">{assessment.description}</p>
+                                        <div className="assessment-card__meta">
+                                            <span className="badge badge--pending">{assessment.assessmentType.replace('_', ' ')}</span>
+                                            <span className="dashboard__muted">{assessment.questions.length} questions</span>
+                                        </div>
+                                        <div className="assessment-card__actions">
+                                            <Link
+                                                href={`/dashboard/assessments/${assessment._id}`}
+                                                className="btn btn--ghost btn--sm"
+                                            >
+                                                View Details
+                                            </Link>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </>
                 )}
             </section>
         </main>

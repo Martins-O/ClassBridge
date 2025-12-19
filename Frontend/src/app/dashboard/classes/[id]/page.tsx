@@ -123,6 +123,9 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
                     <button className="btn btn--ghost" onClick={() => router.push('/dashboard/classes')}>
                         Back to classes
                     </button>
+                    <button className="btn btn--ghost" onClick={() => router.push(`/dashboard/classes/${classId}/edit`)}>
+                        Edit Class
+                    </button>
                     <button className="btn btn--primary" onClick={() => setShowAssignModal(true)}>
                         Assign Mentors
                     </button>

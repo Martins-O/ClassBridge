@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import SearchBar from '../components/SearchBar';
 
 interface Course {
     _id: string;
@@ -18,6 +19,7 @@ export default function CoursesPage() {
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         fetchCourses();
@@ -40,10 +42,15 @@ export default function CoursesPage() {
         }
     };
 
+    const filteredCourses = courses.filter(course =>
+        course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (course.code && course.code.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+
     if (loading) {
         return (
             <main className="dashboard">
-                <div className="dashboard__card">Loading courses…</div>
+                <div className="dashboard__card">Loading courses...</div>
             </main>
         );
     }
@@ -79,6 +86,16 @@ export default function CoursesPage() {
                 </div>
             </section>
 
+            {courses.length > 0 && (
+                <section className="dashboard__search">
+                    <SearchBar
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder="Search courses by name or code..."
+                    />
+                </section>
+            )}
+
             <section className="dashboard__grid">
                 {courses.length === 0 ? (
                     <div className="dashboard__card">
@@ -99,26 +116,32 @@ export default function CoursesPage() {
                                 <span>Status</span>
                                 <span>Actions</span>
                             </div>
-                            {courses.map((course) => (
-                                <div key={course._id} className="table__row">
-                                    <span><strong>{course.code}</strong></span>
-                                    <span>{course.name}</span>
-                                    <span>{course.credits || '—'}</span>
-                                    <span>
-                                        <span className={`badge badge--${course.isActive ? 'active' : 'inactive'}`}>
-                                            {course.isActive ? 'Active' : 'Inactive'}
-                                        </span>
-                                    </span>
-                                    <span>
-                                        <Link
-                                            href={`/dashboard/courses/${course._id}`}
-                                            className="btn btn--ghost btn--sm"
-                                        >
-                                            View
-                                        </Link>
-                                    </span>
+                            {filteredCourses.length === 0 ? (
+                                <div className="table__empty">
+                                    <p>No courses match your search.</p>
                                 </div>
-                            ))}
+                            ) : (
+                                filteredCourses.map((course) => (
+                                    <div key={course._id} className="table__row">
+                                        <span><strong>{course.code || '—'}</strong></span>
+                                        <span>{course.name}</span>
+                                        <span>{course.credits || '—'}</span>
+                                        <span>
+                                            <span className={`badge badge--${course.isActive ? 'active' : 'inactive'}`}>
+                                                {course.isActive ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </span>
+                                        <span>
+                                            <Link
+                                                href={`/dashboard/courses/${course._id}`}
+                                                className="btn btn--ghost btn--sm"
+                                            >
+                                                View
+                                            </Link>
+                                        </span>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 )}

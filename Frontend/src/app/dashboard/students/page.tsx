@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import StudentInviteModal from '../components/StudentInviteModal';
+import SearchBar from '../components/SearchBar';
 
 interface Student {
     _id: string;
@@ -18,6 +19,7 @@ export default function StudentsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [showInviteModal, setShowInviteModal] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         fetchStudents();
@@ -39,6 +41,11 @@ export default function StudentsPage() {
             setLoading(false);
         }
     };
+
+    const filteredStudents = students.filter(s =>
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     if (loading) {
         return (
@@ -73,8 +80,21 @@ export default function StudentsPage() {
                     <button className="btn btn--primary" onClick={() => setShowInviteModal(true)}>
                         Invite Student
                     </button>
+                    <button className="btn btn--ghost" onClick={() => router.push('/dashboard')}>
+                        Back to dashboard
+                    </button>
                 </div>
             </section>
+
+            {students.length > 0 && (
+                <section className="dashboard__search">
+                    <SearchBar
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder="Search students by name or email..."
+                    />
+                </section>
+            )}
 
             <section className="dashboard__grid">
                 <div className="dashboard__card">
@@ -97,18 +117,24 @@ export default function StudentsPage() {
                                 <span>Joined</span>
                                 <span>Status</span>
                             </div>
-                            {students.map((student) => (
-                                <div key={student._id} className="table__row">
-                                    <span><strong>{student.name}</strong></span>
-                                    <span>{student.email}</span>
-                                    <span>{new Date(student.createdAt).toLocaleDateString()}</span>
-                                    <span>
-                                        <span className={`badge badge--${student.isActive ? 'active' : 'inactive'}`}>
-                                            {student.isActive ? 'Active' : 'Inactive'}
-                                        </span>
-                                    </span>
+                            {filteredStudents.length === 0 ? (
+                                <div className="table__empty">
+                                    <p>No students match your search.</p>
                                 </div>
-                            ))}
+                            ) : (
+                                filteredStudents.map((student) => (
+                                    <div key={student._id} className="table__row">
+                                        <span><strong>{student.name}</strong></span>
+                                        <span>{student.email}</span>
+                                        <span>{new Date(student.createdAt).toLocaleDateString()}</span>
+                                        <span>
+                                            <span className={`badge badge--${student.isActive ? 'active' : 'inactive'}`}>
+                                                {student.isActive ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </span>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     )}
                 </div>
