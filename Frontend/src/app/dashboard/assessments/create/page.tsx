@@ -149,7 +149,7 @@ export default function CreateAssessmentPage() {
             <section className="dashboard__grid">
                 <div className="dashboard__card">
                     <form onSubmit={handleSubmit}>
-                        {error && <p className="auth-card__error">{error}</p>}
+                        {error && <p className="alert alert--error u-margin-bottom-md">{error}</p>}
 
                         <p className="form-section-title">Basic Information</p>
 
@@ -319,10 +319,10 @@ export default function CreateAssessmentPage() {
                                 onClick={() => router.push('/dashboard/assessments')}
                                 disabled={submitting}
                             >
-                                Cancel
+                                Discard Changes
                             </button>
                             <button type="submit" className="btn btn--primary" disabled={submitting}>
-                                {submitting ? 'Creating...' : 'Create Assessment'}
+                                {submitting ? 'Creating...' : 'Publish Assessment'}
                             </button>
                         </div>
                     </form>

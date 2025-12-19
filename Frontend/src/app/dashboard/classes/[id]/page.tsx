@@ -98,8 +98,9 @@ export default function ClassDetailPage({ params }: { params: Promise<{ id: stri
     if (error || !classData) {
         return (
             <main className="dashboard">
-                <div className="dashboard__card">
-                    <p className="auth-card__error">{error || 'Class not found'}</p>
+                <div className="dashboard__card dashboard__card--full">
+                    {error && <p className="alert alert--error u-margin-bottom-md">{error}</p>}
+                    {!error && !classData && <p className="auth-card__error">Class not found</p>}
                     <button className="btn btn--primary" onClick={() => router.push('/dashboard/classes')}>
                         Back to classes
                     </button>

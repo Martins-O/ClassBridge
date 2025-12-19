@@ -108,8 +108,9 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
     if (error || !user) {
         return (
             <main className="dashboard">
-                <div className="dashboard__card">
-                    <p className="auth-card__error">{error || 'Student not found'}</p>
+                <div className="dashboard__card dashboard__card--full">
+                    {error && <p className="alert alert--error u-margin-bottom-md">{error}</p>}
+                    {!error && !user && <p className="auth-card__error">Student not found</p>}
                     <button className="btn btn--primary" onClick={() => router.push('/dashboard/students')}>
                         Back to students
                     </button>

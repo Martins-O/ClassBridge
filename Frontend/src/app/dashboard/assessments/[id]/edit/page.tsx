@@ -198,7 +198,7 @@ export default function EditAssessmentPage({ params }: { params: Promise<{ id: s
             <section className="dashboard__grid">
                 <div className="dashboard__card">
                     <form onSubmit={handleSubmit}>
-                        {error && <p className="auth-card__error">{error}</p>}
+                        {error && <p className="alert alert--error u-margin-bottom-md">{error}</p>}
 
                         <p className="form-section-title">Basic Information</p>
 

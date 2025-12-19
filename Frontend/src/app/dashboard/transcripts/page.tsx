@@ -184,7 +184,6 @@ export default function TranscriptPage() {
                     .btn, .dashboard__hero-actions, header, nav, footer {
                         display: none !important;
                     }
-                    /* Force light theme for print */
                     .dashboard__card {
                        background: white !important;
                        border: none !important;
@@ -200,28 +199,26 @@ export default function TranscriptPage() {
 
             <section className="dashboard__hero">
                 <div>
-                    <p className="eyebrow">Academic Transcript</p>
+                    <p className="eyebrow">Academic Records</p>
                     <h1>{t.studentInfo.name}</h1>
+                    <p className="dashboard__muted">Official Academic Transcript</p>
                 </div>
                 <div className="dashboard__hero-actions">
-                    {user?.role !== 'student' && (
-                        <button className="btn btn--ghost" onClick={() => setSelectedTranscript(null)}>
-                            Back to List
-                        </button>
-                    )}
+                    <button className="btn btn--ghost" onClick={() => (user?.role === 'student' ? router.push('/dashboard') : setSelectedTranscript(null))}>
+                        {user?.role === 'student' ? 'Back to dashboard' : 'Back to List'}
+                    </button>
                     <button className="btn btn--primary" onClick={handlePrint}>
                         Print / Download PDF
                     </button>
                 </div>
             </section>
 
-            <div className="transcript-container dashboard__grid" style={{ gridTemplateColumns: '1fr' }}>
-                {/* Header Info */}
-                <div className="dashboard__card">
-                    <div className="flex justify-between items-start border-b border-gray-700 pb-6 mb-6">
+            <div className="transcript-container dashboard__grid">
+                <div className="dashboard__card dashboard__card--full">
+                    <div className="flex justify-between items-start border-b border-gray-100 pb-6 mb-6">
                         <div>
-                            <h2 className="text-2xl font-bold mb-1">{schoolName}</h2>
-                            <p className="text-sm text-gray-400">Official Academic Transcript</p>
+                            <h2 className="text-2xl font-bold mb-1" style={{ color: 'var(--slate-900)' }}>{schoolName}</h2>
+                            <p className="text-sm dashboard__muted">Official Institution Record</p>
                         </div>
                         <div className="text-right">
                             <p className="text-sm"><strong>Generated:</strong> {new Date(t.generatedAt).toLocaleDateString()}</p>
@@ -229,9 +226,9 @@ export default function TranscriptPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-8 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
                         <div>
-                            <h3 className="text-sm uppercase tracking-wider text-gray-500 mb-3">Student Information</h3>
+                            <h3 className="eyebrow u-margin-bottom-sm">Student Information</h3>
                             <div className="space-y-1">
                                 <p><strong>Name:</strong> {t.studentInfo.name}</p>
                                 <p><strong>Email:</strong> {t.studentInfo.email}</p>
@@ -239,45 +236,44 @@ export default function TranscriptPage() {
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-sm uppercase tracking-wider text-gray-500 mb-3">Academic Summary</h3>
+                            <h3 className="eyebrow u-margin-bottom-sm">Academic Summary</h3>
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-white/5 p-3 rounded-lg text-center border border-white/10">
-                                    <span className="block text-xs uppercase text-gray-400">GPA</span>
-                                    <strong className="text-2xl text-cyan-400">{t.academicSummary.gpa.toFixed(2)}</strong>
+                                <div className="bg-slate-50 p-4 rounded-xl text-center border border-slate-100">
+                                    <span className="block text-xs uppercase text-slate-500 font-bold mb-1">Current GPA</span>
+                                    <strong className="text-2xl text-blue-600">{t.academicSummary.gpa.toFixed(2)}</strong>
                                 </div>
-                                <div className="bg-white/5 p-3 rounded-lg text-center border border-white/10">
-                                    <span className="block text-xs uppercase text-gray-400">Credits</span>
-                                    <strong className="text-2xl text-cyan-400">{t.academicSummary.totalCredits}</strong>
+                                <div className="bg-slate-50 p-4 rounded-xl text-center border border-slate-100">
+                                    <span className="block text-xs uppercase text-slate-500 font-bold mb-1">Total Credits</span>
+                                    <strong className="text-2xl text-blue-600">{t.academicSummary.totalCredits}</strong>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Course Records */}
-                <div className="dashboard__card">
-                    <h3 className="text-lg font-bold mb-4">Course Record</h3>
+                <div className="dashboard__card dashboard__card--full">
+                    <h3 className="text-lg font-bold u-margin-bottom-md">Complete Course History</h3>
                     {t.courseRecords.length === 0 ? (
-                        <p>No courses completed yet.</p>
+                        <p className="dashboard__muted">No courses completed yet.</p>
                     ) : (
                         <div className="table">
-                            <div className="table__head" style={{ gridTemplateColumns: 'minmax(200px, 2fr) 1fr 1fr 1fr 1fr' }}>
-                                <span>Course</span>
+                            <div className="table__head" style={{ gridTemplateColumns: 'minmax(200px, 2fr) 1fr 1fr 1fr 1.5fr' }}>
+                                <span>Course Description</span>
                                 <span>Year</span>
                                 <span>Credits</span>
                                 <span>Grade</span>
-                                <span>Completed</span>
+                                <span>Completion Date</span>
                             </div>
                             {t.courseRecords.map((course) => (
-                                <div key={course._id} className="table__row" style={{ gridTemplateColumns: 'minmax(200px, 2fr) 1fr 1fr 1fr 1fr' }}>
+                                <div key={course._id} className="table__row" style={{ gridTemplateColumns: 'minmax(200px, 2fr) 1fr 1fr 1fr 1.5fr' }}>
                                     <span>
-                                        <strong>{course.className}</strong>
-                                        <small>{course.cohort}</small>
+                                        <strong style={{ display: 'block' }}>{course.className}</strong>
+                                        <span className="text-xs dashboard__muted">{course.cohort}</span>
                                     </span>
                                     <span>{course.academicYear}</span>
                                     <span>{course.credits}</span>
                                     <span>
-                                        <span className={`badge ${course.grade.startsWith('A') ? 'badge--active' : ''}`}>
+                                        <span className={`badge ${course.grade.startsWith('A') || course.grade.startsWith('B') ? 'badge--active' : 'badge--pending'}`}>
                                             {course.grade}
                                         </span>
                                     </span>
@@ -288,8 +284,10 @@ export default function TranscriptPage() {
                     )}
                 </div>
 
-                <div className="dashboard__card text-center text-sm text-gray-500">
-                    <p>This document is an official record of the student's academic performance at {schoolName}.</p>
+                <div className="dashboard__card dashboard__card--full" style={{ textAlign: 'center', background: 'transparent', border: 'none', boxShadow: 'none' }}>
+                    <p className="dashboard__muted text-sm">
+                        This document is a verified academic record of the student&apos;s performance at {schoolName}.
+                    </p>
                 </div>
             </div>
         </main>

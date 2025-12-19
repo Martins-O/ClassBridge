@@ -82,7 +82,8 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
     if (error || !course) {
         return (
             <main className="dashboard">
-                <div className="dashboard__card">
+                <div className="dashboard__card dashboard__card--full">
+                    {error && <p className="alert alert--error u-margin-bottom-md">{error}</p>}
                     <p className="auth-card__error">{error || 'Course not found'}</p>
                     <button className="btn btn--primary" onClick={() => router.push('/dashboard/courses')}>
                         Back to courses

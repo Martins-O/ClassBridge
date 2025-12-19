@@ -141,7 +141,7 @@ export default function BulkGradePage() {
             <section className="dashboard__grid">
                 <div className="dashboard__card">
                     <form onSubmit={handleSubmit}>
-                        {error && <p className="auth-card__error">{error}</p>}
+                        {error && <p className="alert alert--error u-margin-bottom-md">{error}</p>}
 
                         <div className="form-grid">
                             <label className="field">
@@ -222,6 +222,14 @@ export default function BulkGradePage() {
                         )}
 
                         <div className="form-actions u-margin-top-lg">
+                            <button
+                                type="button"
+                                className="btn btn--ghost"
+                                onClick={() => router.push('/dashboard/grades')}
+                                disabled={submitting}
+                            >
+                                Discard Changes
+                            </button>
                             <button type="submit" className="btn btn--primary" disabled={submitting || !classId}>
                                 {submitting ? 'Saving Grades...' : 'Save All Grades'}
                             </button>

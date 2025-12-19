@@ -136,7 +136,7 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
             <section className="dashboard__grid">
                 <div className="dashboard__card" style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
                     <form onSubmit={handleSubmit}>
-                        {error && <p className="auth-card__error">{error}</p>}
+                        {error && <p className="alert alert--error u-margin-bottom-md">{error}</p>}
 
                         <div className="form-grid">
                             <label className="field">

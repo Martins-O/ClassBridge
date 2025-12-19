@@ -168,8 +168,8 @@ export default function TakeAssessmentPage({ params }: { params: Promise<{ id: s
     if (error) {
         return (
             <main className="dashboard">
-                <div className="dashboard__card">
-                    <p className="auth-card__error">{error}</p>
+                <div className="dashboard__card dashboard__card--full">
+                    <div className="alert alert--error u-margin-bottom-md">{error}</div>
                     <button className="btn btn--primary" onClick={() => router.push('/dashboard/assessments')}>
                         Return to Assessments
                     </button>

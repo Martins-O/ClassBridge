@@ -137,71 +137,85 @@ export default function SchoolProfilePage() {
   }
 
   return (
-    <main className="profile-shell">
-      <form className="profile-card" onSubmit={handleSubmit}>
-        <p className="eyebrow">School profile</p>
-        <h1>Set up your school</h1>
-        <p className="dashboard__muted">
-          Families and mentors will see this information on invites and transcripts.
-        </p>
-
-        {success ? <p className="alert alert--success">{success}</p> : null}
-        {error ? <p className="alert alert--error">{error}</p> : null}
-
-        <div className="form-grid">
-          <label className="field">
-            <span>School name</span>
-            <input name="name" required value={profile.name ?? ''} onChange={handleChange} placeholder="ClassBridge Academy" />
-          </label>
-          <label className="field">
-            <span>School email</span>
-            <input name="email" type="email" required value={profile.email ?? ''} onChange={handleChange} />
-          </label>
-          <label className="field">
-            <span>Phone</span>
-            <input name="phone" value={profile.phone ?? ''} onChange={handleChange} placeholder="+1 (555) 123-4567" />
-          </label>
-          <label className="field">
-            <span>Website</span>
-            <input name="website" value={profile.website ?? ''} onChange={handleChange} placeholder="https://" />
-          </label>
-          <label className="field" style={{ gridColumn: '1 / -1' }}>
-            <span>Address</span>
-            <input name="address" value={profile.address ?? ''} onChange={handleChange} placeholder="123 Learning Way" />
-          </label>
-          <label className="field">
-            <span>Subscription</span>
-            <select name="subscriptionType" value={profile.subscriptionType ?? ''} onChange={handleChange}>
-              <option value="">Select plan</option>
-              {subscriptionOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </label>
+    <main className="dashboard">
+      <section className="dashboard__hero">
+        <div>
+          <p className="eyebrow">School Management</p>
+          <h1>Institution Profile</h1>
+          <p className="dashboard__muted">Configure your school settings and public information.</p>
         </div>
-
-        <label className="field">
-          <span>About your school</span>
-          <textarea
-            name="description"
-            rows={4}
-            value={profile.description ?? ''}
-            onChange={handleChange}
-            placeholder="Share your mission, programs, or notes for families."
-          />
-        </label>
-
-        <div className="form-actions">
-          <button className="btn btn--ghost" type="button" onClick={() => router.push('/dashboard')}>
-            Cancel
-          </button>
-          <button className="btn btn--primary" type="submit" disabled={saving}>
-            {saving ? 'Saving…' : 'Save profile'}
+        <div className="dashboard__hero-actions">
+          <button className="btn btn--ghost" onClick={() => router.push('/dashboard')}>
+            Back to dashboard
           </button>
         </div>
-      </form>
+      </section>
+
+      <section className="dashboard__grid">
+        <form className="dashboard__card dashboard__card--full" onSubmit={handleSubmit}>
+          <h2 className="form-section-title">Essential Information</h2>
+          <p className="dashboard__muted u-margin-bottom-md">
+            This information will be visible to students, families, and mentors on all official communications.
+          </p>
+
+          {success && <p className="alert alert--success u-margin-bottom-md">{success}</p>}
+          {error && <p className="alert alert--error u-margin-bottom-md">{error}</p>}
+
+          <div className="info-grid">
+            <label className="field">
+              <span>Institution Name *</span>
+              <input name="name" required value={profile.name ?? ''} onChange={handleChange} placeholder="e.g., ClassBridge High" />
+            </label>
+            <label className="field">
+              <span>Contact Email *</span>
+              <input name="email" type="email" required value={profile.email ?? ''} onChange={handleChange} placeholder="admin@school.edu" />
+            </label>
+            <label className="field">
+              <span>Phone Number</span>
+              <input name="phone" value={profile.phone ?? ''} onChange={handleChange} placeholder="+1 (555) 000-0000" />
+            </label>
+            <label className="field">
+              <span>Official Website</span>
+              <input name="website" value={profile.website ?? ''} onChange={handleChange} placeholder="https://www.school.edu" />
+            </label>
+            <label className="field" style={{ gridColumn: 'span 2' }}>
+              <span>Physical Address</span>
+              <input name="address" value={profile.address ?? ''} onChange={handleChange} placeholder="123 Education St, City, State" />
+            </label>
+            <label className="field">
+              <span>Service Tier</span>
+              <select name="subscriptionType" value={profile.subscriptionType ?? ''} onChange={handleChange}>
+                <option value="">Select a plan</option>
+                {subscriptionOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option.charAt(0).toUpperCase() + option.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <label className="field u-margin-top-md">
+            <span>About the Institution</span>
+            <textarea
+              name="description"
+              rows={4}
+              value={profile.description ?? ''}
+              onChange={handleChange}
+              placeholder="Share your school's mission statement or a brief introduction."
+            />
+          </label>
+
+          <div className="form-actions">
+            <button className="btn btn--ghost" type="button" onClick={() => router.push('/dashboard')}>
+              Discard Changes
+            </button>
+            <button className="btn btn--primary" type="submit" disabled={saving}>
+              {saving ? 'Updating...' : 'Save Profile'}
+            </button>
+          </div>
+        </form>
+      </section>
     </main>
   );
 }
