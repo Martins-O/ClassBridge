@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import NotificationCenter from './components/NotificationCenter';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const router = useRouter();
 
     const isActive = (path: string) => {
         if (path === '/dashboard' && pathname === '/dashboard') return true;
@@ -26,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     ];
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen">
             <header className="border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                     <Link href="/dashboard" className="text-xl font-bold tracking-tight text-slate-900 hover:text-blue-600 transition-colors">
@@ -50,14 +51,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                     <div className="flex items-center gap-4">
                         <NotificationCenter />
-                        <div className="hidden md:block w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/20" />
+                        <button
+                            className="hidden md:flex w-10 h-10 rounded-full bg-slate-100 border border-slate-200 items-center justify-center hover:bg-slate-200 transition-colors"
+                            onClick={() => router.push('/dashboard/profile')}
+                        >
+                            <span className="text-slate-600 font-bold text-sm">AT</span>
+                        </button>
                     </div>
                 </div>
             </header>
 
-            <div className="max-w-7xl mx-auto">
+            <main>
                 {children}
-            </div>
+            </main>
         </div>
     );
 }
