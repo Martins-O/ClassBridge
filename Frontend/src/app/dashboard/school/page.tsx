@@ -57,7 +57,9 @@ export default function SchoolProfilePage() {
           return;
         }
         if (!data.user.school || !data.user.school.id) {
-          setError('No school is linked to this account yet. Please contact support.');
+          // No school linked, allow creation
+          setSchoolId(null);
+          setLoading(false);
           return;
         }
         setSchoolId(data.user.school.id);
@@ -92,22 +94,44 @@ export default function SchoolProfilePage() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!schoolId) return;
     setError('');
     setSuccess('');
     setSaving(true);
     try {
-      const response = await fetch(`/api/schools/${schoolId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profile),
-      });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        setError(data.error ?? 'Unable to update school profile.');
+      const authMeResponse = await fetch('/api/auth/me');
+      const authMeData = await authMeResponse.json();
+
+      if (!authMeResponse.ok || !authMeData.user?._id) {
+        setError('Failed to identity user session.');
+        setSaving(false);
         return;
       }
-      setSuccess('School profile updated successfully.');
+
+      const method = schoolId ? 'PUT' : 'POST';
+      const url = schoolId ? `/api/schools/${schoolId}` : '/api/schools';
+
+      // If POST, we need to include adminId
+      const payload = schoolId ? profile : { ...profile, adminId: authMeData.user._id };
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error ?? 'Unable to save school profile.');
+        return;
+      }
+
+      const result = await response.json();
+      if (!schoolId && result.school?.id) {
+        setSchoolId(result.school.id);
+        setSuccess('School created successfully!');
+      } else {
+        setSuccess('School profile updated successfully.');
+      }
     } catch {
       setError('Network error while saving.');
     } finally {
@@ -123,15 +147,23 @@ export default function SchoolProfilePage() {
     );
   }
 
-  if (error || !schoolId) {
+  if (error && !schoolId) {
     return (
-      <main className="profile-shell">
-        <div className="profile-card">
-          <p>{error || 'School profile unavailable.'}</p>
-          <button className="btn btn--primary" onClick={() => router.push('/dashboard')}>
-            Back to dashboard
-          </button>
-        </div>
+      <main className="dashboard">
+        <section className="dashboard__hero">
+          <div>
+            <p className="eyebrow">School Management</p>
+            <h1>Authorization Required</h1>
+          </div>
+        </section>
+        <section className="dashboard__grid">
+          <div className="dashboard__card dashboard__card--full">
+            <p className="alert alert--error u-margin-bottom-md">{error}</p>
+            <button className="btn btn--primary" onClick={() => router.push('/dashboard')}>
+              Back to dashboard
+            </button>
+          </div>
+        </section>
       </main>
     );
   }
@@ -141,8 +173,12 @@ export default function SchoolProfilePage() {
       <section className="dashboard__hero">
         <div>
           <p className="eyebrow">School Management</p>
-          <h1>Institution Profile</h1>
-          <p className="dashboard__muted">Configure your school settings and public information.</p>
+          <h1>{schoolId ? 'Institution Profile' : 'Setup Your School'}</h1>
+          <p className="dashboard__muted">
+            {schoolId
+              ? 'Configure your school settings and public information.'
+              : 'Welcome! Let\'s set up your new school profile to get started.'}
+          </p>
         </div>
         <div className="dashboard__hero-actions">
           <button className="btn btn--ghost" onClick={() => router.push('/dashboard')}>
@@ -211,7 +247,9 @@ export default function SchoolProfilePage() {
               Discard Changes
             </button>
             <button className="btn btn--primary" type="submit" disabled={saving}>
-              {saving ? 'Updating...' : 'Save Profile'}
+              {saving
+                ? (schoolId ? 'Updating...' : 'Creating...')
+                : (schoolId ? 'Save Profile' : 'Create School')}
             </button>
           </div>
         </form>
