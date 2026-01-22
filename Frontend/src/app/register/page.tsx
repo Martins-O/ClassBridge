@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -46,62 +47,138 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="auth-shell">
-      <form className="auth-card" onSubmit={handleSubmit}>
-        <p className="eyebrow">School workspace</p>
-        <h1>Launch your school</h1>
-        <p className="auth-card__hint">
-          We will help you create the first administrator profile so you can invite mentors, build classes, and share
-          assessments.
-        </p>
+    <div className="auth-split">
+      {/* Left Side - Platform Info */}
+      <div className="auth-split__left">
+        <div className="auth-split__bg">
+          <div className="auth-split__bg-gradient"></div>
+          <div className="floating-elements">
+            <div className="float-item float-item--1">📚</div>
+            <div className="float-item float-item--2">🎓</div>
+            <div className="float-item float-item--3">✨</div>
+            <div className="float-item float-item--4">📊</div>
+          </div>
+        </div>
 
-        {error ? <p className="auth-card__error">{error}</p> : null}
+        <div className="auth-split__content">
+          <Link href="/" className="auth-split__logo">
+            <span>🎓</span>
+            <span>ClassBridge</span>
+          </Link>
 
-        <label className="field">
-          <span>Full name</span>
-          <input
-            required
-            name="name"
-            type="text"
-            placeholder="Jordan Garcia"
-            value={form.name}
-            onChange={handleChange}
-          />
-        </label>
+          <h2 className="auth-split__title">
+            Start Your Journey with ClassBridge
+          </h2>
 
-        <label className="field">
-          <span>Work email</span>
-          <input
-            required
-            name="email"
-            type="email"
-            placeholder="you@district.edu"
-            value={form.email}
-            onChange={handleChange}
-          />
-        </label>
+          <p className="auth-split__subtitle">
+            Join hundreds of schools using ClassBridge to streamline operations, track student progress, and improve educational outcomes.
+          </p>
 
-        <label className="field">
-          <span>Password</span>
-          <input
-            required
-            minLength={6}
-            name="password"
-            type="password"
-            placeholder="Minimum 6 characters"
-            value={form.password}
-            onChange={handleChange}
-          />
-        </label>
+          <div className="auth-split__features">
+            <div className="feature-point">
+              <div className="feature-point__icon">🚀</div>
+              <div>
+                <h3>Quick Setup</h3>
+                <p>Get started in minutes, not hours</p>
+              </div>
+            </div>
+            <div className="feature-point">
+              <div className="feature-point__icon">👥</div>
+              <div>
+                <h3>Team Collaboration</h3>
+                <p>Invite mentors and staff easily</p>
+              </div>
+            </div>
+            <div className="feature-point">
+              <div className="feature-point__icon">📈</div>
+              <div>
+                <h3>Track Progress</h3>
+                <p>Monitor student performance in real-time</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <button className="btn btn--primary" type="submit" disabled={loading}>
-          {loading ? 'Creating account…' : 'Create account'}
-        </button>
+      {/* Right Side - Form */}
+      <div className="auth-split__right">
+        <div className="auth-form-container">
+          <div className="auth-form-header">
+            <h1>Create Account</h1>
+            <p>Start managing your school with ClassBridge</p>
+          </div>
 
-        <p className="auth-card__footer">
-          Already registered? <a href="/login">Sign in</a>
-        </p>
-      </form>
-    </main>
+          <form className="auth-form" onSubmit={handleSubmit}>
+            {error && (
+              <div className="alert alert--error">
+                {error}
+              </div>
+            )}
+
+            <div className="field">
+              <label htmlFor="name">Full Name</label>
+              <input
+                id="name"
+                required
+                name="name"
+                type="text"
+                placeholder="John Smith"
+                value={form.name}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="email">Work Email</label>
+              <input
+                id="email"
+                required
+                name="email"
+                type="email"
+                placeholder="you@school.edu"
+                value={form.email}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                required
+                minLength={6}
+                name="password"
+                type="password"
+                placeholder="Minimum 6 characters"
+                value={form.password}
+                onChange={handleChange}
+              />
+            </div>
+
+            <button
+              className="auth-form__submit"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner"></span>
+                  Creating account...
+                </>
+              ) : (
+                'Create Account'
+              )}
+            </button>
+          </form>
+
+          <div className="auth-form-footer">
+            <p>
+              Already have an account?{' '}
+              <Link href="/login">Sign in</Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

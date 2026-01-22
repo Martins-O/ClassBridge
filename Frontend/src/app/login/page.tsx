@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,48 +41,124 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="auth-shell">
-      <form className="auth-card" onSubmit={handleSubmit}>
-        <p className="eyebrow">School admin</p>
-        <h1>Sign in to ClassBridge</h1>
-        <p className="auth-card__hint">
-          Use the admin email you registered with to access your school workspace.
-        </p>
+    <div className="auth-split">
+      {/* Left Side - Platform Info */}
+      <div className="auth-split__left">
+        <div className="auth-split__bg">
+          <div className="auth-split__bg-gradient"></div>
+          <div className="floating-elements">
+            <div className="float-item float-item--1">📚</div>
+            <div className="float-item float-item--2">🎓</div>
+            <div className="float-item float-item--3">✨</div>
+            <div className="float-item float-item--4">📊</div>
+          </div>
+        </div>
 
-        {error ? <p className="auth-card__error">{error}</p> : null}
+        <div className="auth-split__content">
+          <Link href="/" className="auth-split__logo">
+            <span>🎓</span>
+            <span>ClassBridge</span>
+          </Link>
 
-        <label className="field">
-          <span>Email</span>
-          <input
-            required
-            name="email"
-            type="email"
-            placeholder="you@district.edu"
-            value={form.email}
-            onChange={handleChange}
-          />
-        </label>
+          <h2 className="auth-split__title">
+            Welcome Back to ClassBridge
+          </h2>
 
-        <label className="field">
-          <span>Password</span>
-          <input
-            required
-            name="password"
-            type="password"
-            placeholder="••••••••"
-            value={form.password}
-            onChange={handleChange}
-          />
-        </label>
+          <p className="auth-split__subtitle">
+            Access your school dashboard and continue managing classes, students, and assessments all in one place.
+          </p>
 
-        <button className="btn btn--primary" type="submit" disabled={loading}>
-          {loading ? 'Signing in…' : 'Sign in'}
-        </button>
+          <div className="auth-split__features">
+            <div className="feature-point">
+              <div className="feature-point__icon">⚡</div>
+              <div>
+                <h3>Quick Access</h3>
+                <p>Jump right back into your workflow</p>
+              </div>
+            </div>
+            <div className="feature-point">
+              <div className="feature-point__icon">🔒</div>
+              <div>
+                <h3>Secure Login</h3>
+                <p>Your data is encrypted and protected</p>
+              </div>
+            </div>
+            <div className="feature-point">
+              <div className="feature-point__icon">📱</div>
+              <div>
+                <h3>Access Anywhere</h3>
+                <p>Work from any device, anytime</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <p className="auth-card__footer">
-          New to ClassBridge? <a href="/register">Create an admin account</a>
-        </p>
-      </form>
-    </main>
+      {/* Right Side - Form */}
+      <div className="auth-split__right">
+        <div className="auth-form-container">
+          <div className="auth-form-header">
+            <h1>Sign In</h1>
+            <p>Enter your credentials to access your account</p>
+          </div>
+
+          <form className="auth-form" onSubmit={handleSubmit}>
+            {error && (
+              <div className="alert alert--error">
+                {error}
+              </div>
+            )}
+
+            <div className="field">
+              <label htmlFor="email">Email Address</label>
+              <input
+                id="email"
+                required
+                name="email"
+                type="email"
+                placeholder="you@school.edu"
+                value={form.email}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                required
+                name="password"
+                type="password"
+                placeholder="Enter your password"
+                value={form.password}
+                onChange={handleChange}
+              />
+            </div>
+
+            <button
+              className="auth-form__submit"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner"></span>
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
+            </button>
+          </form>
+
+          <div className="auth-form-footer">
+            <p>
+              Don't have an account?{' '}
+              <Link href="/register">Create one now</Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
