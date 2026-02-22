@@ -1,9 +1,9 @@
+import { Request, Response, NextFunction } from 'express';
 import { createHmac, timingSafeEqual } from 'crypto';
-import type { NextRequest } from 'next/server';
 
 const SESSION_COOKIE_NAME = 'userId';
 
-function getSessionSecret() {
+function getSessionSecret(): string {
   const secret = process.env.SESSION_SECRET || (process.env.NODE_ENV !== 'production' ? 'development-only-secret' : undefined);
 
   if (!secret) {
@@ -13,16 +13,16 @@ function getSessionSecret() {
   return secret;
 }
 
-function signValue(value: string) {
+function signValue(value: string): string {
   return createHmac('sha256', getSessionSecret()).update(value).digest('hex');
 }
 
-export function encodeSessionToken(userId: string) {
+export function encodeSessionToken(userId: string): string {
   const signature = signValue(userId);
   return `${userId}.${signature}`;
 }
 
-export function verifySessionToken(token: string | undefined) {
+export function verifySessionToken(token: string | undefined): string | null {
   if (!token) {
     return null;
   }
@@ -51,11 +51,41 @@ export function verifySessionToken(token: string | undefined) {
   return null;
 }
 
-export function getUserIdFromRequest(request: NextRequest) {
-  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+export function getUserIdFromRequest(req: Request): string | null {
+  const token = req.cookies?.[SESSION_COOKIE_NAME];
   return verifySessionToken(token);
 }
 
-export function getSessionCookieName() {
+export function getSessionCookieName(): string {
   return SESSION_COOKIE_NAME;
+}
+
+export interface AuthenticatedRequest extends Request {
+  userId?: string;
+  userRole?: string;
+}
+
+export function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  const userId = getUserIdFromRequest(req);
+  
+  if (!userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  req.userId = userId;
+  next();
+}
+
+export function roleMiddleware(...allowedRoles: string[]) {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    if (!req.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    if (allowedRoles.length > 0 && !allowedRoles.includes(req.userRole || '')) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    next();
+  };
 }
