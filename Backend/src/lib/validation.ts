@@ -1,5 +1,4 @@
 // Input validation utilities for API routes
-import { NextResponse } from 'next/server';
 
 export interface ValidationError {
   field: string;
@@ -18,13 +17,10 @@ export class ValidationResult {
   }
 
   getResponse() {
-    return NextResponse.json(
-      {
-        error: 'Validation failed',
-        details: this.errors
-      },
-      { status: 400 }
-    );
+    return {
+      error: 'Validation failed',
+      details: this.errors,
+    };
   }
 }
 
@@ -47,19 +43,18 @@ export const validateString = (value: unknown, field: string, options: {
     return errors;
   }
 
-  if (value && typeof value === 'string') {
-    const trimmedValue = value.trim();
-
-    if (options.minLength && trimmedValue.length < options.minLength) {
+  if (value) {
+    const strValue = value as string;
+    if (options.minLength && strValue.length < options.minLength) {
       errors.push({ field, message: `${field} must be at least ${options.minLength} characters` });
     }
 
-    if (options.maxLength && trimmedValue.length > options.maxLength) {
-      errors.push({ field, message: `${field} must be no more than ${options.maxLength} characters` });
+    if (options.maxLength && strValue.length > options.maxLength) {
+      errors.push({ field, message: `${field} must be at most ${options.maxLength} characters` });
     }
 
-    if (options.pattern && !options.pattern.test(trimmedValue)) {
-      errors.push({ field, message: `${field} format is invalid` });
+    if (options.pattern && !options.pattern.test(strValue)) {
+      errors.push({ field, message: `${field} has invalid format` });
     }
   }
 
@@ -67,13 +62,44 @@ export const validateString = (value: unknown, field: string, options: {
 };
 
 // Email validation
-export const validateEmail = (value: unknown, field: string = 'email', required: boolean = true): ValidationError[] => {
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return validateString(value, field, {
-    required,
-    pattern: emailPattern,
-    maxLength: 254
-  });
+export const validateEmail = (value: unknown, field: string): ValidationError[] => {
+  const errors: ValidationError[] = [];
+
+  if (!value) return errors;
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (typeof value !== 'string' || !emailRegex.test(value)) {
+    errors.push({ field, message: `${field} must be a valid email address` });
+  }
+
+  return errors;
+};
+
+// Enum validation
+export const validateEnum = (value: unknown, field: string, allowedValues: string[]): ValidationError[] => {
+  const errors: ValidationError[] = [];
+
+  if (!value) return errors;
+
+  if (!allowedValues.includes(value as string)) {
+    errors.push({ field, message: `${field} must be one of: ${allowedValues.join(', ')}` });
+  }
+
+  return errors;
+};
+
+// ObjectId validation
+export const validateObjectId = (value: unknown, field: string): ValidationError[] => {
+  const errors: ValidationError[] = [];
+
+  if (!value) return errors;
+
+  const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+  if (typeof value !== 'string' || !objectIdRegex.test(value)) {
+    errors.push({ field, message: `${field} must be a valid ID` });
+  }
+
+  return errors;
 };
 
 // Number validation
@@ -91,24 +117,37 @@ export const validateNumber = (value: unknown, field: string, options: {
   }
 
   if (value !== undefined && value !== null) {
-    const numValue = Number(value);
+    const num = typeof value === 'number' ? value : parseFloat(value as string);
 
-    if (isNaN(numValue)) {
-      errors.push({ field, message: `${field} must be a valid number` });
+    if (isNaN(num)) {
+      errors.push({ field, message: `${field} must be a number` });
       return errors;
     }
 
-    if (options.integer && !Number.isInteger(numValue)) {
+    if (options.integer && !Number.isInteger(num)) {
       errors.push({ field, message: `${field} must be an integer` });
     }
 
-    if (options.min !== undefined && numValue < options.min) {
+    if (options.min !== undefined && num < options.min) {
       errors.push({ field, message: `${field} must be at least ${options.min}` });
     }
 
-    if (options.max !== undefined && numValue > options.max) {
-      errors.push({ field, message: `${field} must be no more than ${options.max}` });
+    if (options.max !== undefined && num > options.max) {
+      errors.push({ field, message: `${field} must be at most ${options.max}` });
     }
+  }
+
+  return errors;
+};
+
+// Boolean validation
+export const validateBoolean = (value: unknown, field: string): ValidationError[] => {
+  const errors: ValidationError[] = [];
+
+  if (!value) return errors;
+
+  if (typeof value !== 'boolean') {
+    errors.push({ field, message: `${field} must be a boolean` });
   }
 
   return errors;
@@ -119,12 +158,12 @@ export const validateArray = (value: unknown, field: string, options: {
   required?: boolean;
   minLength?: number;
   maxLength?: number;
-  itemValidator?: (item: unknown, index: number) => ValidationError[];
+  itemType?: 'string' | 'number' | 'object';
 } = {}): ValidationError[] => {
   const errors: ValidationError[] = [];
 
-  if (options.required && (!value || !Array.isArray(value) || value.length === 0)) {
-    errors.push({ field, message: `${field} is required and must contain at least one item` });
+  if (options.required && (!value || !Array.isArray(value))) {
+    errors.push({ field, message: `${field} is required and must be an array` });
     return errors;
   }
 
@@ -133,22 +172,20 @@ export const validateArray = (value: unknown, field: string, options: {
     return errors;
   }
 
-  if (Array.isArray(value)) {
+  if (value && Array.isArray(value)) {
     if (options.minLength && value.length < options.minLength) {
-      errors.push({ field, message: `${field} must contain at least ${options.minLength} items` });
+      errors.push({ field, message: `${field} must have at least ${options.minLength} items` });
     }
 
     if (options.maxLength && value.length > options.maxLength) {
-      errors.push({ field, message: `${field} must contain no more than ${options.maxLength} items` });
+      errors.push({ field, message: `${field} must have at most ${options.maxLength} items` });
     }
 
-    if (options.itemValidator) {
+    if (options.itemType) {
       value.forEach((item, index) => {
-        const itemErrors = options.itemValidator!(item, index);
-        errors.push(...itemErrors.map(err => ({
-          field: `${field}[${index}].${err.field}`,
-          message: err.message
-        })));
+        if (typeof item !== options.itemType) {
+          errors.push({ field, message: `${field}[${index}] must be of type ${options.itemType}` });
+        }
       });
     }
   }
@@ -156,64 +193,19 @@ export const validateArray = (value: unknown, field: string, options: {
   return errors;
 };
 
-// ObjectId validation (MongoDB)
-export const validateObjectId = (value: unknown, field: string, required: boolean = true): ValidationError[] => {
-  const errors: ValidationError[] = [];
-  const objectIdPattern = /^[0-9a-fA-F]{24}$/;
-
-  if (required && (!value || typeof value !== 'string')) {
-    errors.push({ field, message: `${field} is required` });
-    return errors;
-  }
-
-  if (value && (typeof value !== 'string' || !objectIdPattern.test(value))) {
-    errors.push({ field, message: `${field} must be a valid ObjectId` });
-  }
-
-  return errors;
-};
-
-// Enum validation
-export const validateEnum = (value: unknown, field: string, allowedValues: string[], required: boolean = true): ValidationError[] => {
-  const errors: ValidationError[] = [];
-
-  if (required && (!value || typeof value !== 'string')) {
-    errors.push({ field, message: `${field} is required` });
-    return errors;
-  }
-
-  if (value && typeof value === 'string' && !allowedValues.includes(value)) {
-    errors.push({ field, message: `${field} must be one of: ${allowedValues.join(', ')}` });
-  }
-
-  return errors;
-};
-
-// Date validation
-export const validateDate = (value: unknown, field: string, required: boolean = true): ValidationError[] => {
-  const errors: ValidationError[] = [];
-
-  if (required && !value) {
-    errors.push({ field, message: `${field} is required` });
-    return errors;
-  }
-
-  if (value) {
-    const date = new Date(value as string);
-
-    if (isNaN(date.getTime())) {
-      errors.push({ field, message: `${field} must be a valid date` });
-    }
-  }
-
-  return errors;
-};
-
 // Sanitization utilities
-export const sanitizeString = (value: string): string => {
-  return value ? value.trim().replace(/[<>]/g, '') : '';
+export const sanitizeString = (value: string | undefined): string => {
+  if (!value) return '';
+  return value.trim();
 };
 
-export const sanitizeEmail = (value: string): string => {
-  return value ? value.trim().toLowerCase() : '';
+export const sanitizeEmail = (value: string | undefined): string => {
+  if (!value) return '';
+  return value.toLowerCase().trim();
+};
+
+export const sanitizeNumber = (value: unknown): number | undefined => {
+  if (value === undefined || value === null) return undefined;
+  const num = typeof value === 'number' ? value : parseFloat(value as string);
+  return isNaN(num) ? undefined : num;
 };
