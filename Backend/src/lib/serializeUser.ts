@@ -15,7 +15,7 @@ const getNestedId = (value: unknown): string | null => {
   if (typeof value === 'string') {
     return value;
   }
-  if (typeof value === 'object' && value !== null && '_id' in value) {
+  if (typeof value === 'object' && '_id' in value) {
     return getNestedId((value as { _id?: unknown })._id);
   }
   return null;
