@@ -1,141 +1,109 @@
-import { Router } from 'express';
-import type { Request } from 'express';
-import { adaptRoute, NextRouteHandler } from '@/lib/nextServerCompat';
+import { Router, Request, Response, NextFunction } from 'express';
 
-import * as assessments from '@/app/api/assessments/route';
-import * as assessmentById from '@/app/api/assessments/[id]/route';
-import * as assessmentAttemptsByAssessment from '@/app/api/assessments/[id]/attempts/route';
-import * as assessmentAttempt from '@/app/api/assessments/attempts/[attemptId]/route';
-import * as courses from '@/app/api/courses/route';
-import * as courseById from '@/app/api/courses/[id]/route';
-import * as transcripts from '@/app/api/transcripts/route';
-import * as transcriptById from '@/app/api/transcripts/[id]/route';
-import * as schools from '@/app/api/schools/route';
-import * as schoolById from '@/app/api/schools/[id]/route';
-import * as schoolsGet from '@/app/api/schools/get/route';
-import * as studentsInvitations from '@/app/api/students/invitations/route';
-import * as studentAcceptInvitation from '@/app/api/students/accept-invitation/route';
-import * as studentInvitationToken from '@/app/api/students/invitation/[token]/route';
-import * as studentInvite from '@/app/api/students/invite/route';
-import * as authLogin from '@/app/api/auth/login/route';
-import * as authLogout from '@/app/api/auth/logout/route';
-import * as authMe from '@/app/api/auth/me/route';
-import * as authRegister from '@/app/api/auth/register/route';
-import * as authPasswordReset from '@/app/api/auth/password-reset/route';
-import * as authPasswordResetToken from '@/app/api/auth/password-reset/[token]/route';
-import * as classes from '@/app/api/classes/route';
-import * as classById from '@/app/api/classes/[id]/route';
-import * as classStudents from '@/app/api/classes/[id]/students/route';
-import * as classesGet from '@/app/api/classes/get/route';
-import * as grades from '@/app/api/grades/route';
-import * as gradeById from '@/app/api/grades/[id]/route';
-import * as mentors from '@/app/api/mentors/route';
-import * as mentorById from '@/app/api/mentors/[id]/route';
-import * as mentorAcceptInvitation from '@/app/api/mentors/accept-invitation/[token]/route';
-import * as stats from '@/app/api/stats/route';
-import * as userById from '@/app/api/users/[id]/route';
+import * as authController from '@/controllers/auth';
+import * as schoolsController from '@/controllers/schools';
+import * as classesController from '@/controllers/classes';
+import * as coursesController from '@/controllers/courses';
+import * as assessmentsController from '@/controllers/assessments';
+import * as gradesController from '@/controllers/grades';
+import * as usersController from '@/controllers/users';
+import * as mentorsController from '@/controllers/mentors';
+import * as studentsController from '@/controllers/students';
+import * as transcriptsController from '@/controllers/transcripts';
+import * as notificationsController from '@/controllers/notifications';
+import * as statsController from '@/controllers/stats';
 
 const router = Router();
 
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-type RouteModule = Partial<Record<HttpMethod, NextRouteHandler<any>>>;
-
-const asRouteModule = (module: unknown): RouteModule => module as RouteModule;
-
-const register = (
-  method: HttpMethod,
-  path: string,
-  module: RouteModule,
-  paramMapper?: (req: Request) => Record<string, string>,
-) => {
-  const handler = module[method];
-  if (!handler) {
-    return;
-  }
-
-  const expressMethod = method.toLowerCase() as 'get' | 'post' | 'put' | 'delete' | 'patch';
-  router[expressMethod](path, adaptRoute(handler, paramMapper));
+const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
 };
 
-// Assessments
-register('GET', '/assessments', asRouteModule(assessments));
-register('POST', '/assessments', asRouteModule(assessments));
-register('GET', '/assessments/:id', asRouteModule(assessmentById), (req) => ({ id: req.params.id }));
-register('PUT', '/assessments/:id', asRouteModule(assessmentById), (req) => ({ id: req.params.id }));
-register('DELETE', '/assessments/:id', asRouteModule(assessmentById), (req) => ({ id: req.params.id }));
-register('GET', '/assessments/:id/attempts', asRouteModule(assessmentAttemptsByAssessment), (req) => ({ id: req.params.id }));
-register('POST', '/assessments/:id/attempts', asRouteModule(assessmentAttemptsByAssessment), (req) => ({ id: req.params.id }));
-register('GET', '/assessments/attempts/:attemptId', asRouteModule(assessmentAttempt), (req) => ({ attemptId: req.params.attemptId }));
-register('PUT', '/assessments/attempts/:attemptId', asRouteModule(assessmentAttempt), (req) => ({ attemptId: req.params.attemptId }));
+// Auth routes
+router.post('/auth/login', asyncHandler(authController.login));
+router.post('/auth/logout', asyncHandler(authController.logout));
+router.get('/auth/me', asyncHandler(authController.me));
+router.post('/auth/register', asyncHandler(authController.register));
+router.post('/auth/password-reset', asyncHandler(authController.requestPasswordReset));
+router.get('/auth/password-reset/:token', asyncHandler(authController.verifyPasswordResetToken));
+router.post('/auth/password-reset/:token', asyncHandler(authController.resetPassword));
 
-// Courses
-register('GET', '/courses', asRouteModule(courses));
-register('POST', '/courses', asRouteModule(courses));
-register('GET', '/courses/:id', asRouteModule(courseById), (req) => ({ id: req.params.id }));
-register('PUT', '/courses/:id', asRouteModule(courseById), (req) => ({ id: req.params.id }));
-register('DELETE', '/courses/:id', asRouteModule(courseById), (req) => ({ id: req.params.id }));
+// Schools routes
+router.get('/schools', asyncHandler(schoolsController.getSchools));
+router.post('/schools', asyncHandler(schoolsController.createSchool));
+router.get('/schools/get', asyncHandler(schoolsController.getSchoolsForUser));
+router.get('/schools/:id', asyncHandler(schoolsController.getSchoolById));
+router.put('/schools/:id', asyncHandler(schoolsController.updateSchool));
 
-// Transcripts
-register('GET', '/transcripts', asRouteModule(transcripts));
-register('POST', '/transcripts', asRouteModule(transcripts));
-register('GET', '/transcripts/:id', asRouteModule(transcriptById), (req) => ({ id: req.params.id }));
-register('PUT', '/transcripts/:id', asRouteModule(transcriptById), (req) => ({ id: req.params.id }));
-register('DELETE', '/transcripts/:id', asRouteModule(transcriptById), (req) => ({ id: req.params.id }));
+// Classes routes
+router.get('/classes', asyncHandler(classesController.getClasses));
+router.post('/classes', asyncHandler(classesController.createClass));
+router.get('/classes/get', asyncHandler(classesController.getClassesForUser));
+router.get('/classes/:id', asyncHandler(classesController.getClassById));
+router.put('/classes/:id', asyncHandler(classesController.updateClass));
+router.get('/classes/:id/students', asyncHandler(classesController.getClassStudents));
+router.post('/classes/:id/students', asyncHandler(classesController.addStudentToClass));
 
-// Schools
-register('GET', '/schools', asRouteModule(schools));
-register('POST', '/schools', asRouteModule(schools));
-register('GET', '/schools/:id', asRouteModule(schoolById), (req) => ({ id: req.params.id }));
-register('PUT', '/schools/:id', asRouteModule(schoolById), (req) => ({ id: req.params.id }));
-register('DELETE', '/schools/:id', asRouteModule(schoolById), (req) => ({ id: req.params.id }));
-register('GET', '/schools/get', asRouteModule(schoolsGet));
+// Courses routes
+router.get('/courses', asyncHandler(coursesController.getCourses));
+router.post('/courses', asyncHandler(coursesController.createCourse));
+router.get('/courses/:id', asyncHandler(coursesController.getCourseById));
+router.put('/courses/:id', asyncHandler(coursesController.updateCourse));
+router.delete('/courses/:id', asyncHandler(coursesController.deleteCourse));
 
-// Students
-register('GET', '/students/invitations', asRouteModule(studentsInvitations));
-register('POST', '/students/invitations', asRouteModule(studentsInvitations));
-register('POST', '/students/accept-invitation', asRouteModule(studentAcceptInvitation));
-register('GET', '/students/invitation/:token', asRouteModule(studentInvitationToken), (req) => ({ token: req.params.token }));
-register('POST', '/students/invite', asRouteModule(studentInvite));
+// Assessments routes
+router.get('/assessments', asyncHandler(assessmentsController.getAssessments));
+router.post('/assessments', asyncHandler(assessmentsController.createAssessment));
+router.get('/assessments/:id', asyncHandler(assessmentsController.getAssessment));
+router.put('/assessments/:id', asyncHandler(assessmentsController.updateAssessment));
+router.delete('/assessments/:id', asyncHandler(assessmentsController.deleteAssessment));
+router.get('/assessments/:id/attempts', asyncHandler(assessmentsController.getAssessmentAttempts));
+router.post('/assessments/:id/attempts', asyncHandler(assessmentsController.createAssessmentAttempt));
+router.get('/assessments/attempts/:attemptId', asyncHandler(assessmentsController.getAssessmentAttempt));
+router.put('/assessments/attempts/:attemptId', asyncHandler(assessmentsController.updateAssessmentAttempt));
 
-// Auth
-register('POST', '/auth/login', asRouteModule(authLogin));
-register('POST', '/auth/logout', asRouteModule(authLogout));
-register('GET', '/auth/me', asRouteModule(authMe));
-register('POST', '/auth/register', asRouteModule(authRegister));
-register('POST', '/auth/password-reset', asRouteModule(authPasswordReset));
-register('GET', '/auth/password-reset/:token', asRouteModule(authPasswordResetToken), (req) => ({ token: req.params.token }));
-register('POST', '/auth/password-reset/:token', asRouteModule(authPasswordResetToken), (req) => ({ token: req.params.token }));
+// Grades routes
+router.get('/grades', asyncHandler(gradesController.getGrades));
+router.post('/grades', asyncHandler(gradesController.createGrade));
+router.post('/grades/bulk', asyncHandler(gradesController.bulkCreateGrades));
+router.get('/grades/:id', asyncHandler(gradesController.getGrade));
+router.put('/grades/:id', asyncHandler(gradesController.updateGrade));
+router.delete('/grades/:id', asyncHandler(gradesController.deleteGrade));
 
-// Classes
-register('GET', '/classes', asRouteModule(classes));
-register('POST', '/classes', asRouteModule(classes));
-register('GET', '/classes/:id', asRouteModule(classById), (req) => ({ id: req.params.id }));
-register('PUT', '/classes/:id', asRouteModule(classById), (req) => ({ id: req.params.id }));
-register('DELETE', '/classes/:id', asRouteModule(classById), (req) => ({ id: req.params.id }));
-register('GET', '/classes/:id/students', asRouteModule(classStudents), (req) => ({ id: req.params.id }));
-register('POST', '/classes/:id/students', asRouteModule(classStudents), (req) => ({ id: req.params.id }));
-register('GET', '/classes/get', asRouteModule(classesGet));
+// Users routes
+router.get('/users/:id', asyncHandler(usersController.getUser));
+router.patch('/users/:id', asyncHandler(usersController.updateUser));
 
-// Grades
-register('GET', '/grades', asRouteModule(grades));
-register('POST', '/grades', asRouteModule(grades));
-register('GET', '/grades/:id', asRouteModule(gradeById), (req) => ({ id: req.params.id }));
-register('PUT', '/grades/:id', asRouteModule(gradeById), (req) => ({ id: req.params.id }));
-register('DELETE', '/grades/:id', asRouteModule(gradeById), (req) => ({ id: req.params.id }));
+// Mentors routes
+router.get('/mentors', asyncHandler(mentorsController.getMentors));
+router.post('/mentors', asyncHandler(mentorsController.createMentor));
+router.get('/mentors/:id', asyncHandler(mentorsController.getMentor));
+router.put('/mentors/:id', asyncHandler(mentorsController.updateMentor));
+router.get('/mentors/accept-invitation/:token', asyncHandler(mentorsController.getMentorInvitation));
+router.post('/mentors/accept-invitation/:token', asyncHandler(mentorsController.acceptMentorInvitation));
 
-// Mentors
-register('GET', '/mentors', asRouteModule(mentors));
-register('POST', '/mentors', asRouteModule(mentors));
-register('GET', '/mentors/:id', asRouteModule(mentorById), (req) => ({ id: req.params.id }));
-register('PUT', '/mentors/:id', asRouteModule(mentorById), (req) => ({ id: req.params.id }));
-register('GET', '/mentors/accept-invitation/:token', asRouteModule(mentorAcceptInvitation), (req) => ({ token: req.params.token }));
-register('POST', '/mentors/accept-invitation/:token', asRouteModule(mentorAcceptInvitation), (req) => ({ token: req.params.token }));
+// Students routes
+router.get('/students/invitations', asyncHandler(studentsController.getStudentInvitations));
+router.post('/students/invite', asyncHandler(studentsController.inviteStudent));
+router.post('/students/bulk-invite', asyncHandler(studentsController.bulkInviteStudents));
+router.post('/students/accept-invitation', asyncHandler(studentsController.acceptStudentInvitation));
+router.get('/students/invitation/:token', asyncHandler(studentsController.getStudentInvitation));
 
-// Users
-register('GET', '/users/:id', asRouteModule(userById), (req) => ({ id: req.params.id }));
-register('PATCH', '/users/:id', asRouteModule(userById), (req) => ({ id: req.params.id }));
+// Transcripts routes
+router.get('/transcripts', asyncHandler(transcriptsController.getTranscripts));
+router.post('/transcripts', asyncHandler(transcriptsController.createTranscript));
+router.get('/transcripts/:id', asyncHandler(transcriptsController.getTranscript));
+router.put('/transcripts/:id', asyncHandler(transcriptsController.updateTranscript));
+router.delete('/transcripts/:id', asyncHandler(transcriptsController.deleteTranscript));
 
-// Stats
-register('GET', '/stats', asRouteModule(stats));
+// Notifications routes
+router.get('/notifications', asyncHandler(notificationsController.getNotifications));
+router.patch('/notifications', asyncHandler(notificationsController.markAllNotificationsAsRead));
+router.patch('/notifications/:id', asyncHandler(notificationsController.markNotificationAsRead));
+
+// Stats route
+router.get('/stats', asyncHandler(statsController.getStats));
 
 export default router;
