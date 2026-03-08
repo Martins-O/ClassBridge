@@ -1,9 +1,5 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
 import connectDB from '@/lib/mongodb';
-import User from '@/models/User';
-import PasswordResetToken from '@/models/PasswordResetToken';
 import {
   ValidationResult,
   validateString,
@@ -13,14 +9,11 @@ import {
   validateEnum,
 } from '@/lib/validation';
 import {
-  encodeSessionToken,
   getSessionCookieName,
   getUserIdFromRequest,
 } from '@/lib/session';
-import { sendEmail, generatePasswordResetEmail } from '@/lib/email';
 import { serializeUser } from '@/lib/serializeUser';
-
-const RESET_TOKEN_TTL_MINUTES = 60;
+import { authService } from '@/services';
 
 export async function login(req: Request, res: Response) {
   try {
@@ -32,19 +25,12 @@ export async function login(req: Request, res: Response) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) {
+    const result = await authService.login(email, password);
+    if (!result) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    const sessionToken = encodeSessionToken(user._id.toString());
-
-    res.cookie(getSessionCookieName(), sessionToken, {
+    res.cookie(getSessionCookieName(), result.sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -53,12 +39,7 @@ export async function login(req: Request, res: Response) {
 
     return res.json({
       success: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        createdAt: user.createdAt,
-      },
+      user: result.user,
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -83,11 +64,7 @@ export async function me(req: Request, res: Response) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const user = await User.findById(userId)
-      .select('-password')
-      .populate('schoolId', 'name email phone address website description subscriptionType')
-      .populate('classIds', 'name academicYear cohort duration isActive');
-
+    const user = await authService.getUserWithRelations(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -122,33 +99,20 @@ export async function register(req: Request, res: Response) {
 
     const name = sanitizeString(userData.name);
     const email = sanitizeEmail(userData.email);
-    const password = userData.password;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({ error: 'User with this email already exists' });
+    try {
+      const user = await authService.register({ name, email, password: userData.password });
+
+      return res.status(201).json({
+        success: true,
+        user,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('already exists')) {
+        return res.status(409).json({ error: error.message });
+      }
+      throw error;
     }
-
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    const user = new User({
-      name,
-      email,
-      password: hashedPassword,
-      role: 'school_admin',
-    });
-
-    await user.save();
-
-    return res.status(201).json({
-      success: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        createdAt: user.createdAt,
-      },
-    });
   } catch (error) {
     console.error('Register error:', error);
     return res.status(500).json({ error: 'Failed to register user' });
@@ -168,23 +132,7 @@ export async function requestPasswordReset(req: Request, res: Response) {
     await connectDB();
 
     const email = sanitizeEmail(payload.email);
-    const user = await User.findOne({ email });
-
-    if (user) {
-      const token = crypto.randomBytes(32).toString('hex');
-      const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60 * 1000);
-
-      await PasswordResetToken.updateMany({ userId: user._id, used: false }, { $set: { used: true } });
-      await PasswordResetToken.create({ userId: user._id, token, expiresAt });
-
-      const emailPayload = generatePasswordResetEmail({
-        recipientEmail: user.email,
-        recipientName: user.name,
-        resetToken: token,
-      });
-
-      await sendEmail(emailPayload);
-    }
+    await authService.requestPasswordReset(email);
 
     return res.json({
       success: true,
@@ -201,13 +149,9 @@ export async function verifyPasswordResetToken(req: Request, res: Response) {
     await connectDB();
     const { token } = req.params;
 
-    const resetRecord = await PasswordResetToken.findOne({
-      token,
-      used: false,
-      expiresAt: { $gt: new Date() },
-    }).select('_id');
+    const isValid = await authService.verifyPasswordResetToken(token);
 
-    if (!resetRecord) {
+    if (!isValid) {
       return res.status(404).json({ valid: false });
     }
 
@@ -232,30 +176,11 @@ export async function resetPassword(req: Request, res: Response) {
 
     await connectDB();
 
-    const resetRecord = await PasswordResetToken.findOne({
-      token,
-      used: false,
-      expiresAt: { $gt: new Date() },
-    });
+    const success = await authService.resetPassword(token, password);
 
-    if (!resetRecord) {
+    if (!success) {
       return res.status(400).json({ error: 'Invalid or expired reset token' });
     }
-
-    const user = await User.findById(resetRecord.userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    user.password = await bcrypt.hash(password, 12);
-    await user.save();
-
-    resetRecord.used = true;
-    await resetRecord.save();
-    await PasswordResetToken.updateMany(
-      { userId: resetRecord.userId, used: false },
-      { $set: { used: true } },
-    );
 
     return res.json({ success: true });
   } catch (error) {
