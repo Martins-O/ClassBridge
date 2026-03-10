@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import express from 'express';
 
 import apiRouter from './routes/api';
+import { setupSwagger } from './lib/swagger';
 
 dotenv.config();
 
@@ -23,6 +24,8 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+setupSwagger(app);
+
 app.use('/api', apiRouter);
 
 app.get('/health', (_req, res) => {
@@ -31,4 +34,5 @@ app.get('/health', (_req, res) => {
 
 app.listen(port, () => {
   console.log(`Backend API listening on port ${port}`);
+  console.log(`Swagger documentation available at http://localhost:${port}/api-docs`);
 });
