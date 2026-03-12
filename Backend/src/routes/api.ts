@@ -12,6 +12,8 @@ import * as studentsController from '@/controllers/students';
 import * as transcriptsController from '@/controllers/transcripts';
 import * as notificationsController from '@/controllers/notifications';
 import * as statsController from '@/controllers/stats';
+import * as healthController from '@/controllers/health';
+import uploadRoutes from './upload';
 
 const router = Router();
 
@@ -20,6 +22,20 @@ const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => P
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 };
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: Service is healthy
+ *       503:
+ *         description: Service is unhealthy
+ */
+router.get('/health', asyncHandler(healthController.getHealth));
 
 /**
  * @swagger
@@ -648,6 +664,31 @@ router.delete('/transcripts/:id', asyncHandler(transcriptsController.deleteTrans
 
 /**
  * @swagger
+ * /transcripts/{id}/export:
+ *   get:
+ *     summary: Export transcript as PDF or CSV
+ *     tags: [Transcripts]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: format
+ *         schema:
+ *           type: string
+ *           enum: [pdf, csv]
+ *     responses:
+ *       200:
+ *         description: Exported transcript file
+ */
+router.get('/transcripts/:id/export', asyncHandler(transcriptsController.exportTranscript));
+
+/**
+ * @swagger
  * /notifications:
  *   get:
  *     summary: Get all notifications
@@ -702,5 +743,7 @@ router.patch('/notifications/:id', asyncHandler(notificationsController.markNoti
  *         description: Platform statistics
  */
 router.get('/stats', asyncHandler(statsController.getStats));
+
+router.use('/upload', uploadRoutes);
 
 export default router;
