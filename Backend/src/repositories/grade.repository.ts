@@ -19,12 +19,59 @@ export class GradeRepository {
       .lean();
   }
 
+  async findAllPaginated(skip: number, limit: number): Promise<any[]> {
+    return Grade.find()
+      .populate('studentId', 'name email studentId')
+      .populate('mentorId', 'name email')
+      .populate('courseId', 'name')
+      .populate('classId', 'name')
+      .skip(skip)
+      .limit(limit)
+      .sort({ gradedDate: -1 })
+      .lean();
+  }
+
+  async countAll(): Promise<number> {
+    return Grade.countDocuments();
+  }
+
   async findByStudent(studentId: string): Promise<any[]> {
     return Grade.find({ studentId })
       .populate('mentorId', 'name email')
       .populate('courseId', 'name')
       .populate('classId', 'name')
       .lean();
+  }
+
+  async findByStudentPaginated(studentId: string, skip: number, limit: number): Promise<any[]> {
+    return Grade.find({ studentId })
+      .populate('mentorId', 'name email')
+      .populate('courseId', 'name')
+      .populate('classId', 'name')
+      .skip(skip)
+      .limit(limit)
+      .sort({ gradedDate: -1 })
+      .lean();
+  }
+
+  async countByStudent(studentId: string): Promise<number> {
+    return Grade.countDocuments({ studentId });
+  }
+
+  async findByMentorPaginated(mentorId: string, skip: number, limit: number): Promise<any[]> {
+    return Grade.find({ mentorId })
+      .populate('studentId', 'name email studentId')
+      .populate('mentorId', 'name email')
+      .populate('courseId', 'name')
+      .populate('classId', 'name')
+      .skip(skip)
+      .limit(limit)
+      .sort({ gradedDate: -1 })
+      .lean();
+  }
+
+  async countByMentor(mentorId: string): Promise<number> {
+    return Grade.countDocuments({ mentorId });
   }
 
   async findByCourse(courseId: string): Promise<any[]> {

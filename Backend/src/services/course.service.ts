@@ -1,20 +1,45 @@
 import { courseRepository } from '@/repositories';
 import { classRepository } from '@/repositories';
 
+export interface PaginatedCourses {
+  courses: any[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export class CourseService {
-  async getAll(userId: string, userRole: string, schoolId?: string): Promise<any[]> {
+  async getAll(userId: string, userRole: string, schoolId?: string, page = 1, limit = 20): Promise<PaginatedCourses> {
+    const skip = (page - 1) * limit;
+    
+    let courses: any[] = [];
+    let total = 0;
+
     if (userRole === 'super_admin') {
-      return courseRepository.findAll();
+      [courses, total] = await Promise.all([
+        courseRepository.findAllPaginated(skip, limit),
+        courseRepository.countAll()
+      ]);
     } else if (userRole === 'school_admin' && schoolId) {
       const classes = await classRepository.findBySchool(schoolId);
       const classIds = classes.map((c: any) => c._id);
-      return courseRepository.findAll({ classId: { $in: classIds } });
+      [courses, total] = await Promise.all([
+        courseRepository.findByClassIdsPaginated(classIds, skip, limit),
+        courseRepository.countByClassIds(classIds)
+      ]);
     } else if (userRole === 'mentor') {
-      return courseRepository.findByMentor(userId);
+      [courses, total] = await Promise.all([
+        courseRepository.findByMentorPaginated(userId, skip, limit),
+        courseRepository.countByMentor(userId)
+      ]);
     } else if (userRole === 'student') {
-      return courseRepository.findByStudent(userId);
+      [courses, total] = await Promise.all([
+        courseRepository.findByStudentPaginated(userId, skip, limit),
+        courseRepository.countByStudent(userId)
+      ]);
     }
-    return [];
+
+    return { courses, total, page, limit };
   }
 
   async getById(id: string): Promise<any> {

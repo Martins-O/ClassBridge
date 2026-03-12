@@ -1,15 +1,37 @@
 import { gradeRepository } from '@/repositories';
 
+export interface PaginatedGrades {
+  grades: any[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export class GradeService {
-  async getAll(userId: string, userRole: string): Promise<any[]> {
+  async getAll(userId: string, userRole: string, page = 1, limit = 20): Promise<PaginatedGrades> {
+    const skip = (page - 1) * limit;
+    
+    let grades: any[] = [];
+    let total = 0;
+
     if (userRole === 'super_admin' || userRole === 'school_admin') {
-      return gradeRepository.findAll();
+      [grades, total] = await Promise.all([
+        gradeRepository.findAllPaginated(skip, limit),
+        gradeRepository.countAll()
+      ]);
     } else if (userRole === 'mentor') {
-      return gradeRepository.findAll({ mentorId: userId });
+      [grades, total] = await Promise.all([
+        gradeRepository.findByMentorPaginated(userId, skip, limit),
+        gradeRepository.countByMentor(userId)
+      ]);
     } else if (userRole === 'student') {
-      return gradeRepository.findByStudent(userId);
+      [grades, total] = await Promise.all([
+        gradeRepository.findByStudentPaginated(userId, skip, limit),
+        gradeRepository.countByStudent(userId)
+      ]);
     }
-    return [];
+
+    return { grades, total, page, limit };
   }
 
   async getById(id: string): Promise<any> {

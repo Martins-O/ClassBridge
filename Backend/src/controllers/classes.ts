@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import connectDB from '@/lib/mongodb';
 import { getUserIdFromRequest } from '@/lib/session';
+import { getPaginationParams, paginate } from '@/lib/pagination';
 import { userRepository } from '@/repositories';
 import { classService } from '@/services';
 
@@ -54,10 +55,12 @@ export async function getClasses(req: Request, res: Response) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const classes = await classService.getAll(userId, user.role, user.schoolId?.toString());
-    const formattedClasses = classes.map(formatClassDocument);
+    const { page, limit } = getPaginationParams(req, { defaultLimit: 20, maxLimit: 100 });
+    const result = await classService.getAll(userId, user.role, user.schoolId?.toString(), page, limit);
+    const formattedClasses = result.classes.map(formatClassDocument);
 
-    return res.json({ classes: formattedClasses });
+    const response = paginate(formattedClasses, result.total, page, limit);
+    return res.json(response);
   } catch (error) {
     console.error('Get classes error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -249,10 +252,12 @@ export async function getClassesForUser(req: Request, res: Response) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const classes = await classService.getAll(userId, user.role, user.schoolId?.toString());
-    const formattedClasses = classes.map(formatClassDocument);
+    const { page, limit } = getPaginationParams(req, { defaultLimit: 20, maxLimit: 100 });
+    const result = await classService.getAll(userId, user.role, user.schoolId?.toString(), page, limit);
+    const formattedClasses = result.classes.map(formatClassDocument);
 
-    return res.json({ classes: formattedClasses });
+    const response = paginate(formattedClasses, result.total, page, limit);
+    return res.json(response);
   } catch (error) {
     console.error('Get classes for user error:', error);
     return res.status(500).json({ error: 'Internal server error' });

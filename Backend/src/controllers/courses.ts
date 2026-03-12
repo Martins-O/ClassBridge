@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import connectDB from '@/lib/mongodb';
 import { getUserIdFromRequest } from '@/lib/session';
+import { getPaginationParams, paginate } from '@/lib/pagination';
 import { userRepository } from '@/repositories';
 import { courseService } from '@/services';
 
@@ -18,9 +19,11 @@ export async function getCourses(req: Request, res: Response) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const courses = await courseService.getAll(userId, user.role, user.schoolId?.toString());
+    const { page, limit } = getPaginationParams(req, { defaultLimit: 20, maxLimit: 100 });
+    const result = await courseService.getAll(userId, user.role, user.schoolId?.toString(), page, limit);
 
-    return res.json({ courses });
+    const response = paginate(result.courses, result.total, page, limit);
+    return res.json(response);
   } catch (error) {
     console.error('Get courses error:', error);
     return res.status(500).json({ error: 'Internal server error' });

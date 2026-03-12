@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import connectDB from '@/lib/mongodb';
 import Notification from '@/models/Notification';
 import { getUserIdFromRequest } from '@/lib/session';
+import { getPaginationParams, paginate } from '@/lib/pagination';
 
 // GET /api/notifications - Get user notifications
 export async function getNotifications(req: Request, res: Response) {
@@ -13,11 +14,19 @@ export async function getNotifications(req: Request, res: Response) {
             return res.status(401).json({ error: 'Authentication required' });
         }
 
-        const notifications = await Notification.find({ userId })
-            .sort({ createdAt: -1 })
-            .limit(20);
+        const { page, limit, skip } = getPaginationParams(req, { defaultLimit: 20, maxLimit: 50 });
+        
+        const [notifications, total] = await Promise.all([
+            Notification.find({ userId })
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            Notification.countDocuments({ userId })
+        ]);
 
-        return res.json({ notifications });
+        const response = paginate(notifications, total, page, limit);
+        return res.json(response);
     } catch (error) {
         console.error('Failed to fetch notifications:', error);
         return res.status(500).json({ error: 'Internal server error' });

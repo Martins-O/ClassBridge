@@ -17,6 +17,20 @@ export class CourseRepository {
       .lean();
   }
 
+  async findAllPaginated(skip: number, limit: number): Promise<any[]> {
+    return Course.find()
+      .populate('classId', 'name academicYear')
+      .populate('mentorId', 'name email')
+      .populate('studentIds', 'name email')
+      .skip(skip)
+      .limit(limit)
+      .lean();
+  }
+
+  async countAll(): Promise<number> {
+    return Course.countDocuments();
+  }
+
   async findByMentor(mentorId: string): Promise<any[]> {
     return Course.find({ mentorId })
       .populate('classId', 'name academicYear')
@@ -25,12 +39,54 @@ export class CourseRepository {
       .lean();
   }
 
+  async findByMentorPaginated(mentorId: string, skip: number, limit: number): Promise<any[]> {
+    return Course.find({ mentorId })
+      .populate('classId', 'name academicYear')
+      .populate('mentorId', 'name email')
+      .populate('studentIds', 'name email')
+      .skip(skip)
+      .limit(limit)
+      .lean();
+  }
+
+  async countByMentor(mentorId: string): Promise<number> {
+    return Course.countDocuments({ mentorId });
+  }
+
   async findByStudent(studentId: string): Promise<any[]> {
     return Course.find({ studentIds: studentId })
       .populate('classId', 'name academicYear')
       .populate('mentorId', 'name email')
       .populate('studentIds', 'name email')
       .lean();
+  }
+
+  async findByStudentPaginated(studentId: string, skip: number, limit: number): Promise<any[]> {
+    return Course.find({ studentIds: studentId })
+      .populate('classId', 'name academicYear')
+      .populate('mentorId', 'name email')
+      .populate('studentIds', 'name email')
+      .skip(skip)
+      .limit(limit)
+      .lean();
+  }
+
+  async countByStudent(studentId: string): Promise<number> {
+    return Course.countDocuments({ studentIds: studentId });
+  }
+
+  async findByClassIdsPaginated(classIds: any[], skip: number, limit: number): Promise<any[]> {
+    return Course.find({ classId: { $in: classIds } })
+      .populate('classId', 'name academicYear')
+      .populate('mentorId', 'name email')
+      .populate('studentIds', 'name email')
+      .skip(skip)
+      .limit(limit)
+      .lean();
+  }
+
+  async countByClassIds(classIds: any[]): Promise<number> {
+    return Course.countDocuments({ classId: { $in: classIds } });
   }
 
   async findByClass(classId: string): Promise<any[]> {
