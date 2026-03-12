@@ -1,14 +1,31 @@
 import { schoolRepository } from '@/repositories';
 import { userRepository } from '@/repositories';
 
+export interface PaginatedSchools {
+  schools: any[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export class SchoolService {
-  async getAll(userId: string, userRole: string): Promise<any[]> {
+  async getAll(userId: string, userRole: string, page = 1, limit = 20, query: Record<string, any> = {}): Promise<PaginatedSchools> {
+    const skip = (page - 1) * limit;
+    
     if (userRole === 'super_admin') {
-      return schoolRepository.findAll();
+      const [schools, total] = await Promise.all([
+        schoolRepository.findAllPaginated(skip, limit, query),
+        schoolRepository.countAll(query)
+      ]);
+      return { schools, total, page, limit };
     } else if (userRole === 'school_admin') {
-      return schoolRepository.findByAdmin(userId);
+      const [schools, total] = await Promise.all([
+        schoolRepository.findByAdminPaginated(userId, skip, limit, query),
+        schoolRepository.countByAdmin(userId, query)
+      ]);
+      return { schools, total, page, limit };
     }
-    return [];
+    return { schools: [], total: 0, page, limit };
   }
 
   async getById(id: string): Promise<any> {

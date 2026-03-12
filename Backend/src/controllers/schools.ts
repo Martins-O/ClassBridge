@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import connectDB from '@/lib/mongodb';
 import { getUserIdFromRequest } from '@/lib/session';
+import { getPaginationParams, paginate } from '@/lib/pagination';
+import { getQueryParams, buildQuery } from '@/lib/queryBuilder';
 import { userRepository } from '@/repositories';
 import { schoolService } from '@/services';
 
@@ -18,9 +20,17 @@ export async function getSchools(req: Request, res: Response) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const schools = await schoolService.getAll(userId, user.role);
+    const { page, limit } = getPaginationParams(req, { defaultLimit: 20, maxLimit: 100 });
+    const { filters, search } = getQueryParams(req, {
+      allowedFilterFields: ['isActive', 'name'],
+      allowedSortFields: ['name', 'createdAt']
+    });
 
-    return res.json({ schools });
+    const query = buildQuery(filters, search);
+    const result = await schoolService.getAll(userId, user.role, page, limit, query);
+
+    const response = paginate(result.schools, result.total, page, limit);
+    return res.json(response);
   } catch (error) {
     console.error('Get schools error:', error);
     return res.status(500).json({ error: 'Internal server error' });

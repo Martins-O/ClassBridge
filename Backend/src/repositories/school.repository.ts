@@ -18,8 +18,24 @@ export class SchoolRepository {
     return School.find(query).populate('adminId', 'name email').lean();
   }
 
+  async findAllPaginated(skip: number, limit: number, query: FilterQuery<any> = {}): Promise<any[]> {
+    return School.find(query).populate('adminId', 'name email').skip(skip).limit(limit).lean();
+  }
+
+  async countAll(query: FilterQuery<any> = {}): Promise<number> {
+    return School.countDocuments(query);
+  }
+
   async findByAdmin(adminId: string): Promise<any[]> {
     return School.find({ adminId }).populate('adminId', 'name email').lean();
+  }
+
+  async findByAdminPaginated(adminId: string, skip: number, limit: number, query: FilterQuery<any> = {}): Promise<any[]> {
+    return School.find({ ...query, adminId }).populate('adminId', 'name email').skip(skip).limit(limit).lean();
+  }
+
+  async countByAdmin(adminId: string, query: FilterQuery<any> = {}): Promise<number> {
+    return School.countDocuments({ ...query, adminId });
   }
 
   async create(data: any): Promise<any> {
