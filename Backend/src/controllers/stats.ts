@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import connectDB from '@/lib/mongodb';
 import { getUserIdFromRequest } from '@/lib/session';
+import { getFromCache, setToCache, buildCacheKey } from '@/lib/cache';
 import User from '@/models/User';
 import School from '@/models/School';
 import Class from '@/models/Class';
@@ -74,6 +75,13 @@ export async function getStats(req: Request, res: Response) {
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
+    }
+
+    const cacheKey = buildCacheKey('stats', userId, user.role);
+    const cachedStats = await getFromCache<{ stats: DashboardStats; studentStats?: StudentStats }>(cacheKey);
+    
+    if (cachedStats) {
+      return res.json(cachedStats);
     }
 
     let stats: DashboardStats = { ...EMPTY_STATS };
@@ -249,7 +257,10 @@ export async function getStats(req: Request, res: Response) {
       averageGrade,
     };
 
-    return res.json({ stats, studentStats });
+    const result = { stats, studentStats };
+    await setToCache(cacheKey, result, { ttl: 60 });
+
+    return res.json(result);
   } catch (error) {
     console.error('Failed to build dashboard stats', error);
     return res.status(500).json({ error: 'Failed to fetch stats' });
