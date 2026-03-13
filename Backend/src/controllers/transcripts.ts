@@ -4,6 +4,7 @@ import Transcript from '@/models/Transcript';
 import User from '@/models/User';
 import Class from '@/models/Class';
 import { getUserIdFromRequest } from '@/lib/session';
+import { generateTranscriptPDF, generateTranscriptCSV, TranscriptData } from '@/services/export.service';
 
 // GET /api/transcripts - Fetch transcripts with filtering
 export async function getTranscripts(req: Request, res: Response) {
@@ -309,6 +310,64 @@ export async function deleteTranscript(req: Request, res: Response) {
 
   } catch (error) {
     console.error('Failed to delete transcript:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function exportTranscript(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { id } = req.params;
+    const format = req.query.format as string || 'pdf';
+
+    const transcript = await Transcript.findById(id)
+      .populate('studentId', 'name email studentId')
+      .populate('schoolId', 'name');
+
+    if (!transcript) {
+      return res.status(404).json({ error: 'Transcript not found' });
+    }
+
+    const transcriptData: TranscriptData = {
+      studentInfo: {
+        name: transcript.studentInfo.name,
+        email: transcript.studentInfo.email,
+        studentNumber: transcript.studentInfo.studentNumber,
+        enrollmentDate: transcript.studentInfo.enrollmentDate
+      },
+      courseRecords: transcript.courseRecords.map((record: any) => ({
+        className: record.className,
+        academicYear: record.academicYear,
+        duration: record.duration,
+        cohort: record.cohort,
+        grade: record.grade,
+        credits: record.credits,
+        mentorName: record.mentorName,
+        completedDate: record.completedDate
+      })),
+      academicSummary: transcript.academicSummary
+    };
+
+    if (format === 'csv') {
+      const csv = generateTranscriptCSV(transcriptData);
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=transcript-${id}.csv`);
+      return res.send(csv);
+    }
+
+    const pdf = await generateTranscriptPDF(transcriptData);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=transcript-${id}.pdf`);
+    return res.send(pdf);
+
+  } catch (error) {
+    console.error('Failed to export transcript:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
