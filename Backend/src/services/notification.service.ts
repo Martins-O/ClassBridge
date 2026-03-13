@@ -1,4 +1,5 @@
 import { notificationRepository } from '@/repositories';
+import { emitNotification } from '@/lib/socket';
 
 export class NotificationService {
   async getAll(userId: string): Promise<any[]> {
@@ -13,13 +14,25 @@ export class NotificationService {
     userId: string;
     title: string;
     message: string;
-    type?: 'info' | 'success' | 'warning' | 'error';
+    type?: 'info' | 'success' | 'warning' | 'error' | 'assignment' | 'grade' | 'invitation';
+    link?: string;
   }): Promise<any> {
-    return notificationRepository.create({
+    const notification = await notificationRepository.create({
       ...data,
       type: data.type || 'info',
       isRead: false,
     });
+
+    emitNotification(data.userId, {
+      id: notification._id?.toString() || '',
+      title: notification.title,
+      message: notification.message,
+      type: notification.type,
+      link: notification.link,
+      createdAt: notification.createdAt
+    });
+
+    return notification;
   }
 
   async markAsRead(id: string): Promise<any> {

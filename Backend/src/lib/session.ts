@@ -3,6 +3,18 @@ import { createHmac, timingSafeEqual } from 'crypto';
 
 const SESSION_COOKIE_NAME = 'userId';
 
+export function getUserIdFromCookie(cookieHeader: string): string | null {
+    const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        if (key === SESSION_COOKIE_NAME) {
+            acc[key] = value;
+        }
+        return acc;
+    }, {} as Record<string, string>);
+    
+    return verifySessionToken(cookies[SESSION_COOKIE_NAME]);
+}
+
 function getSessionSecret(): string {
   const secret = process.env.SESSION_SECRET || (process.env.NODE_ENV !== 'production' ? 'development-only-secret' : undefined);
 
