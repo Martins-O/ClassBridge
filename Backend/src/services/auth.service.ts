@@ -3,14 +3,16 @@ import crypto from 'crypto';
 import { userRepository } from '@/repositories';
 import { schoolRepository } from '@/repositories';
 import { encodeSessionToken, getSessionCookieName } from '@/lib/session';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken, TokenPayload } from '@/lib/jwt';
 import PasswordResetToken from '@/models/PasswordResetToken';
+import RefreshToken from '@/models/RefreshToken';
 import { sendEmail, generatePasswordResetEmail } from '@/lib/email';
 
 const RESET_TOKEN_TTL_MINUTES = 60;
 const SALT_ROUNDS = 12;
 
 export class AuthService {
-  async login(email: string, password: string): Promise<{ user: any; sessionToken: string } | null> {
+  async login(email: string, password: string): Promise<{ user: any; accessToken: string; refreshToken: string } | null> {
     const user = await userRepository.findByEmail(email);
     if (!user) {
       return null;
@@ -21,10 +23,79 @@ export class AuthService {
       return null;
     }
 
-    const sessionToken = encodeSessionToken(user._id.toString());
+    const tokenPayload: TokenPayload = {
+      userId: user._id.toString(),
+      email: user.email,
+      role: user.role
+    };
+
+    const accessToken = generateAccessToken(tokenPayload);
+    const refreshTokenDoc = generateRefreshToken(user._id.toString());
+    
+    await RefreshToken.create({
+      userId: user._id,
+      token: refreshTokenDoc.token,
+      expiresAt: refreshTokenDoc.expiresAt,
+      isRevoked: false
+    });
 
     const { password: _, ...userWithoutPassword } = user;
-    return { user: userWithoutPassword, sessionToken };
+    return { user: userWithoutPassword, accessToken, refreshToken: refreshTokenDoc.token };
+  }
+
+  async refreshTokens(refreshToken: string): Promise<{ accessToken: string; refreshToken: string } | null> {
+    try {
+      const decoded = verifyRefreshToken(refreshToken);
+      
+      const tokenRecord = await RefreshToken.findOne({
+        token: refreshToken,
+        isRevoked: false,
+        expiresAt: { $gt: new Date() }
+      });
+
+      if (!tokenRecord) {
+        return null;
+      }
+
+      const user = await userRepository.findById(decoded.userId);
+      if (!user) {
+        return null;
+      }
+
+      const tokenPayload: TokenPayload = {
+        userId: user._id.toString(),
+        email: user.email,
+        role: user.role
+      };
+
+      const accessToken = generateAccessToken(tokenPayload);
+      const newRefreshTokenDoc = generateRefreshToken(user._id.toString());
+      
+      await RefreshToken.create({
+        userId: user._id,
+        token: newRefreshTokenDoc.token,
+        expiresAt: newRefreshTokenDoc.expiresAt,
+        isRevoked: false
+      });
+
+      await RefreshToken.updateOne(
+        { _id: tokenRecord._id },
+        { isRevoked: true }
+      );
+
+      return { accessToken, refreshToken: newRefreshTokenDoc.token };
+    } catch {
+      return null;
+    }
+  }
+
+  async logout(refreshToken: string): Promise<void> {
+    if (refreshToken) {
+      await RefreshToken.updateOne(
+        { token: refreshToken },
+        { isRevoked: true }
+      );
+    }
   }
 
   async register(data: { name: string; email: string; password: string; role?: string }): Promise<any> {

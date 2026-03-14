@@ -12,8 +12,11 @@ import {
   getSessionCookieName,
   getUserIdFromRequest,
 } from '@/lib/session';
+import { verifyAccessToken, decodeToken } from '@/lib/jwt';
+import { generateTwoFactorSecret, generateQRCode, verifyTwoFactorCode, generateRecoveryCodes, verifyBackupCode } from '@/lib/twoFactor';
 import { serializeUser } from '@/lib/serializeUser';
 import { authService } from '@/services';
+import User from '@/models/User';
 
 export async function login(req: Request, res: Response) {
   try {
@@ -30,16 +33,11 @@ export async function login(req: Request, res: Response) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    res.cookie(getSessionCookieName(), result.sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
     return res.json({
       success: true,
       user: result.user,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -47,24 +45,67 @@ export async function login(req: Request, res: Response) {
   }
 }
 
-export async function logout(_req: Request, res: Response) {
-  res.clearCookie(getSessionCookieName());
-  return res.json({
-    success: true,
-    message: 'Logged out successfully',
-  });
+export async function refreshToken(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({ error: 'Refresh token is required' });
+    }
+
+    const tokens = await authService.refreshTokens(refreshToken);
+    if (!tokens) {
+      return res.status(401).json({ error: 'Invalid or expired refresh token' });
+    }
+
+    return res.json({
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    return res.status(500).json({ error: 'Failed to refresh token' });
+  }
+}
+
+export async function logout(req: Request, res: Response) {
+  try {
+    const refreshToken = req.body.refreshToken || req.cookies?.refreshToken;
+    if (refreshToken) {
+      await authService.logout(refreshToken);
+    }
+    return res.json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    return res.json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  }
 }
 
 export async function me(req: Request, res: Response) {
   try {
     await connectDB();
 
-    const userId = getUserIdFromRequest(req);
-    if (!userId) {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    
+    if (!token) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const user = await authService.getUserWithRelations(userId);
+    const payload = verifyAccessToken(token);
+    if (!payload) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    const user = await authService.getUserWithRelations(payload.userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -186,5 +227,145 @@ export async function resetPassword(req: Request, res: Response) {
   } catch (error) {
     console.error('Reset password error:', error);
     return res.status(500).json({ error: 'Failed to reset password' });
+  }
+}
+
+export async function setupTwoFactor(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const payload = verifyAccessToken(token);
+    if (!payload) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    const user = await User.findById(payload.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.twoFactorEnabled) {
+      return res.status(400).json({ error: 'Two-factor authentication is already enabled' });
+    }
+
+    const twoFactorSetup = generateTwoFactorSecret(user.email);
+    const qrCode = await generateQRCode(twoFactorSetup.otpauthUrl);
+
+    await User.findByIdAndUpdate(user._id, {
+      twoFactorSecret: twoFactorSetup.secret
+    });
+
+    return res.json({
+      secret: twoFactorSetup.secret,
+      qrCode,
+      message: 'Two-factor authentication setup initiated'
+    });
+  } catch (error) {
+    console.error('Setup 2FA error:', error);
+    return res.status(500).json({ error: 'Failed to setup two-factor authentication' });
+  }
+}
+
+export async function verifyTwoFactor(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const { userId, token } = req.body;
+
+    if (!userId || !token) {
+      return res.status(400).json({ error: 'User ID and token are required' });
+    }
+
+    const user = await User.findById(userId).select('+twoFactorSecret');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!user.twoFactorSecret) {
+      return res.status(400).json({ error: 'Two-factor authentication not set up' });
+    }
+
+    const verification = verifyTwoFactorCode(user.twoFactorSecret, token);
+    
+    if (!verification.valid) {
+      return res.status(401).json({ valid: false, error: 'Invalid verification code' });
+    }
+
+    const backupCodes = generateRecoveryCodes();
+    const hashedCodes = backupCodes.map(bc => bc.hashedCode);
+
+    await User.findByIdAndUpdate(user._id, {
+      twoFactorEnabled: true,
+      backupCodes: hashedCodes
+    });
+
+    return res.json({
+      valid: true,
+      backupCodes: backupCodes.map(bc => bc.code),
+      message: 'Two-factor authentication enabled successfully'
+    });
+  } catch (error) {
+    console.error('Verify 2FA error:', error);
+    return res.status(500).json({ error: 'Failed to verify two-factor authentication' });
+  }
+}
+
+export async function disableTwoFactor(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const payload = verifyAccessToken(token);
+    if (!payload) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    const { password, token: twoFactorToken } = req.body;
+
+    const user = await User.findById(payload.userId).select('+twoFactorSecret');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!user.twoFactorEnabled) {
+      return res.status(400).json({ error: 'Two-factor authentication is not enabled' });
+    }
+
+    const bcrypt = await import('bcryptjs');
+    const isPasswordValid = await bcrypt.default.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+
+    if (twoFactorToken) {
+      const verification = verifyTwoFactorCode(user.twoFactorSecret!, twoFactorToken);
+      if (!verification.valid) {
+        return res.status(401).json({ error: 'Invalid 2FA code' });
+      }
+    }
+
+    await User.findByIdAndUpdate(user._id, {
+      twoFactorEnabled: false,
+      twoFactorSecret: undefined,
+      backupCodes: undefined
+    });
+
+    return res.json({ success: true, message: 'Two-factor authentication disabled' });
+  } catch (error) {
+    console.error('Disable 2FA error:', error);
+    return res.status(500).json({ error: 'Failed to disable two-factor authentication' });
   }
 }
