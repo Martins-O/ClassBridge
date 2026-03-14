@@ -83,8 +83,22 @@ const AssessmentSchema = new Schema({
   startDate: { type: Date },
   endDate: { type: Date },
   maxAttempts: { type: Number, default: 1 },
-  timeLimit: { type: Number }, // in minutes
-  passingScore: { type: Number }
+  timeLimit: { type: Number },
+  passingScore: { type: Number },
+  materials: [{
+    title: String,
+    description: String,
+    url: String,
+    type: {
+      type: String,
+      enum: ['document', 'video', 'link', 'image'],
+      default: 'document'
+    },
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 }, {
   timestamps: true
 });

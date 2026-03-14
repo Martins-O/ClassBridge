@@ -5,9 +5,13 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import http from 'http';
 
 import apiRouter from './routes/api';
 import { setupSwagger } from './lib/swagger';
+import { initRedis, closeRedis } from './lib/redis';
+import { initCloudinary } from './lib/cloudinary';
+import { setupSocketIO } from './lib/socket';
 
 dotenv.config();
 
@@ -49,7 +53,7 @@ if (isDevelopment) {
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  limit: 100,
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -57,7 +61,7 @@ const apiLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  limit: 20,
   message: { error: 'Too many authentication attempts, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -68,16 +72,17 @@ app.use(API_PREFIX, apiLimiter);
 
 setupSwagger(app);
 
-app.get('/health', (_req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
-});
-
 app.get('/', (_req, res) => {
   res.redirect('/api-docs');
+});
+
+app.get('/api/v1', (_req, res) => {
+  res.json({
+    message: 'ClassBridge API',
+    version: API_VERSION,
+    docs: '/api-docs',
+    health: '/health',
+  });
 });
 
 app.use(API_PREFIX, apiRouter);
@@ -109,6 +114,8 @@ function validateEnvironment() {
 function gracefulShutdown(signal: string) {
   console.log(`\n${signal} received. Starting graceful shutdown...`);
   
+  closeRedis().catch(console.error);
+  
   process.exit(0);
 }
 
@@ -117,22 +124,46 @@ validateEnvironment();
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-const server = app.listen(port, () => {
+async function initializeServices() {
+    try {
+        await initRedis();
+    } catch (error) {
+        console.warn('Redis initialization failed, continuing without Redis:', error);
+    }
+
+    try {
+        initCloudinary();
+    } catch (error) {
+        console.warn('Cloudinary initialization failed, continuing without Cloudinary:', error);
+    }
+}
+
+const httpServer = http.createServer(app);
+
+initializeServices().then(() => {
+    try {
+        setupSocketIO(httpServer);
+    } catch (error) {
+        console.warn('Socket.io initialization failed, continuing without Socket.io:', error);
+    }
+});
+
+const server = httpServer.listen(port, () => {
   console.log(`
-╔═══════════════════════════════════════════════════════╗
-║                                                       ║
-║   🎓 ClassBridge API Server                          ║
-║                                                       ║
-║   Version: ${API_VERSION}                                          ║
-║   Port: ${port}                                           ║
-║   Environment: ${isDevelopment ? 'development' : 'production'}                        ║
-║                                                       ║
-║   Endpoints:                                          ║
-║   • API:       ${API_PREFIX}                              ║
-║   • Swagger:   http://localhost:${port}/api-docs             ║
-║   • Health:    http://localhost:${port}/health                ║
-║                                                       ║
-╚═══════════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════════════════╗
+║                                                                        ║
+║   🎓 ClassBridge API Server                                             ║
+║                                                                        ║
+║   Version: ${API_VERSION}                                                             ║
+║   Port: ${port}                                                           ║
+║   Environment: ${isDevelopment ? 'development' : 'production'}                                        ║
+║                                                                   ║
+║   Endpoints:                                                      ║
+║   • API:       ${API_PREFIX}                                            ║
+║   • Swagger:   http://localhost:${port}/api-docs║
+║   • Health:    http://localhost:${port}/health                    ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
   `);
 });
 

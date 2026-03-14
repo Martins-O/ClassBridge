@@ -8,7 +8,7 @@ const options: swaggerJsdoc.Options = {
     info: {
       title: 'ClassBridge API',
       version: '1.0.0',
-      description: 'API documentation for ClassBridge - Educational Management Platform',
+      description: 'API documentation for ClassBridge - Educational Management Platform\n\n**Base URL:** `http://localhost:4000/api/v1`',
       contact: {
         name: 'API Support',
         email: 'support@classbridge.com',
@@ -16,7 +16,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost:4000',
+        url: 'http://localhost:4000/api/v1',
         description: 'Development server',
       },
     ],
