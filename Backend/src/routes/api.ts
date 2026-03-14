@@ -71,6 +71,29 @@ router.post('/auth/logout', asyncHandler(authController.logout));
 
 /**
  * @swagger
+ * /auth/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Tokens refreshed successfully
+ *       401:
+ *         description: Invalid refresh token
+ */
+router.post('/auth/refresh', asyncHandler(authController.refreshToken));
+
+/**
+ * @swagger
  * /auth/me:
  *   get:
  *     summary: Get current user
@@ -172,6 +195,68 @@ router.get('/auth/password-reset/:token', asyncHandler(authController.verifyPass
  *         description: Password reset successful
  */
 router.post('/auth/password-reset/:token', asyncHandler(authController.resetPassword));
+
+/**
+ * @swagger
+ * /auth/2fa/setup:
+ *   post:
+ *     summary: Setup two-factor authentication
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 2FA setup initiated
+ */
+router.post('/auth/2fa/setup', asyncHandler(authController.setupTwoFactor));
+
+/**
+ * @swagger
+ * /auth/2fa/verify:
+ *   post:
+ *     summary: Verify and enable two-factor authentication
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 2FA enabled successfully
+ */
+router.post('/auth/2fa/verify', asyncHandler(authController.verifyTwoFactor));
+
+/**
+ * @swagger
+ * /auth/2fa/disable:
+ *   post:
+ *     summary: Disable two-factor authentication
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               password:
+ *                 type: string
+ *               token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 2FA disabled successfully
+ */
+router.post('/auth/2fa/disable', asyncHandler(authController.disableTwoFactor));
 
 /**
  * @swagger

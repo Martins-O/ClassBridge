@@ -7,13 +7,16 @@ export interface IUser extends Document {
   password: string;
   name: string;
   role: UserRole;
-  schoolId?: string; // Reference to school (for school_admin, mentor, student)
-  classIds: string[]; // References to classes (for mentors and students)
-  studentId?: string; // Auto-generated student ID (for students only)
+  schoolId?: string;
+  classIds: string[];
+  studentId?: string;
   isActive: boolean;
   profileImage?: string;
   phone?: string;
   bio?: string;
+  twoFactorEnabled: boolean;
+  twoFactorSecret?: string;
+  backupCodes?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -71,7 +74,19 @@ const UserSchema = new Schema({
   bio: {
     type: String,
     trim: true
-  }
+  },
+  twoFactorEnabled: {
+    type: Boolean,
+    default: false
+  },
+  twoFactorSecret: {
+    type: String,
+    select: false
+  },
+  backupCodes: [{
+    type: String,
+    select: false
+  }]
 }, {
   timestamps: true
 });
@@ -79,5 +94,9 @@ const UserSchema = new Schema({
 // Index for faster queries
 UserSchema.index({ schoolId: 1, role: 1 });
 UserSchema.index({ classIds: 1 });
+UserSchema.index({ email: 1 });
+UserSchema.index({ role: 1, isActive: 1 });
+UserSchema.index({ schoolId: 1, isActive: 1 });
+UserSchema.index({ studentId: 1 });
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
