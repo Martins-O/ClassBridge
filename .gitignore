@@ -50,3 +50,8 @@ next-env.d.ts
 .idea
 .claude
 .qodo
+
+# Large backup files
+*.tar.gz
+*.zip
+*.7z
