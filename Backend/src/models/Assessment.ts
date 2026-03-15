@@ -103,4 +103,12 @@ const AssessmentSchema = new Schema({
   timestamps: true
 });
 
+AssessmentSchema.index({ schoolId: 1 });
+AssessmentSchema.index({ createdBy: 1 });
+AssessmentSchema.index({ targetRole: 1 });
+AssessmentSchema.index({ isActive: 1, startDate: 1 });
+AssessmentSchema.index({ endDate: 1 });
+AssessmentSchema.index({ schoolId: 1, targetRole: 1 });
+AssessmentSchema.index({ classIds: 1 });
+
 export default mongoose.models.Assessment || mongoose.model<IAssessment>('Assessment', AssessmentSchema);

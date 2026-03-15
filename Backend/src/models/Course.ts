@@ -79,6 +79,8 @@ CourseSchema.index({ classId: 1 });
 CourseSchema.index({ mentorId: 1 });
 CourseSchema.index({ studentIds: 1 });
 CourseSchema.index({ isActive: 1 });
+CourseSchema.index({ classId: 1, isActive: 1 });
+CourseSchema.index({ mentorId: 1, isActive: 1 });
 
 // Pre-save middleware to validate dates
 CourseSchema.pre('save', function(next) {

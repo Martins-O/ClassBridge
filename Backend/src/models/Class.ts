@@ -60,4 +60,11 @@ const ClassSchema = new Schema({
   timestamps: true
 });
 
+ClassSchema.index({ schoolId: 1, academicYear: 1 });
+ClassSchema.index({ schoolId: 1, isActive: 1 });
+ClassSchema.index({ mentorIds: 1 });
+ClassSchema.index({ studentIds: 1 });
+ClassSchema.index({ academicYear: 1, cohort: 1 });
+ClassSchema.index({ isActive: 1, createdAt: -1 });
+
 export default mongoose.models.Class || mongoose.model<IClass>('Class', ClassSchema);

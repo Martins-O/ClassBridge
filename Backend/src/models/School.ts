@@ -61,4 +61,8 @@ const SchoolSchema = new Schema({
   timestamps: true
 });
 
+SchoolSchema.index({ adminId: 1 });
+SchoolSchema.index({ isActive: 1 });
+SchoolSchema.index({ subscriptionType: 1, isActive: 1 });
+
 export default mongoose.models.School || mongoose.model<ISchool>('School', SchoolSchema);

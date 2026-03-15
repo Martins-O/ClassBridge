@@ -152,6 +152,10 @@ GradeSchema.index({ classId: 1, gradeType: 1 });
 GradeSchema.index({ mentorId: 1 });
 GradeSchema.index({ schoolId: 1 });
 GradeSchema.index({ gradedDate: -1 });
+GradeSchema.index({ studentId: 1, gradedDate: -1 });
+GradeSchema.index({ classId: 1, studentId: 1, gradeType: 1 });
+GradeSchema.index({ status: 1, isExcused: 1 });
+GradeSchema.index({ schoolId: 1, classId: 1, studentId: 1 });
 
 // Calculate percentage and letter grade
 GradeSchema.methods.calculateGrade = function() {
