@@ -524,3 +524,152 @@ If you didn't expect this invitation or don't want to become a mentor, you can s
     textContent
   };
 }
+
+export interface GradeNotificationData {
+  recipientEmail: string;
+  recipientName: string;
+  studentName: string;
+  className: string;
+  courseName: string;
+  grade: string;
+  percentage: number;
+}
+
+export function generateGradeNotificationEmail(data: GradeNotificationData): EmailData {
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; }
+        .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 20px; border-radius: 8px; text-align: center; }
+        .grade-badge { font-size: 48px; font-weight: bold; margin: 20px 0; }
+        .details { background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .footer { text-align: center; color: #64748b; font-size: 14px; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📊 New Grade Posted</h1>
+        </div>
+        <p>Hello ${data.recipientName},</p>
+        <p>A new grade has been posted for <strong>${data.studentName}</strong>.</p>
+        <div class="grade-badge">${data.grade}</div>
+        <div class="details">
+          <p><strong>Course:</strong> ${data.courseName}</p>
+          <p><strong>Class:</strong> ${data.className}</p>
+          <p><strong>Score:</strong> ${data.percentage}%</p>
+        </div>
+        <p>Log in to view more details.</p>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} ClassBridge</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return {
+    to: data.recipientEmail,
+    toName: data.recipientName,
+    subject: `New Grade: ${data.grade} in ${data.courseName}`,
+    htmlContent
+  };
+}
+
+export interface AssessmentNotificationData {
+  recipientEmail: string;
+  recipientName: string;
+  assessmentTitle: string;
+  dueDate: string;
+  className: string;
+}
+
+export function generateAssessmentNotificationEmail(data: AssessmentNotificationData): EmailData {
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; }
+        .header { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 20px; border-radius: 8px; text-align: center; }
+        .due-date { font-size: 24px; font-weight: bold; margin: 20px 0; color: #dc2626; }
+        .details { background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📝 Assessment Due Soon</h1>
+        </div>
+        <p>Hello ${data.recipientName},</p>
+        <p>You have an upcoming assessment:</p>
+        <div class="details">
+          <p><strong>Assessment:</strong> ${data.assessmentTitle}</p>
+          <p><strong>Class:</strong> ${data.className}</p>
+          <div class="due-date">Due: ${data.dueDate}</div>
+        </div>
+        <p>Log in to start the assessment.</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return {
+    to: data.recipientEmail,
+    toName: data.recipientName,
+    subject: `Assessment Due: ${data.assessmentTitle}`,
+    htmlContent
+  };
+}
+
+export interface WelcomeEmailData {
+  recipientEmail: string;
+  recipientName: string;
+  role: string;
+}
+
+export function generateWelcomeEmail(data: WelcomeEmailData): EmailData {
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; }
+        .header { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 30px; border-radius: 8px; text-align: center; }
+        .features { margin: 20px 0; }
+        .features li { margin: 10px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🎓 Welcome to ClassBridge!</h1>
+        </div>
+        <p>Hello ${data.recipientName},</p>
+        <p>Welcome to ClassBridge! Your account has been created as a <strong>${data.role}</strong>.</p>
+        <div class="features">
+          <h3>Getting Started:</h3>
+          <ul>
+            <li>Complete your profile</li>
+            <li>Explore your dashboard</li>
+            <li>Connect with students/mentors</li>
+          </ul>
+        </div>
+        <p>Log in to get started!</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return {
+    to: data.recipientEmail,
+    toName: data.recipientName,
+    subject: 'Welcome to ClassBridge!',
+    htmlContent
+  };
+}
