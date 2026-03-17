@@ -111,11 +111,35 @@ export async function updateCourse(req: Request, res: Response) {
     const { id } = req.params;
     const body = req.body;
 
-    const course = await courseService.update(id, body);
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { verifyAccessToken } = await import('@/lib/jwt');
+    const payload = verifyAccessToken(token);
+
+    const user = await userRepository.findById(payload.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const course = await courseService.update(
+      id, 
+      body, 
+      payload.userId, 
+      user.role,
+      user.schoolId?.toString()
+    );
 
     return res.json({ message: 'Course updated', course });
   } catch (error) {
     console.error('Update course error:', error);
+    if (error instanceof Error) {
+      return res.status(403).json({ error: error.message });
+    }
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -126,11 +150,34 @@ export async function deleteCourse(req: Request, res: Response) {
 
     const { id } = req.params;
 
-    await courseService.delete(id);
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { verifyAccessToken } = await import('@/lib/jwt');
+    const payload = verifyAccessToken(token);
+
+    const user = await userRepository.findById(payload.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    await courseService.delete(
+      id, 
+      payload.userId, 
+      user.role,
+      user.schoolId?.toString()
+    );
 
     return res.json({ message: 'Course archived' });
   } catch (error) {
     console.error('Delete course error:', error);
+    if (error instanceof Error) {
+      return res.status(403).json({ error: error.message });
+    }
     return res.status(500).json({ error: 'Internal server error' });
   }
 }

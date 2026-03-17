@@ -9,6 +9,12 @@ export class CourseRepository {
       .lean();
   }
 
+  async findByIdBasic(id: string): Promise<any> {
+    return Course.findById(id)
+      .populate('classId', 'name schoolId')
+      .lean();
+  }
+
   async findAll(query: any = {}): Promise<any[]> {
     return Course.find(query)
       .populate('classId', 'name academicYear')

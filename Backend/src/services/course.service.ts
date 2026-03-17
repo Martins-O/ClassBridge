@@ -70,17 +70,55 @@ export class CourseService {
     return courseRepository.create(data);
   }
 
-  async update(id: string, data: any): Promise<any> {
-    return courseRepository.updateById(id, data);
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const course = await courseRepository.findById(id);
+  async update(id: string, data: any, userId: string, userRole: string, userSchoolId?: string): Promise<any> {
+    const course = await courseRepository.findByIdBasic(id);
     if (!course) {
       throw new Error('Course not found');
     }
+
+    if (userRole === 'student') {
+      throw new Error('Students cannot update courses');
+    }
+
+    if (userRole === 'mentor') {
+      if (course.mentorId.toString() !== userId) {
+        throw new Error('You can only update your own courses');
+      }
+    }
+
+    if (userRole === 'school_admin' && userSchoolId) {
+      const cls = await classRepository.findByIdBasic(course.classId);
+      if (!cls || cls.schoolId.toString() !== userSchoolId) {
+        throw new Error('You can only update courses in your school');
+      }
+    }
+
+    return courseRepository.updateById(id, data);
+  }
+
+  async delete(id: string, userId: string, userRole: string, userSchoolId?: string): Promise<boolean> {
+    const course = await courseRepository.findByIdBasic(id);
+    if (!course) {
+      throw new Error('Course not found');
+    }
+
+    if (userRole === 'student') {
+      throw new Error('Students cannot delete courses');
+    }
+
+    if (userRole === 'mentor') {
+      if (course.mentorId.toString() !== userId) {
+        throw new Error('You can only delete your own courses');
+      }
+    }
+
+    if (userRole === 'school_admin' && userSchoolId) {
+      const cls = await classRepository.findByIdBasic(course.classId);
+      if (!cls || cls.schoolId.toString() !== userSchoolId) {
+        throw new Error('You can only delete courses in your school');
+      }
+    }
     
-    course.isActive = false;
     return courseRepository.updateById(id, { isActive: false }).then(() => true);
   }
 }
