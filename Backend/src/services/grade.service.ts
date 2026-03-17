@@ -1,4 +1,5 @@
 import { gradeRepository } from '@/repositories';
+import { classRepository } from '@/repositories';
 
 export interface PaginatedGrades {
   grades: any[];
@@ -48,19 +49,81 @@ export class GradeService {
     grade: string;
     score?: number;
     comments?: string;
-  }): Promise<any> {
+  }, userId: string, userRole: string): Promise<any> {
+    if (userRole === 'student') {
+      throw new Error('Students cannot create grades');
+    }
+
+    if (userRole === 'mentor' && data.mentorId !== userId) {
+      throw new Error('You can only grade students in your classes');
+    }
+
     return gradeRepository.create(data);
   }
 
-  async createBulk(grades: any[]): Promise<any[]> {
+  async createBulk(grades: any[], userId: string, userRole: string): Promise<any[]> {
+    if (userRole === 'student') {
+      throw new Error('Students cannot create grades');
+    }
+
+    if (userRole === 'mentor') {
+      for (const grade of grades) {
+        if (grade.mentorId !== userId) {
+          throw new Error('You can only grade students in your classes');
+        }
+      }
+    }
+
     return gradeRepository.createMany(grades);
   }
 
-  async update(id: string, data: any): Promise<any> {
+  async update(id: string, data: any, userId: string, userRole: string, userSchoolId?: string): Promise<any> {
+    const grade = await gradeRepository.findByIdBasic(id);
+    if (!grade) {
+      throw new Error('Grade not found');
+    }
+
+    if (userRole === 'student') {
+      throw new Error('Students cannot update grades');
+    }
+
+    if (userRole === 'mentor') {
+      if (grade.mentorId?.toString() !== userId) {
+        throw new Error('You can only update grades you created');
+      }
+    }
+
+    if (userRole === 'school_admin' && userSchoolId) {
+      if (grade.schoolId?.toString() !== userSchoolId) {
+        throw new Error('You can only update grades in your school');
+      }
+    }
+
     return gradeRepository.updateById(id, data);
   }
 
-  async delete(id: string): Promise<boolean> {
+  async delete(id: string, userId: string, userRole: string, userSchoolId?: string): Promise<boolean> {
+    const grade = await gradeRepository.findByIdBasic(id);
+    if (!grade) {
+      throw new Error('Grade not found');
+    }
+
+    if (userRole === 'student') {
+      throw new Error('Students cannot delete grades');
+    }
+
+    if (userRole === 'mentor') {
+      if (grade.mentorId?.toString() !== userId) {
+        throw new Error('You can only delete grades you created');
+      }
+    }
+
+    if (userRole === 'school_admin' && userSchoolId) {
+      if (grade.schoolId?.toString() !== userSchoolId) {
+        throw new Error('You can only delete grades in your school');
+      }
+    }
+
     return gradeRepository.deleteById(id);
   }
 

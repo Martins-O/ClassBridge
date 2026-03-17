@@ -10,6 +10,12 @@ export class GradeRepository {
       .lean();
   }
 
+  async findByIdBasic(id: string): Promise<any> {
+    return Grade.findById(id)
+      .select('mentorId schoolId classId studentId')
+      .lean();
+  }
+
   async findAll(query: any = {}): Promise<any[]> {
     return Grade.find(query)
       .populate('studentId', 'name email studentId')
