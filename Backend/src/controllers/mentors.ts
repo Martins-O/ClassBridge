@@ -46,26 +46,35 @@ export async function getMentors(req: Request, res: Response) {
       return res.status(403).json({ error: 'You can only view mentors from your own school' });
     }
 
-    // Fetch mentors for the school
-    const mentors = await User.find({
-      role: 'mentor',
-      schoolId: schoolId,
-      isActive: true
-    }).select('-password');
+    // Fetch mentors and classes in parallel to avoid N+1 queries
+    const [mentors, classes] = await Promise.all([
+      User.find({
+        role: 'mentor',
+        schoolId: schoolId,
+        isActive: true
+      }).select('-password').lean(),
+      Class.find({
+        schoolId: schoolId
+      }).select('name _id mentorIds').lean()
+    ]);
 
-    // Get class assignments for each mentor
-    const mentorsWithClasses = await Promise.all(
-      mentors.map(async (mentor) => {
-        const classes = await Class.find({
-          mentorIds: mentor._id
-        }).select('name _id');
+    // Group classes by mentor
+    const classesByMentor = new Map<string, typeof classes>();
+    for (const cls of classes) {
+      for (const mentorId of cls.mentorIds) {
+        const mentorIdStr = mentorId.toString();
+        if (!classesByMentor.has(mentorIdStr)) {
+          classesByMentor.set(mentorIdStr, []);
+        }
+        classesByMentor.get(mentorIdStr)?.push(cls);
+      }
+    }
 
-        return {
-          ...mentor.toObject(),
-          assignedClasses: classes
-        };
-      })
-    );
+    // Attach classes to mentors
+    const mentorsWithClasses = mentors.map((mentor: any) => ({
+      ...mentor,
+      assignedClasses: classesByMentor.get(mentor._id.toString()) || []
+    }));
 
     return res.json({ mentors: mentorsWithClasses });
   } catch (error) {
