@@ -396,64 +396,85 @@ export async function bulkInviteStudents(req: Request, res: Response) {
 
     const school = classData.schoolId as any;
 
+    // Batch check existing users
+    const emails = students.map((s: any) => s.email.toLowerCase());
+    const existingUsers = await User.find({ email: { $in: emails } }).select('email').lean();
+    const existingEmails = new Set(existingUsers.map((u: any) => u.email.toLowerCase()));
+
+    // Batch check existing invitations
+    const existingInvitations = await StudentInvitation.find({ email: { $in: emails } }).select('email').lean();
+    const existingInvitationEmails = new Set(existingInvitations.map((i: any) => i.email.toLowerCase()));
+
+    // Prepare valid invitations
+    const validInvitations: any[] = [];
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     for (const student of students) {
       const { email, name } = student;
+      const normalizedEmail = email.toLowerCase();
 
       if (!email || !name) {
         results.failed.push({ email: email || 'unknown', error: 'Missing name or email' });
         continue;
       }
 
-      // Basic validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         results.failed.push({ email, error: 'Invalid email format' });
         continue;
       }
 
-      // Check if user exists
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
+      if (existingEmails.has(normalizedEmail)) {
         results.failed.push({ email, error: 'User already exists' });
         continue;
       }
 
-      // Create invitation
+      if (existingInvitationEmails.has(normalizedEmail)) {
+        results.failed.push({ email, error: 'Invitation already exists' });
+        continue;
+      }
+
       const token = crypto.randomUUID();
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
 
-      const invitation = new StudentInvitation({
-        email,
+      validInvitations.push({
+        email: normalizedEmail,
         name,
         schoolId: school._id,
         classId: classId,
         invitedBy: userId,
-        token: token,
-        expiresAt: expiresAt
+        token,
+        expiresAt
       });
+    }
 
-      try {
-        await invitation.save();
+    // Batch insert invitations
+    if (validInvitations.length > 0) {
+      const insertedInvitations = await StudentInvitation.insertMany(validInvitations, { ordered: false });
 
-        const emailData = generateStudentInvitationEmail({
-          studentEmail: email,
-          studentName: name,
-          schoolName: school.name,
-          className: classData.name,
-          invitationToken: token,
-          inviterName: user.name
-        });
+      // Send emails in batch
+      for (let i = 0; i < insertedInvitations.length; i++) {
+        const invitation = insertedInvitations[i];
+        const student = students.find((s: any) => s.email.toLowerCase() === invitation.email);
 
-        const emailSent = await sendEmail(emailData);
-        if (emailSent) {
-          results.success.push(email);
-        } else {
-          await StudentInvitation.findByIdAndDelete(invitation._id);
-          results.failed.push({ email, error: 'Failed to send email' });
+        if (student) {
+          const emailData = generateStudentInvitationEmail({
+            studentEmail: invitation.email,
+            studentName: student.name,
+            schoolName: school.name,
+            className: classData.name,
+            invitationToken: invitation.token,
+            inviterName: user.name
+          });
+
+          const emailSent = await sendEmail(emailData);
+          if (emailSent) {
+            results.success.push(invitation.email);
+          } else {
+            await StudentInvitation.findByIdAndDelete(invitation._id);
+            results.failed.push({ email: invitation.email, error: 'Failed to send email' });
+          }
         }
-      } catch (err) {
-        results.failed.push({ email, error: 'Database error' });
       }
     }
 
