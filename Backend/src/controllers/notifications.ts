@@ -2,16 +2,16 @@ import { Request, Response } from 'express';
 import connectDB from '@/lib/mongodb';
 import Notification from '@/models/Notification';
 import { getUserIdFromRequest } from '@/lib/session';
-import { getPaginationParams, paginate } from '@/lib/pagination';
+import { getPaginationParams } from '@/lib/pagination';
+import { sendSuccess, sendError, sendPaginated } from '@/lib/apiResponse';
 
-// GET /api/notifications - Get user notifications
 export async function getNotifications(req: Request, res: Response) {
     try {
         await connectDB();
 
         const userId = getUserIdFromRequest(req);
         if (!userId) {
-            return res.status(401).json({ error: 'Authentication required' });
+            return sendError(res, 'Authentication required', 401, 'AUTH_REQUIRED');
         }
 
         const { page, limit, skip } = getPaginationParams(req, { defaultLimit: 20, maxLimit: 50 });
@@ -25,56 +25,63 @@ export async function getNotifications(req: Request, res: Response) {
             Notification.countDocuments({ userId })
         ]);
 
-        const response = paginate(notifications, total, page, limit);
-        return res.json(response);
+        return sendPaginated(res, notifications, {
+            data: notifications,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+                hasNext: page < Math.ceil(total / limit),
+                hasPrev: page > 1
+            }
+        } as any);
     } catch (error) {
         console.error('Failed to fetch notifications:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        return sendError(res, 'Internal server error', 500);
     }
 }
 
-// PATCH /api/notifications - Mark all as read
 export async function markAllNotificationsAsRead(req: Request, res: Response) {
     try {
         await connectDB();
 
         const userId = getUserIdFromRequest(req);
         if (!userId) {
-            return res.status(401).json({ error: 'Authentication required' });
+            return sendError(res, 'Authentication required', 401, 'AUTH_REQUIRED');
         }
 
         await Notification.updateMany({ userId, isRead: false }, { isRead: true });
 
-        return res.json({ message: 'Notifications marked as read' });
+        return sendSuccess(res, { message: 'Notifications marked as read' });
     } catch (error) {
         console.error('Failed to mark notifications as read:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        return sendError(res, 'Internal server error', 500);
     }
 }
 
-// PATCH /api/notifications/:id - Mark single notification as read
 export async function markNotificationAsRead(req: Request, res: Response) {
     try {
         await connectDB();
 
         const userId = getUserIdFromRequest(req);
         if (!userId) {
-            return res.status(401).json({ error: 'Authentication required' });
+            return sendError(res, 'Authentication required', 401, 'AUTH_REQUIRED');
         }
 
         const { id } = req.params;
         const notification = await Notification.findOne({ _id: id, userId });
 
         if (!notification) {
-            return res.status(404).json({ error: 'Notification not found' });
+            return sendError(res, 'Notification not found', 404, 'NOT_FOUND');
         }
 
         notification.isRead = true;
         await notification.save();
 
-        return res.json({ notification });
+        return sendSuccess(res, notification);
     } catch (error) {
         console.error('Failed to mark notification as read:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        return sendError(res, 'Internal server error', 500);
     }
 }

@@ -5,6 +5,7 @@ import { getPaginationParams, paginate } from '@/lib/pagination';
 import { getQueryParams, buildQuery } from '@/lib/queryBuilder';
 import { userRepository } from '@/repositories';
 import { schoolService } from '@/services';
+import { sendSuccess, sendError, sendPaginated } from '@/lib/apiResponse';
 
 export async function getSchools(req: Request, res: Response) {
   try {
@@ -12,12 +13,12 @@ export async function getSchools(req: Request, res: Response) {
 
     const userId = getUserIdFromRequest(req);
     if (!userId) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return sendError(res, 'Authentication required', 401, 'AUTH_REQUIRED');
     }
 
     const user = await userRepository.findById(userId);
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return sendError(res, 'User not found', 404, 'USER_NOT_FOUND');
     }
 
     const { page, limit } = getPaginationParams(req, { defaultLimit: 20, maxLimit: 100 });
@@ -29,11 +30,17 @@ export async function getSchools(req: Request, res: Response) {
     const query = buildQuery(filters, search);
     const result = await schoolService.getAll(userId, user.role, page, limit, query);
 
-    const response = paginate(result.schools, result.total, page, limit);
-    return res.json(response);
+    return sendPaginated(res, result.schools, {
+      page,
+      limit,
+      total: result.total,
+      totalPages: Math.ceil(result.total / limit),
+      hasNext: page < Math.ceil(result.total / limit),
+      hasPrev: page > 1
+    });
   } catch (error) {
     console.error('Get schools error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return sendError(res, 'Internal server error', 500);
   }
 }
 
