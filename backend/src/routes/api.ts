@@ -17,7 +17,7 @@ import * as approvalsController from '@/controllers/approvals';
 import * as deletionRequestsController from '@/controllers/deletionRequests';
 import uploadRoutes from './upload';
 import { csrfProtection } from '@/middleware/csrf';
-import { jwtAuthMiddleware, AuthenticatedRequest } from '@/lib/auth';
+import { jwtAuthMiddleware, optionalAuthMiddleware, AuthenticatedRequest } from '@/lib/auth';
 import { authenticate, AuthRequest } from '@/lib/authorization';
 import { requirePermission, requireSystemAdmin, requireSchoolAdmin, requireAnyPermission } from '@/lib/authorization';
 import { PERMISSIONS } from '@/lib/permissions';
@@ -192,7 +192,7 @@ router.post('/auth/refresh', csrfHandler(authController.refreshToken));
  *       401:
  *         description: Not authenticated
  */
-router.get('/auth/me', asyncHandler(authController.me));
+router.get('/auth/me', optionalAuthMiddleware, asyncHandler(authController.me));
 
 /**
  * @swagger

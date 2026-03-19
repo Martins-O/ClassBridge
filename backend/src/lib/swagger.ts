@@ -28,6 +28,12 @@ const options: swaggerJsdoc.Options = {
           name: 'userId',
           description: 'Session cookie authentication',
         },
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Enter your JWT access token'
+        }
       },
       schemas: {
         User: {
@@ -168,6 +174,8 @@ const options: swaggerJsdoc.Options = {
     },
     security: [{
       cookieAuth: [],
+    }, {
+      bearerAuth: []
     }],
   },
   apis: ['./src/routes/*.ts', './src/controllers/*.ts'],
