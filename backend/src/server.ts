@@ -1,6 +1,7 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -13,12 +14,11 @@ import { setupSwagger } from './lib/swagger';
 import { initRedis, closeRedis } from './lib/redis';
 import { initCloudinary } from './lib/cloudinary';
 import { setupSocketIO } from './lib/socket';
+import connectDB from './lib/mongodb';
 import { generateCsrfToken } from './lib/csrf';
 import { requestTimeout } from './middleware/timeout';
 import { requestIdMiddleware } from './middleware/requestId';
 import { validateEnvironment } from './lib/env';
-
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
@@ -155,6 +155,14 @@ async function initializeServices() {
         await initRedis();
     } catch (error) {
         console.warn('Redis initialization failed, continuing without Redis:', error);
+    }
+
+    try {
+        await connectDB();
+        console.log('Successfully connected to MongoDB');
+    } catch (error) {
+        console.error('MongoDB connection error:', error);
+        process.exit(1);
     }
 
     try {

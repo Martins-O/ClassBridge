@@ -26,6 +26,9 @@ export function createUserRateLimiter(options: UserRateLimitOptions = {}) {
         },
         standardHeaders: true,
         legacyHeaders: false,
+        validate: { 
+            ipKeyGenerator: false 
+        },
         keyGenerator: keyGenerator || ((req: Request) => {
             const authHeader = req.headers.authorization;
             const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
@@ -34,7 +37,7 @@ export function createUserRateLimiter(options: UserRateLimitOptions = {}) {
                 return `token:${token.substring(0, 20)}`;
             }
             
-            return `ip:${req.ip || req.socket.remoteAddress || 'unknown'}`;
+            return req.ip || req.socket.remoteAddress || 'unknown';
         }),
         handler: (req: Request, res: Response) => {
             res.status(429).json({
