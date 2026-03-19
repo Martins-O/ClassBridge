@@ -67,7 +67,13 @@ export function verifySessionToken(token: string | undefined): string | null {
   return null;
 }
 
-export function getUserIdFromRequest(req: Request): string | null {
+export function getUserIdFromRequest(req: any): string | null {
+  // First check if JWT middleware already populated req.user
+  if (req.user?.userId) {
+    return req.user.userId;
+  }
+  
+  // Fallback to session cookie
   const token = req.cookies?.[SESSION_COOKIE_NAME];
   return verifySessionToken(token);
 }

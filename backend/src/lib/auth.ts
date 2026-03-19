@@ -6,21 +6,44 @@ export interface AuthenticatedRequest extends Request {
     user?: TokenPayload;
 }
 
-export function jwtAuthMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+import User from '@/models/User';
+
+export async function jwtAuthMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
-    if (!token) {
-        return res.status(401).json({ error: 'Authentication required' });
+    if (token) {
+        try {
+            const payload = verifyAccessToken(token);
+            req.user = payload;
+            return next();
+        } catch {
+            return res.status(401).json({ error: 'Invalid or expired token' });
+        }
     }
 
-    try {
-        const payload = verifyAccessToken(token);
-        req.user = payload;
-        next();
-    } catch {
-        return res.status(401).json({ error: 'Invalid or expired token' });
+    // Fallback to cookie
+    const userId = getUserIdFromRequest(req);
+    if (userId) {
+        try {
+            const user = await User.findById(userId);
+            if (user) {
+                req.user = {
+                    userId: user._id.toString(),
+                    email: user.email,
+                    role: user.role,
+                    schoolId: user.schoolId?.toString(),
+                    schoolApproved: user.isApproved,
+                    schoolStatus: user.isActive ? 'approved' : 'pending' // Simplified status
+                };
+                return next();
+            }
+        } catch (err) {
+            console.error('Middleware cookie error:', err);
+        }
     }
+
+    return res.status(401).json({ error: 'Authentication required' });
 }
 
 export function optionalAuthMiddleware(req: AuthenticatedRequest, _res: Response, next: NextFunction) {
