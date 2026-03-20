@@ -1,0 +1,39 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: false
+        type: string
+    branches: [main]
+
+jobs:
+  deploy-production:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render Deploy
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const response = await fetch(process.env.RENDER_DEPLOY_HOOK_URL, {
+              method: 'POST',
+            });
+            if (!response.ok) {
+              throw new Error(`Failed to trigger deploy: ${response.statusText}`);
+            }
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK_URL }}
+
+      - name: Wait for deployment
+        run: sleep 45
+
+      - name: Health check production
+        run: |
+          HTTP_CODE=$(curl -f -s -o /dev/null -w "%{http_code}" "${{ vars.RENDER_PRODUCTION_URL }}/health")
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Production health check passed!"
+          fi
