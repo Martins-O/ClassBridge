@@ -1,9 +1,0 @@
-export { authService } from './auth.service';
-export { schoolService } from './school.service';
-export { classService } from './class.service';
-export { courseService } from './course.service';
-export { gradeService } from './grade.service';
-export { userService } from './user.service';
-export { assessmentService } from './assessment.service';
-export { transcriptService } from './transcript.service';
-export { notificationService } from './notification.service';
