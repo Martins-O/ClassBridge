@@ -55,3 +55,12 @@ next-env.d.ts
 *.tar.gz
 *.zip
 *.7z
+
+# Backend
+backend/node_modules
+backend/dist
+backend/logs
+backend/data
+
+# IDE
+.vscode/
