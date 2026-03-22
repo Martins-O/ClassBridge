@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import connectDB from '@/lib/mongodb';
-import { getUserIdFromRequest } from '@/lib/session';
+import { getUserFromRequest } from '@/lib/auth';
 import { getFromCache, setToCache, buildCacheKey } from '@/lib/cache';
 import User from '@/models/User';
 import School from '@/models/School';
@@ -83,7 +83,7 @@ export async function getStats(req: Request, res: Response) {
   try {
     await connectDB();
 
-    const userId = getUserIdFromRequest(req);
+    const userId = getUserFromRequest(req);
     if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -287,7 +287,7 @@ export async function getGlobalStats(req: Request, res: Response) {
   try {
     await connectDB();
 
-    const userId = getUserIdFromRequest(req);
+    const userId = getUserFromRequest(req);
     if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
