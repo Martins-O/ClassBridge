@@ -13,6 +13,7 @@ import {
 import {
   getSessionCookieName,
   getUserIdFromRequest,
+  encodeSessionToken,
 } from '@/lib/session';
 import { verifyAccessToken, decodeToken } from '@/lib/jwt';
 import { generateTwoFactorSecret, generateQRCode, verifyTwoFactorCode, generateRecoveryCodes, verifyBackupCode } from '@/lib/twoFactor';
@@ -45,9 +46,17 @@ export async function login(req: Request, res: Response) {
       });
     }
 
+    const user = (result as any).user;
+    res.cookie(getSessionCookieName(), encodeSessionToken(user.id), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: 'lax',
+    });
+
     return res.json({
       success: true,
-      user: (result as any).user,
+      user,
       accessToken: (result as any).accessToken,
       refreshToken: (result as any).refreshToken,
     });
@@ -113,19 +122,13 @@ export async function me(req: Request, res: Response) {
   try {
     await connectDB();
 
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const userId = getUserIdFromRequest(req);
     
-    if (!token) {
+    if (!userId) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const payload = verifyAccessToken(token);
-    if (!payload) {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-
-    const user = await authService.getUserWithRelations(payload.userId);
+    const user = await authService.getUserWithRelations(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
