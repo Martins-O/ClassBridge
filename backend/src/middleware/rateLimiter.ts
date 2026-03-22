@@ -26,9 +26,7 @@ export function createUserRateLimiter(options: UserRateLimitOptions = {}) {
         },
         standardHeaders: true,
         legacyHeaders: false,
-        validate: { 
-            ipKeyGenerator: false 
-        },
+        validate: false,
         keyGenerator: keyGenerator || ((req: Request) => {
             const authHeader = req.headers.authorization;
             const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
