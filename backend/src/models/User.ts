@@ -134,10 +134,8 @@ const UserSchema = new Schema({
 
 UserSchema.index({ schoolId: 1, role: 1 });
 UserSchema.index({ classIds: 1 });
-UserSchema.index({ email: 1 });
 UserSchema.index({ role: 1, isActive: 1 });
 UserSchema.index({ schoolId: 1, isActive: 1 });
-UserSchema.index({ studentId: 1 });
 UserSchema.index({ lockoutUntil: 1 }, { sparse: true });
 UserSchema.index({ lockoutUntil: 1, isActive: 1 });
 UserSchema.index({ deletionRequested: 1, schoolId: 1 });
