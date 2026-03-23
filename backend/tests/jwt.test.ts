@@ -1,3 +1,7 @@
+jest.mock('uuid', () => ({
+  v4: jest.fn().mockReturnValue('mock-uuid-123'),
+}));
+
 import { generateAccessToken, verifyAccessToken, generateRefreshToken, verifyRefreshToken } from '../src/lib/jwt';
 
 describe('JWT Authentication', () => {
