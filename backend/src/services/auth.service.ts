@@ -28,6 +28,7 @@ export class AuthService extends BaseService {
     lockoutUntil?: Date;
   } | null> {
     const user = await userRepository.findByEmail(email);
+    
     if (!user) {
       return null;
     }
