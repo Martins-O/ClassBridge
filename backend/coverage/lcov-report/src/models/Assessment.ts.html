@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/13</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/13</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -179,7 +179,7 @@
 <a name='L114'></a><a href='#L114'>114</a>
 <a name='L115'></a><a href='#L115'>115</a>
 <a name='L116'></a><a href='#L116'>116</a>
-<a name='L117'></a><a href='#L117'>117</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L117'></a><a href='#L117'>117</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -212,7 +212,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -227,7 +227,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -284,18 +284,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import mongoose, { Schema, Document } from 'mongoose';</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import mongoose, { Schema, Document } from 'mongoose';
 &nbsp;
 export interface IAssessmentQuestion {
   id: string;
@@ -328,7 +328,7 @@ export interface IAssessment extends Document {
   updatedAt: Date;
 }
 &nbsp;
-const AssessmentQuestionSchema = <span class="cstat-no" title="statement not covered" >new Schema({</span>
+const AssessmentQuestionSchema = new Schema({
   id: { type: String, required: true },
   type: {
     type: String,
@@ -343,7 +343,7 @@ const AssessmentQuestionSchema = <span class="cstat-no" title="statement not cov
   category: { type: String, trim: true }
 });
 &nbsp;
-const AssessmentSchema = <span class="cstat-no" title="statement not covered" >new Schema({</span>
+const AssessmentSchema = new Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
   questions: [AssessmentQuestionSchema],
@@ -400,17 +400,17 @@ const AssessmentSchema = <span class="cstat-no" title="statement not covered" >n
   timestamps: true
 });
 &nbsp;
-<span class="cstat-no" title="statement not covered" >AssessmentSchema.index({ schoolId: 1 });</span>
-<span class="cstat-no" title="statement not covered" >AssessmentSchema.index({ createdBy: 1 });</span>
-<span class="cstat-no" title="statement not covered" >AssessmentSchema.index({ targetRole: 1 });</span>
-<span class="cstat-no" title="statement not covered" >AssessmentSchema.index({ isActive: 1, startDate: 1 });</span>
-<span class="cstat-no" title="statement not covered" >AssessmentSchema.index({ endDate: 1 });</span>
-<span class="cstat-no" title="statement not covered" >AssessmentSchema.index({ schoolId: 1, targetRole: 1 });</span>
-<span class="cstat-no" title="statement not covered" >AssessmentSchema.index({ classIds: 1 });</span>
-<span class="cstat-no" title="statement not covered" >AssessmentSchema.index({ isActive: 1, endDate: 1 });</span>
-<span class="cstat-no" title="statement not covered" >AssessmentSchema.index({ schoolId: 1, isActive: 1, assessmentType: 1 });</span>
+AssessmentSchema.index({ schoolId: 1 });
+AssessmentSchema.index({ createdBy: 1 });
+AssessmentSchema.index({ targetRole: 1 });
+AssessmentSchema.index({ isActive: 1, startDate: 1 });
+AssessmentSchema.index({ endDate: 1 });
+AssessmentSchema.index({ schoolId: 1, targetRole: 1 });
+AssessmentSchema.index({ classIds: 1 });
+AssessmentSchema.index({ isActive: 1, endDate: 1 });
+AssessmentSchema.index({ schoolId: 1, isActive: 1, assessmentType: 1 });
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export default mongoose.models.Assessment || mongoose.model&lt;IAssessment&gt;('Assessment', AssessmentSchema);</span>
+export default mongoose.models.Assessment || mongoose.model&lt;IAssessment&gt;('Assessment', AssessmentSchema);
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -418,7 +418,7 @@ const AssessmentSchema = <span class="cstat-no" title="statement not covered" >n
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-10T19:25:23.385Z
+                at 2026-04-10T21:05:35.979Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
