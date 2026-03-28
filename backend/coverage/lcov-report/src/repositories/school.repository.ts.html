@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">44.44% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/18</span>
+                <span class='fraction'>0/18</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">38.46% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/13</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">44.44% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>8/18</span>
+                <span class='fraction'>0/18</span>
             </div>
         
             
@@ -124,19 +124,11 @@
 <a name='L59'></a><a href='#L59'>59</a>
 <a name='L60'></a><a href='#L60'>60</a>
 <a name='L61'></a><a href='#L61'>61</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -164,12 +156,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -178,25 +169,34 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { FilterQuery, UpdateQuery } from 'mongoose';
-import School from '@/models/School';
+<span class="cstat-no" title="statement not covered" >import School from '@/models/School';</span>
 &nbsp;
-export class SchoolRepository {
-  async findById(id: string): Promise&lt;any&gt; {
-    return School.findById(id).populate('adminId', 'name email').lean();
+<span class="cstat-no" title="statement not covered" >export class S</span>choolRepository {
+<span class="fstat-no" title="function not covered" >  async </span>findById(id: string): Promise&lt;any&gt; {
+<span class="cstat-no" title="statement not covered" >    return School.findById(id).populate('adminId', 'name email').lean();</span>
   }
 &nbsp;
 <span class="fstat-no" title="function not covered" >  async </span>findByIdBasic(id: string): Promise&lt;any&gt; {
 <span class="cstat-no" title="statement not covered" >    return School.findById(id).lean();</span>
   }
 &nbsp;
-  async findByEmail(email: string): Promise&lt;any&gt; {
-    return School.findOne({ email: email.toLowerCase() }).lean();
+<span class="fstat-no" title="function not covered" >  async </span>findByEmail(email: string): Promise&lt;any&gt; {
+<span class="cstat-no" title="statement not covered" >    return School.findOne({ email: email.toLowerCase() }).lean();</span>
   }
 &nbsp;
 <span class="fstat-no" title="function not covered" >  async </span>findAll(query: FilterQuery&lt;any&gt; = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span>: Promise&lt;any[]&gt; {
@@ -223,13 +223,13 @@ export class SchoolRepository {
 <span class="cstat-no" title="statement not covered" >    return School.countDocuments({ ...query, adminId });</span>
   }
 &nbsp;
-  async create(data: any): Promise&lt;any&gt; {
-    const school = new School(data);
+<span class="fstat-no" title="function not covered" >  async </span>create(data: any): Promise&lt;any&gt; {
+    const school = <span class="cstat-no" title="statement not covered" >new School(data);</span>
 <span class="cstat-no" title="statement not covered" >    return school.save();</span>
   }
 &nbsp;
-  async updateById(id: string, data: UpdateQuery&lt;any&gt;): Promise&lt;any&gt; {
-    return School.findByIdAndUpdate(id, data, { new: true }).populate('adminId', 'name email').lean();
+<span class="fstat-no" title="function not covered" >  async </span>updateById(id: string, data: UpdateQuery&lt;any&gt;): Promise&lt;any&gt; {
+<span class="cstat-no" title="statement not covered" >    return School.findByIdAndUpdate(id, data, { new: true }).populate('adminId', 'name email').lean();</span>
   }
 &nbsp;
 <span class="fstat-no" title="function not covered" >  async </span>deleteById(id: string): Promise&lt;boolean&gt; {
@@ -237,12 +237,12 @@ export class SchoolRepository {
 <span class="cstat-no" title="statement not covered" >    return !!result;</span>
   }
 &nbsp;
-  async count(query: FilterQuery&lt;any&gt; = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span>: Promise&lt;number&gt; {
-    return School.countDocuments(query);
+<span class="fstat-no" title="function not covered" >  async </span>count(query: FilterQuery&lt;any&gt; = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span>: Promise&lt;number&gt; {
+<span class="cstat-no" title="statement not covered" >    return School.countDocuments(query);</span>
   }
 }
 &nbsp;
-export const schoolRepository = new SchoolRepository();
+export const <span class="cstat-no" title="statement not covered" >schoolRepository = new SchoolRepository();</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -250,7 +250,7 @@ export const schoolRepository = new SchoolRepository();
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-10T21:05:35.979Z
+                at 2026-04-10T21:27:57.088Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
