@@ -47,7 +47,8 @@ export async function login(req: Request, res: Response) {
     }
 
     const user = (result as any).user;
-    res.cookie(getSessionCookieName(), encodeSessionToken(user.id), {
+    const userId = String(user._id || user.id);
+    res.cookie(getSessionCookieName(), encodeSessionToken(userId), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
