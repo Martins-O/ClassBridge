@@ -21,8 +21,9 @@ export function LoginPage() {
     try {
       const { data } = await authService.login(email, password);
       
-      if (data.success && data.data) {
-        login(data.data.user, data.data.accessToken, data.data.refreshToken);
+      // Backend returns { success, user, accessToken, refreshToken } directly
+      if (data.success && data.accessToken && data.user) {
+        login(data.user, data.accessToken, data.refreshToken || '');
         navigate('/dashboard');
       } else {
         setError(data.error || 'Login failed');

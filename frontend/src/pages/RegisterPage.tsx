@@ -41,8 +41,8 @@ export function RegisterPage() {
         schoolName: formData.schoolName,
       });
       
-      if (data.success && data.data) {
-        login(data.data.user, data.data.accessToken, data.data.refreshToken);
+      if (data.success && data.accessToken && data.user) {
+        login(data.user, data.accessToken, data.refreshToken || '');
         navigate('/dashboard');
       } else {
         setError(data.error || 'Registration failed');

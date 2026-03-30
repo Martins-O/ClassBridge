@@ -1,19 +1,99 @@
-export type { User, School, Class, Course, Grade, Assessment, AuthResponse, ApiResponse, PaginatedResponse } from './index';
-
-export interface Toast {
-  id: string;
-  message: string;
-  type: 'success' | 'error' | 'info' | 'warning';
+export interface User {
+  _id: string;
+  email: string;
+  name: string;
+  role: string;
+  schoolId?: string;
+  classIds: string[];
+  isActive: boolean;
+  isApproved: boolean;
 }
 
-export interface PaginationParams {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+export interface School {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  website?: string;
+  description?: string;
+  adminId: string;
+  status: 'pending' | 'approved' | 'rejected';
+  isActive: boolean;
+  subscriptionType: 'basic' | 'premium' | 'enterprise';
 }
 
-export interface FilterParams extends PaginationParams {
-  search?: string;
-  status?: string;
+export interface Class {
+  _id: string;
+  name: string;
+  description?: string;
+  schoolId: string;
+  mentorIds: string[];
+  studentIds: string[];
+  academicYear: string;
+  duration: string;
+  cohort: string;
+  isActive: boolean;
+}
+
+export interface Course {
+  _id: string;
+  name: string;
+  description?: string;
+  schoolId: string;
+  classId: string;
+  credits: number;
+  duration: string;
+  isActive: boolean;
+}
+
+export interface Grade {
+  _id: string;
+  studentId: string;
+  classId: string;
+  mentorId: string;
+  schoolId: string;
+  gradeType: string;
+  title: string;
+  points: number;
+  maxPoints: number;
+  percentage: number;
+  letterGrade?: string;
+  weight: number;
+}
+
+export interface Assessment {
+  _id: string;
+  title: string;
+  description?: string;
+  classId: string;
+  schoolId: string;
+  mentorId: string;
+  passingScore: number;
+  maxAttempts: number;
+  isActive: boolean;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  user?: User;
+  accessToken?: string;
+  refreshToken?: string;
+  error?: string;
+  errorCode?: string;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  total?: number;
+  error?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }

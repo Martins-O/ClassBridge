@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react';
+import type { ReactNode } from 'react';
 
 interface LoadingProps {
   children?: ReactNode;
