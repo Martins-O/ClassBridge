@@ -38,6 +38,11 @@ export function LoginPage() {
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center px-4">
       <div className="w-full max-w-md">
+        <Link to="/" className="inline-flex items-center gap-2 text-text-secondary hover:text-primary mb-6 transition-colors">
+          <span>←</span>
+          <span>Back to Home</span>
+        </Link>
+        
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
