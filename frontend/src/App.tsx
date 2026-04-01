@@ -1,63 +1,32 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from './stores/auth';
+import AdminLayout from './layouts/AdminLayout';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+
+import { DashboardPage } from './pages/admin/DashboardPage';
+import { SchoolsListPage } from './pages/admin/SchoolsListPage';
+import { SchoolsCreatePage } from './pages/admin/SchoolsCreatePage';
+import { SchoolsDetailsPage } from './pages/admin/SchoolsDetailsPage';
+import { ApprovalsListPage } from './pages/admin/ApprovalsListPage';
+import { ApprovalsDetailsPage } from './pages/admin/ApprovalsDetailsPage';
+import { UsersListPage } from './pages/admin/UsersListPage';
+import { UsersDetailsPage } from './pages/admin/UsersDetailsPage';
+import { ClassesListPage } from './pages/admin/ClassesListPage';
+import { ClassesDetailsPage } from './pages/admin/ClassesDetailsPage';
+import { CoursesListPage } from './pages/admin/CoursesListPage';
+import { CoursesDetailsPage } from './pages/admin/CoursesDetailsPage';
+import { SettingsPage } from './pages/admin/SettingsPage';
+import { AuditLogsPage } from './pages/admin/AuditLogsPage';
 
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
-}
-
-function DashboardPage() {
-  const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
-  
-  return (
-    <div className="min-h-screen bg-surface">
-      <header className="bg-white border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">CB</span>
-            </div>
-            <span className="font-bold text-text">ClassBridge</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-text-secondary">{user?.name}</span>
-            <button onClick={logout} className="text-primary hover:underline">
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-text mb-6">Dashboard</h1>
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="card">
-            <h3 className="text-lg font-semibold mb-2">Schools</h3>
-            <p className="text-3xl font-bold text-primary">0</p>
-          </div>
-          <div className="card">
-            <h3 className="text-lg font-semibold mb-2">Classes</h3>
-            <p className="text-3xl font-bold text-primary">0</p>
-          </div>
-          <div className="card">
-            <h3 className="text-lg font-semibold mb-2">Students</h3>
-            <p className="text-3xl font-bold text-primary">0</p>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
 }
 
 function App() {
@@ -68,14 +37,100 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <AdminLayout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<DashboardPage />} />
+          </Route>
+
+          <Route
+            path="/schools"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<SchoolsListPage />} />
+            <Route path="new" element={<SchoolsCreatePage />} />
+            <Route path=":id" element={<SchoolsDetailsPage />} />
+          </Route>
+
+          <Route
+            path="/approvals"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<ApprovalsListPage />} />
+            <Route path=":id" element={<ApprovalsDetailsPage />} />
+          </Route>
+
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<UsersListPage />} />
+            <Route path=":id" element={<UsersDetailsPage />} />
+          </Route>
+
+          <Route
+            path="/classes"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<ClassesListPage />} />
+            <Route path=":id" element={<ClassesDetailsPage />} />
+          </Route>
+
+          <Route
+            path="/courses"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<CoursesListPage />} />
+            <Route path=":id" element={<CoursesDetailsPage />} />
+          </Route>
+
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<SettingsPage />} />
+          </Route>
+
+          <Route
+            path="/audit-logs"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<AuditLogsPage />} />
+          </Route>
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
