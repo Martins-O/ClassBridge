@@ -61,7 +61,7 @@ export const schoolService = {
 };
 
 export const classService = {
-  getAll: (params?: { schoolId?: string }) =>
+  getAll: (params?: { schoolId?: string; page?: number; limit?: number }) =>
     api.get<PaginatedResponse<Class>>('/classes', { params }),
   
   getById: (id: string) =>
@@ -78,7 +78,7 @@ export const classService = {
 };
 
 export const courseService = {
-  getAll: (params?: { classId?: string }) =>
+  getAll: (params?: { classId?: string; page?: number; limit?: number }) =>
     api.get<PaginatedResponse<Course>>('/courses', { params }),
   
   getById: (id: string) =>
@@ -97,6 +97,34 @@ export const gradeService = {
   
   create: (data: Partial<Grade>) =>
     api.post<ApiResponse<Grade>>('/grades', data),
+};
+
+export interface Approval {
+  _id: string;
+  schoolId: string;
+  schoolName: string;
+  status: 'pending' | 'approved' | 'rejected';
+  requestedBy: string;
+  reason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const approvalService = {
+  getPending: () =>
+    api.get<{ success: boolean; approvals: Approval[] }>('/approvals/pending'),
+  
+  getPendingCount: () =>
+    api.get<{ success: boolean; count: number }>('/approvals/pending/count'),
+  
+  getById: (id: string) =>
+    api.get<{ success: boolean; approval: Approval }>(`/approvals/${id}`),
+  
+  approve: (id: string) =>
+    api.post<{ success: boolean; message: string }>(`/approvals/${id}/approve`),
+  
+  reject: (id: string, reason: string) =>
+    api.post<{ success: boolean; message: string }>(`/approvals/${id}/reject`, { reason }),
 };
 
 export default api;

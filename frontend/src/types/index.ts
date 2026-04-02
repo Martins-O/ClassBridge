@@ -4,9 +4,13 @@ export interface User {
   name: string;
   role: string;
   schoolId?: string;
+  schoolName?: string;
+  phone?: string;
+  status?: string;
   classIds: string[];
   isActive: boolean;
   isApproved: boolean;
+  createdAt?: string;
 }
 
 export interface School {
@@ -15,12 +19,19 @@ export interface School {
   email: string;
   phone?: string;
   address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
   website?: string;
   description?: string;
   adminId: string;
   status: 'pending' | 'approved' | 'rejected';
   isActive: boolean;
-  subscriptionType: 'basic' | 'premium' | 'enterprise';
+  subscriptionType: 'basic' | 'premium' | 'enterprise' | 'free';
+  maxStudents?: number;
+  maxTeachers?: number;
+  createdAt?: string;
 }
 
 export interface Class {
@@ -39,11 +50,14 @@ export interface Class {
 export interface Course {
   _id: string;
   name: string;
+  code?: string;
   description?: string;
+  category?: string;
   schoolId: string;
   classId: string;
   credits: number;
   duration: string;
+  studentIds?: string[];
   isActive: boolean;
 }
 
