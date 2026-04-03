@@ -30,10 +30,14 @@ function getSessionSecret(): string {
 }
 
 function signValue(value: string): string {
-  return createHmac('sha256', getSessionSecret()).update(value).digest('hex');
+  const secret = getSessionSecret();
+  return createHmac('sha256', secret).update(value).digest('hex');
 }
 
 export function encodeSessionToken(userId: string): string {
+  if (!userId) {
+    throw new Error('userId is required for session token');
+  }
   const signature = signValue(userId);
   return `${userId}.${signature}`;
 }
