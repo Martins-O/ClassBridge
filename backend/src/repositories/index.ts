@@ -8,3 +8,4 @@ export { transcriptRepository } from './transcript.repository';
 export { notificationRepository } from './notification.repository';
 export { approvalRepository } from './approval.repository';
 export { deletionRequestRepository } from './deletionRequest.repository';
+export { auditRepository } from './audit.repository';

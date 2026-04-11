@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2 } from 'lucide-react';
+import { Search, Eye, Edit } from 'lucide-react';
 import { schoolService } from '@/services/api';
 import type { School } from '@/types';
 
@@ -55,14 +55,8 @@ export function SchoolsListPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Schools</h2>
-          <p className="text-gray-500">Manage schools in the system</p>
+          <p className="text-gray-500">View and manage schools in the system</p>
         </div>
-        <Link to="/schools/new">
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Add School
-          </Button>
-        </Link>
       </div>
 
       {/* Search */}

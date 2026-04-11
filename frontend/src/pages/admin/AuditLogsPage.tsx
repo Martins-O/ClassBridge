@@ -1,111 +1,62 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Download, Filter, User, Clock, Activity } from 'lucide-react';
-
-interface AuditLog {
-  _id: string;
-  action: string;
-  entityType: string;
-  entityId: string;
-  userId: string;
-  userName: string;
-  details: string;
-  ipAddress: string;
-  createdAt: string;
-}
+import { auditService, type AuditLog } from '@/services/api';
 
 export function AuditLogsPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    const mockLogs: AuditLog[] = [
-      {
-        _id: '1',
-        action: 'LOGIN',
-        entityType: 'user',
-        entityId: 'user1',
-        userId: 'user1',
-        userName: 'Super Admin',
-        details: 'Successful login',
-        ipAddress: '192.168.1.1',
-        createdAt: new Date().toISOString(),
-      },
-      {
-        _id: '2',
-        action: 'CREATE',
-        entityType: 'school',
-        entityId: 'school1',
-        userId: 'user1',
-        userName: 'Super Admin',
-        details: 'Created new school: Test School',
-        ipAddress: '192.168.1.1',
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-      },
-      {
-        _id: '3',
-        action: 'UPDATE',
-        entityType: 'user',
-        entityId: 'user2',
-        userId: 'user1',
-        userName: 'Super Admin',
-        details: 'Updated user role',
-        ipAddress: '192.168.1.1',
-        createdAt: new Date(Date.now() - 172800000).toISOString(),
-      },
-      {
-        _id: '4',
-        action: 'APPROVE',
-        entityType: 'school',
-        entityId: 'school2',
-        userId: 'user1',
-        userName: 'Super Admin',
-        details: 'Approved school registration',
-        ipAddress: '192.168.1.1',
-        createdAt: new Date(Date.now() - 259200000).toISOString(),
-      },
-      {
-        _id: '5',
-        action: 'DELETE',
-        entityType: 'course',
-        entityId: 'course1',
-        userId: 'user1',
-        userName: 'Super Admin',
-        details: 'Deleted course',
-        ipAddress: '192.168.1.1',
-        createdAt: new Date(Date.now() - 345600000).toISOString(),
-      },
-    ];
-    setLogs(mockLogs);
-    setIsLoading(false);
-  }, []);
+    async function fetchLogs() {
+      setIsLoading(true);
+      try {
+        const params: any = { page, limit: 20 };
+        if (filter !== 'all') params.action = filter;
+        const { data } = await auditService.getAll(params);
+        if (data.success) {
+          setLogs(data.logs);
+          setTotal(data.total);
+        }
+      } catch (error) {
+        console.error('Failed to fetch audit logs:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchLogs();
+  }, [page, filter]);
 
-  const filteredLogs = logs.filter(log => {
-    const matchesSearch = 
-      log.action.toLowerCase().includes(search.toLowerCase()) ||
-      log.userName.toLowerCase().includes(search.toLowerCase()) ||
-      log.details.toLowerCase().includes(search.toLowerCase());
-    const matchesFilter = filter === 'all' || log.action === filter;
-    return matchesSearch && matchesFilter;
-  });
+  const filteredLogs = logs.filter(log => 
+    log.action.toLowerCase().includes(search.toLowerCase()) ||
+    log.userEmail.toLowerCase().includes(search.toLowerCase()) ||
+    log.resource.toLowerCase().includes(search.toLowerCase()) ||
+    (log.details as any)?.event?.toLowerCase().includes(search.toLowerCase())
+  );
 
   const getActionBadge = (action: string) => {
     const variants: Record<string, 'default' | 'success' | 'warning' | 'destructive'> = {
-      CREATE: 'success',
-      UPDATE: 'warning',
-      DELETE: 'destructive',
-      LOGIN: 'default',
-      LOGOUT: 'default',
-      APPROVE: 'success',
-      REJECT: 'destructive',
+      create: 'success',
+      update: 'warning',
+      delete: 'destructive',
+      login: 'default',
+      logout: 'secondary',
+      read: 'default',
     };
     return <Badge variant={variants[action] || 'default'}>{action}</Badge>;
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    return new Date(timestamp).toLocaleString();
   };
 
   if (isLoading) {
@@ -122,7 +73,7 @@ export function AuditLogsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Audit Logs</h2>
-          <p className="text-gray-500">Track system activities and changes</p>
+          <p className="text-gray-500">Track all platform activities</p>
         </div>
         <Button variant="outline">
           <Download className="h-4 w-4 mr-2" />
@@ -148,11 +99,11 @@ export function AuditLogsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Actions</SelectItem>
-            <SelectItem value="LOGIN">Login</SelectItem>
-            <SelectItem value="CREATE">Create</SelectItem>
-            <SelectItem value="UPDATE">Update</SelectItem>
-            <SelectItem value="DELETE">Delete</SelectItem>
-            <SelectItem value="APPROVE">Approve</SelectItem>
+            <SelectItem value="login">Login</SelectItem>
+            <SelectItem value="create">Create</SelectItem>
+            <SelectItem value="update">Update</SelectItem>
+            <SelectItem value="delete">Delete</SelectItem>
+            <SelectItem value="read">Read</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -166,6 +117,7 @@ export function AuditLogsPage() {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Resource</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Address</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
@@ -180,15 +132,18 @@ export function AuditLogsPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-gray-400" />
-                        <span className="font-medium text-gray-900">{log.userName}</span>
+                        <span className="font-medium text-gray-900">{log.userEmail}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-gray-500">{log.details}</td>
-                    <td className="px-6 py-4 text-gray-500">{log.ipAddress}</td>
+                    <td className="px-6 py-4 text-gray-500">{log.resource}</td>
+                    <td className="px-6 py-4 text-gray-500 max-w-xs truncate">
+                      {(log.details as any)?.event || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-gray-500">{log.ipAddress || '-'}</td>
                     <td className="px-6 py-4 text-gray-500">
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-gray-400" />
-                        {new Date(log.createdAt).toLocaleString()}
+                        {formatTimestamp(log.timestamp)}
                       </div>
                     </td>
                   </tr>
@@ -204,6 +159,23 @@ export function AuditLogsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {total > 20 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-500">
+            Showing {((page - 1) * 20) + 1} to {Math.min(page * 20, total)} of {total} logs
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
+              Previous
+            </Button>
+            <Button variant="outline" disabled={page * 20 >= total} onClick={() => setPage(p => p + 1)}>
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

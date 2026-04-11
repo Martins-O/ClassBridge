@@ -39,6 +39,7 @@ export interface Class {
   name: string;
   description?: string;
   schoolId: string;
+  schoolName?: string;
   mentorIds: string[];
   studentIds: string[];
   academicYear: string;
@@ -54,7 +55,9 @@ export interface Course {
   description?: string;
   category?: string;
   schoolId: string;
+  schoolName?: string;
   classId: string;
+  className?: string;
   credits: number;
   duration: string;
   studentIds?: string[];

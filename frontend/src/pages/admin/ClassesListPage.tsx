@@ -46,12 +46,8 @@ export function ClassesListPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Classes</h2>
-          <p className="text-gray-500">Manage classes in the system</p>
+          <p className="text-gray-500">View classes in the system</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Class
-        </Button>
       </div>
 
       {/* Search */}
@@ -73,6 +69,7 @@ export function ClassesListPage() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">School</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Academic Year</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cohort</th>
@@ -88,6 +85,7 @@ export function ClassesListPage() {
                         {cls.name}
                       </Link>
                     </td>
+                    <td className="px-6 py-4 text-gray-500">{cls.schoolName || cls.schoolId}</td>
                     <td className="px-6 py-4 text-gray-500">{cls.academicYear}</td>
                     <td className="px-6 py-4 text-gray-500">{cls.duration}</td>
                     <td className="px-6 py-4 text-gray-500">{cls.cohort}</td>

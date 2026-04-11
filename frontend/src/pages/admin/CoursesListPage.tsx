@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Eye, Edit } from 'lucide-react';
+import { Search, Eye, Edit } from 'lucide-react';
 import { courseService } from '@/services/api';
 import type { Course } from '@/types';
 
@@ -46,12 +46,8 @@ export function CoursesListPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Courses</h2>
-          <p className="text-gray-500">Manage courses in the system</p>
+          <p className="text-gray-500">View courses in the system</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Course
-        </Button>
       </div>
 
       {/* Search */}
@@ -73,9 +69,10 @@ export function CoursesListPage() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">School</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Class</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Credits</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
@@ -88,11 +85,10 @@ export function CoursesListPage() {
                         {course.name}
                       </Link>
                     </td>
+                    <td className="px-6 py-4 text-gray-500">{course.schoolName || course.schoolId}</td>
+                    <td className="px-6 py-4 text-gray-500">{course.className || course.classId}</td>
                     <td className="px-6 py-4 text-gray-500">{course.code || '-'}</td>
                     <td className="px-6 py-4 text-gray-500">{course.credits}</td>
-                    <td className="px-6 py-4">
-                      <Badge variant="outline">{course.category || 'General'}</Badge>
-                    </td>
                     <td className="px-6 py-4">
                       <Badge variant={course.isActive ? 'success' : 'secondary'}>
                         {course.isActive ? 'Active' : 'Inactive'}

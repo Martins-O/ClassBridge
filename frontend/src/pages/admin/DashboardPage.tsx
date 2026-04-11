@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Users, GraduationCap, FileText, Plus, CheckCircle, Settings, Shield, Clock, AlertCircle } from 'lucide-react';
+import { Building2, Users, GraduationCap, FileText, CheckCircle, Settings, Shield, Clock, AlertCircle } from 'lucide-react';
 import { schoolService, userService, classService, approvalService } from '@/services/api';
 
 interface Stats {
@@ -114,7 +114,7 @@ export function DashboardPage() {
   ];
 
   const quickActions = [
-    { name: 'Add School', href: '/schools/new', icon: Plus },
+    { name: 'View Schools', href: '/schools', icon: Building2 },
     { name: 'View Approvals', href: '/approvals', icon: CheckCircle },
     { name: 'Audit Logs', href: '/audit-logs', icon: Shield },
     { name: 'Settings', href: '/settings', icon: Settings },
