@@ -1,19 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { Search, Eye, CheckCircle, XCircle } from 'lucide-react';
 import { approvalService } from '@/services/api';
 import type { Approval } from '@/services/api';
 
 export function ApprovalsListPage() {
-  const navigate = useNavigate();
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectId, setRejectId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   useEffect(() => {
     async function fetchApprovals() {
@@ -57,17 +61,25 @@ export function ApprovalsListPage() {
     }
   };
 
-  const handleReject = async (id: string) => {
-    const reason = window.prompt('Enter rejection reason:');
-    if (!reason) return;
-    setProcessingId(id);
+  const openRejectModal = (id: string) => {
+    setRejectId(id);
+    setRejectReason('');
+    setRejectModalOpen(true);
+  };
+
+  const handleReject = async () => {
+    if (!rejectId || !rejectReason.trim()) return;
+    setProcessingId(rejectId);
+    setRejectModalOpen(false);
     try {
-      await approvalService.reject(id, reason);
-      setApprovals(approvals.filter(a => a._id !== id));
+      await approvalService.reject(rejectId, rejectReason);
+      setApprovals(approvals.filter(a => a._id !== rejectId));
     } catch (error) {
       console.error('Failed to reject:', error);
     } finally {
       setProcessingId(null);
+      setRejectId(null);
+      setRejectReason('');
     }
   };
 
@@ -154,7 +166,7 @@ export function ApprovalsListPage() {
                               variant="ghost" 
                               size="icon" 
                               className="text-red-600"
-                              onClick={() => handleReject(approval._id)}
+                              onClick={() => openRejectModal(approval._id)}
                               disabled={processingId === approval._id}
                             >
                               <XCircle className="h-4 w-4" />
@@ -175,6 +187,32 @@ export function ApprovalsListPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={rejectModalOpen} onOpenChange={setRejectModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject School Request</DialogTitle>
+          </DialogHeader>
+          <div>
+            <Label htmlFor="reject-reason">Rejection Reason</Label>
+            <Input
+              id="reject-reason"
+              placeholder="Enter reason for rejection..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleReject}>
+              Reject
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
