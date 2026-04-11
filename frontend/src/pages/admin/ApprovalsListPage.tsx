@@ -46,11 +46,10 @@ export function ApprovalsListPage() {
   };
 
   const handleApprove = async (id: string) => {
-    if (!confirm('Approve this school?')) return;
     setProcessingId(id);
     try {
       await approvalService.approve(id);
-      navigate(0);
+      setApprovals(approvals.filter(a => a._id !== id));
     } catch (error) {
       console.error('Failed to approve:', error);
     } finally {
@@ -59,12 +58,12 @@ export function ApprovalsListPage() {
   };
 
   const handleReject = async (id: string) => {
-    const reason = prompt('Enter rejection reason:');
+    const reason = window.prompt('Enter rejection reason:');
     if (!reason) return;
     setProcessingId(id);
     try {
       await approvalService.reject(id, reason);
-      navigate(0);
+      setApprovals(approvals.filter(a => a._id !== id));
     } catch (error) {
       console.error('Failed to reject:', error);
     } finally {

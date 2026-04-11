@@ -21,9 +21,11 @@ export function ApprovalsDetailsPage() {
     async function fetchApproval() {
       if (!id) return;
       try {
+        console.log('Fetching approval:', id);
         const response = await approvalService.getById(id);
-        if (response.data?.success) {
-          setApproval(response.data.approval);
+        console.log('Approval response:', response);
+        if (response.data) {
+          setApproval(response.data.approval || response.data);
         }
       } catch (error) {
         console.error('Failed to fetch approval:', error);
@@ -38,9 +40,7 @@ export function ApprovalsDetailsPage() {
     if (!id) return;
     setIsProcessing(true);
     try {
-      console.log('Approving:', id);
-      const response = await approvalService.approve(id);
-      console.log('Approve response:', response);
+      await approvalService.approve(id);
       navigate('/approvals');
     } catch (error) {
       console.error('Failed to approve:', error);
@@ -119,7 +119,9 @@ export function ApprovalsDetailsPage() {
               <User className="h-5 w-5 text-gray-400" />
               <div>
                 <p className="text-sm text-gray-500">Requested By</p>
-                <p className="font-medium">{approval.requestedBy}</p>
+                <p className="font-medium">
+                  {approval.requestedBy?.name || approval.requestedBy?.email || String(approval.requestedBy)}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
