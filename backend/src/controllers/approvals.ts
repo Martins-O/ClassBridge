@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { approvalService } from '@/services/approval.service';
+import { auditService } from '@/services/audit.service';
 import { requireSystemAdmin } from '@/lib/authorization';
 import { AuthRequest } from '@/lib/authorization';
 
@@ -103,6 +104,16 @@ export async function approveSchool(req: AuthRequest, res: Response) {
       return res.status(400).json({ error: result.message });
     }
 
+    await auditService.logResourceUpdate(
+      req.user.userId,
+      req.user.email,
+      'school',
+      result.schoolId || id,
+      { action: 'approved', approvalId: id },
+      req.ip || 'unknown',
+      req.headers['user-agent']
+    );
+
     return res.json({
       message: result.message,
       schoolId: result.schoolId,
@@ -135,6 +146,16 @@ export async function rejectSchool(req: AuthRequest, res: Response) {
     if (!result.success) {
       return res.status(400).json({ error: result.message });
     }
+
+    await auditService.logResourceUpdate(
+      req.user.userId,
+      req.user.email,
+      'school',
+      result.schoolId || id,
+      { action: 'rejected', approvalId: id, reason },
+      req.ip || 'unknown',
+      req.headers['user-agent']
+    );
 
     return res.json({
       message: result.message,

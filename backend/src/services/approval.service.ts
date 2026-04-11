@@ -21,6 +21,7 @@ export interface ApprovalResult {
   message: string;
   schoolId?: string;
   approvalId?: string;
+  schoolAdminId?: string;
 }
 
 export class ApprovalService {
@@ -128,6 +129,7 @@ export class ApprovalService {
       success: true,
       message: 'School approved successfully',
       schoolId: approval.schoolId.toString(),
+      schoolAdminId: adminUser?._id?.toString(),
     };
   }
 
@@ -167,6 +169,7 @@ export class ApprovalService {
       success: true,
       message: 'School registration rejected',
       schoolId: approval.schoolId.toString(),
+      schoolAdminId: adminUser?._id?.toString(),
     };
   }
 

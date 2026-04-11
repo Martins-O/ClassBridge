@@ -19,6 +19,8 @@ import { verifyAccessToken, decodeToken } from '@/lib/jwt';
 import { generateTwoFactorSecret, generateQRCode, verifyTwoFactorCode, generateRecoveryCodes, verifyBackupCode } from '@/lib/twoFactor';
 import { serializeUser } from '@/lib/serializeUser';
 import { authService } from '@/services';
+import { auditService } from '@/services/audit.service';
+import { notificationService } from '@/services/notification.service';
 import User from '@/models/User';
 
 export async function login(req: Request, res: Response) {
@@ -48,10 +50,13 @@ export async function login(req: Request, res: Response) {
 
     const user = (result as any).user;
     const userId = String(user._id || user.id);
+    
+    await auditService.logLogin(userId, email, req.ip || 'unknown', req.headers['user-agent']);
+    
     res.cookie(getSessionCookieName(), encodeSessionToken(userId), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       sameSite: 'lax',
     });
 
@@ -103,9 +108,17 @@ export async function refreshToken(req: Request, res: Response) {
 export async function logout(req: Request, res: Response) {
   try {
     const refreshToken = req.body.refreshToken || req.cookies?.refreshToken;
+    const userId = req.headers['x-user-id'] as string;
+    const userEmail = req.headers['x-user-email'] as string;
+    
     if (refreshToken) {
       await authService.logout(refreshToken);
     }
+    
+    if (userId && userEmail) {
+      await auditService.logLogout(userId, userEmail, req.ip || 'unknown', req.headers['user-agent']);
+    }
+    
     return res.json({
       success: true,
       message: 'Logged out successfully',

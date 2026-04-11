@@ -5,6 +5,23 @@ import { getUserIdFromRequest } from '@/lib/session';
 import { getPaginationParams } from '@/lib/pagination';
 import { sendSuccess, sendError, sendPaginated } from '@/lib/apiResponse';
 
+export async function getUnreadCount(req: Request, res: Response) {
+    try {
+        await connectDB();
+
+        const userId = getUserIdFromRequest(req);
+        if (!userId) {
+            return sendError(res, 'Authentication required', 401, 'AUTH_REQUIRED');
+        }
+
+        const count = await Notification.countDocuments({ userId, isRead: false });
+        return sendSuccess(res, { count });
+    } catch (error) {
+        console.error('Failed to get unread count:', error);
+        return sendError(res, 'Internal server error', 500);
+    }
+}
+
 export async function getNotifications(req: Request, res: Response) {
     try {
         await connectDB();
@@ -82,6 +99,29 @@ export async function markNotificationAsRead(req: Request, res: Response) {
         return sendSuccess(res, notification);
     } catch (error) {
         console.error('Failed to mark notification as read:', error);
+        return sendError(res, 'Internal server error', 500);
+    }
+}
+
+export async function deleteNotification(req: Request, res: Response) {
+    try {
+        await connectDB();
+
+        const userId = getUserIdFromRequest(req);
+        if (!userId) {
+            return sendError(res, 'Authentication required', 401, 'AUTH_REQUIRED');
+        }
+
+        const { id } = req.params;
+        const result = await Notification.deleteOne({ _id: id, userId });
+
+        if (result.deletedCount === 0) {
+            return sendError(res, 'Notification not found', 404, 'NOT_FOUND');
+        }
+
+        return sendSuccess(res, { message: 'Notification deleted' });
+    } catch (error) {
+        console.error('Failed to delete notification:', error);
         return sendError(res, 'Internal server error', 500);
     }
 }

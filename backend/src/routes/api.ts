@@ -15,6 +15,7 @@ import * as statsController from '@/controllers/stats';
 import * as healthController from '@/controllers/health';
 import * as approvalsController from '@/controllers/approvals';
 import * as deletionRequestsController from '@/controllers/deletionRequests';
+import * as auditController from '@/controllers/audit';
 import uploadRoutes from './upload';
 import { csrfProtection } from '@/middleware/csrf';
 import { jwtAuthMiddleware, optionalAuthMiddleware, AuthenticatedRequest } from '@/lib/auth';
@@ -371,7 +372,7 @@ router.post('/auth/2fa/disable', csrfHandler(authController.disableTwoFactor));
  *         description: School created
  */
 router.get('/schools', jwtAuthMiddleware, asyncHandler(schoolsController.getSchools));
-router.post('/schools', protectedCsrfHandler(schoolsController.createSchool));
+router.post('/schools', systemAdminHandler(schoolsController.createSchool));
 
 /**
  * @swagger
@@ -406,7 +407,7 @@ router.post('/schools', protectedCsrfHandler(schoolsController.createSchool));
  *         description: School updated
  */
 router.get('/schools/:id', jwtAuthMiddleware, asyncHandler(schoolsController.getSchoolById));
-router.put('/schools/:id', protectedCsrfHandler(schoolsController.updateSchool));
+router.put('/schools/:id', systemAdminHandler(schoolsController.updateSchool));
 
 // School Approval Routes
 router.post('/schools/request', asyncHandler(approvalsController.requestSchool));
@@ -751,6 +752,8 @@ router.patch('/notifications', protectedCsrfHandler(notificationsController.mark
  *         description: Notification marked as read
  */
 router.patch('/notifications/:id', protectedCsrfHandler(notificationsController.markNotificationAsRead));
+router.get('/notifications/unread-count', jwtAuthMiddleware, asyncHandler(notificationsController.getUnreadCount));
+router.delete('/notifications/:id', protectedCsrfHandler(notificationsController.deleteNotification));
 
 /**
  * @swagger
@@ -768,5 +771,9 @@ router.get('/stats', jwtAuthMiddleware, asyncHandler(statsController.getStats));
 router.get('/stats/global', systemAdminHandler(statsController.getGlobalStats));
 
 router.use('/upload', uploadRoutes);
+
+// Audit Logs Routes
+router.get('/audit-logs', systemAdminHandler(auditController.getAuditLogs));
+router.get('/audit-logs/recent', systemAdminHandler(auditController.getRecentLogs));
 
 export default router;
