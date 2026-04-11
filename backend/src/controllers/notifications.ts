@@ -33,26 +33,31 @@ export async function getNotifications(req: Request, res: Response) {
 
         const { page, limit, skip } = getPaginationParams(req, { defaultLimit: 20, maxLimit: 50 });
         
-        const [notifications, total] = await Promise.all([
+        const [notifications, total, unreadCount] = await Promise.all([
             Notification.find({ userId })
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
                 .lean(),
-            Notification.countDocuments({ userId })
+            Notification.countDocuments({ userId }),
+            Notification.countDocuments({ userId, isRead: false })
         ]);
 
-        return sendPaginated(res, notifications, {
-            data: notifications,
-            pagination: {
-                page,
-                limit,
-                total,
-                totalPages: Math.ceil(total / limit),
-                hasNext: page < Math.ceil(total / limit),
-                hasPrev: page > 1
+        return res.status(200).json({
+            success: true,
+            notifications,
+            unreadCount,
+            meta: {
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit),
+                    hasNext: page < Math.ceil(total / limit),
+                    hasPrev: page > 1
+                }
             }
-        } as any);
+        });
     } catch (error) {
         console.error('Failed to fetch notifications:', error);
         return sendError(res, 'Internal server error', 500);
