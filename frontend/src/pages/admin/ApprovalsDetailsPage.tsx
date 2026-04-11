@@ -21,9 +21,9 @@ export function ApprovalsDetailsPage() {
     async function fetchApproval() {
       if (!id) return;
       try {
-        const { data } = await approvalService.getById(id);
-        if (data.success) {
-          setApproval(data.approval);
+        const response = await approvalService.getById(id);
+        if (response.data?.success) {
+          setApproval(response.data.approval);
         }
       } catch (error) {
         console.error('Failed to fetch approval:', error);
@@ -38,7 +38,9 @@ export function ApprovalsDetailsPage() {
     if (!id) return;
     setIsProcessing(true);
     try {
-      await approvalService.approve(id);
+      console.log('Approving:', id);
+      const response = await approvalService.approve(id);
+      console.log('Approve response:', response);
       navigate('/approvals');
     } catch (error) {
       console.error('Failed to approve:', error);
