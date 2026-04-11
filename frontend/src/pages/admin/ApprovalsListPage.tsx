@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,9 +9,11 @@ import { approvalService } from '@/services/api';
 import type { Approval } from '@/services/api';
 
 export function ApprovalsListPage() {
+  const navigate = useNavigate();
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchApprovals() {
@@ -41,6 +43,33 @@ export function ApprovalsListPage() {
       rejected: 'destructive',
     };
     return <Badge variant={variants[status] || 'default'}>{status}</Badge>;
+  };
+
+  const handleApprove = async (id: string) => {
+    if (!confirm('Approve this school?')) return;
+    setProcessingId(id);
+    try {
+      await approvalService.approve(id);
+      navigate(0);
+    } catch (error) {
+      console.error('Failed to approve:', error);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    const reason = prompt('Enter rejection reason:');
+    if (!reason) return;
+    setProcessingId(id);
+    try {
+      await approvalService.reject(id, reason);
+      navigate(0);
+    } catch (error) {
+      console.error('Failed to reject:', error);
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   if (isLoading) {
@@ -113,10 +142,22 @@ export function ApprovalsListPage() {
                         </Link>
                         {approval.status === 'pending' && (
                           <>
-                            <Button variant="ghost" size="icon" className="text-green-600">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-green-600"
+                              onClick={() => handleApprove(approval._id)}
+                              disabled={processingId === approval._id}
+                            >
                               <CheckCircle className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="text-red-600">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-red-600"
+                              onClick={() => handleReject(approval._id)}
+                              disabled={processingId === approval._id}
+                            >
                               <XCircle className="h-4 w-4" />
                             </Button>
                           </>
