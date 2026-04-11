@@ -8,7 +8,6 @@ import RegisterPage from './pages/RegisterPage';
 
 import { DashboardPage } from './pages/admin/DashboardPage';
 import { SchoolsListPage } from './pages/admin/SchoolsListPage';
-import { SchoolsCreatePage } from './pages/admin/SchoolsCreatePage';
 import { SchoolsDetailsPage } from './pages/admin/SchoolsDetailsPage';
 import { ApprovalsListPage } from './pages/admin/ApprovalsListPage';
 import { ApprovalsDetailsPage } from './pages/admin/ApprovalsDetailsPage';
@@ -58,8 +57,8 @@ function App() {
             }
           >
             <Route index element={<SchoolsListPage />} />
-            <Route path="new" element={<SchoolsCreatePage />} />
             <Route path=":id" element={<SchoolsDetailsPage />} />
+            <Route path=":id/edit" element={<SchoolsDetailsPage />} />
           </Route>
 
           <Route

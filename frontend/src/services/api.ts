@@ -1,11 +1,13 @@
 import axios from 'axios';
 import type { AuthResponse, ApiResponse, PaginatedResponse, User, School, Class, Course, Grade } from '../types';
+import { useAuthStore } from '../stores/auth';
 
 const api = axios.create({
   baseURL: '/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 api.interceptors.request.use((config) => {
@@ -15,6 +17,39 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken) {
+        try {
+          const { data } = await axios.post('/api/v1/auth/refresh', { refreshToken });
+          if (data.success && data.accessToken) {
+            localStorage.setItem('accessToken', data.accessToken);
+            localStorage.setItem('refreshToken', data.refreshToken);
+            originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+            return api(originalRequest);
+          }
+        } catch (refreshError) {
+          useAuthStore.getState().logout();
+          window.location.href = '/login';
+          return Promise.reject(refreshError);
+        }
+      }
+      
+      useAuthStore.getState().logout();
+      window.location.href = '/login';
+    }
+    
+    return Promise.reject(error);
+  }
+);
 
 export const authService = {
   login: (email: string, password: string) =>
@@ -91,14 +126,6 @@ export const courseService = {
     api.patch<ApiResponse<Course>>(`/courses/${id}`, data),
 };
 
-export const gradeService = {
-  getAll: (params?: { studentId?: string; classId?: string }) =>
-    api.get<PaginatedResponse<Grade>>('/grades', { params }),
-  
-  create: (data: Partial<Grade>) =>
-    api.post<ApiResponse<Grade>>('/grades', data),
-};
-
 export interface Approval {
   _id: string;
   schoolId: string;
@@ -125,6 +152,60 @@ export const approvalService = {
   
   reject: (id: string, reason: string) =>
     api.post<{ success: boolean; message: string }>(`/approvals/${id}/reject`, { reason }),
+};
+
+export const gradeService = {
+  getAll: (params?: { studentId?: string; classId?: string }) =>
+    api.get<PaginatedResponse<Grade>>('/grades', { params }),
+  
+  create: (data: Partial<Grade>) =>
+    api.post<ApiResponse<Grade>>('/grades', data),
+};
+
+export interface AuditLog {
+  _id: string;
+  userId: string;
+  userEmail: string;
+  action: string;
+  resource: string;
+  resourceId?: string;
+  details?: Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
+  timestamp: string;
+}
+
+export const auditService = {
+  getAll: (params?: { page?: number; limit?: number; action?: string; resource?: string; userId?: string }) =>
+    api.get<{ success: boolean; logs: AuditLog[]; total: number; page: number; limit: number; totalPages: number }>('/audit-logs', { params }),
+  
+  getRecent: (limit?: number) =>
+    api.get<{ success: boolean; logs: AuditLog[] }>('/audit-logs/recent', { params: { limit } }),
+};
+
+export interface Notification {
+  _id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error' | 'assignment' | 'grade' | 'invitation';
+  link?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export const notificationService = {
+  getAll: (params?: { page?: number; limit?: number }) =>
+    api.get<{ success: boolean; notifications: Notification[]; total: number; unreadCount: number }>('/notifications', { params }),
+  
+  getUnreadCount: () =>
+    api.get<{ success: boolean; count: number }>('/notifications/unread-count'),
+  
+  markAsRead: (id: string) =>
+    api.patch<{ success: boolean }>(`/notifications/${id}/read`),
+  
+  markAllAsRead: () =>
+    api.patch<{ success: boolean }>('/notifications/read-all'),
 };
 
 export default api;
