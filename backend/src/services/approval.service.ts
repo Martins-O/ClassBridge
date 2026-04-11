@@ -107,29 +107,33 @@ export class ApprovalService {
       approvedAt: new Date(),
     });
 
-    await schoolRepository.updateById(approval.schoolId.toString(), {
-      status: 'approved',
-    });
-
-    await userRepository.updateById(approval.requestedBy.toString(), {
-      isApproved: true,
-    });
-
-    const adminUser = await userRepository.findById(approval.requestedBy.toString());
-    if (adminUser) {
-      await notificationRepository.create({
-        userId: adminUser._id,
-        title: 'School Approved',
-        message: `Your school "${approval.schoolName}" has been approved. You can now access all features.`,
-        type: 'school_approved',
+    if (approval.schoolId) {
+      await schoolRepository.updateById(approval.schoolId.toString(), {
+        status: 'approved',
       });
+    }
+
+    if (approval.requestedBy) {
+      await userRepository.updateById(approval.requestedBy.toString(), {
+        isApproved: true,
+      });
+
+      const adminUser = await userRepository.findById(approval.requestedBy.toString());
+      if (adminUser) {
+        await notificationRepository.create({
+          userId: adminUser._id,
+          title: 'School Approved',
+          message: `Your school "${approval.schoolName}" has been approved. You can now access all features.`,
+          type: 'school_approved',
+        });
+      }
     }
 
     return {
       success: true,
       message: 'School approved successfully',
-      schoolId: approval.schoolId.toString(),
-      schoolAdminId: adminUser?._id?.toString(),
+      schoolId: approval.schoolId?.toString(),
+      schoolAdminId: approval.requestedBy?.toString(),
     };
   }
 
@@ -150,26 +154,30 @@ export class ApprovalService {
       rejectionReason: reason,
     });
 
-    await schoolRepository.updateById(approval.schoolId.toString(), {
-      status: 'rejected',
-      rejectionReason: reason,
-    });
-
-    const adminUser = await userRepository.findById(approval.requestedBy.toString());
-    if (adminUser) {
-      await notificationRepository.create({
-        userId: adminUser._id,
-        title: 'School Registration Rejected',
-        message: `Your school "${approval.schoolName}" registration has been rejected. Reason: ${reason}`,
-        type: 'school_rejected',
+    if (approval.schoolId) {
+      await schoolRepository.updateById(approval.schoolId.toString(), {
+        status: 'rejected',
+        rejectionReason: reason,
       });
+    }
+
+    if (approval.requestedBy) {
+      const adminUser = await userRepository.findById(approval.requestedBy.toString());
+      if (adminUser) {
+        await notificationRepository.create({
+          userId: adminUser._id,
+          title: 'School Registration Rejected',
+          message: `Your school "${approval.schoolName}" registration has been rejected. Reason: ${reason}`,
+          type: 'school_rejected',
+        });
+      }
     }
 
     return {
       success: true,
       message: 'School registration rejected',
-      schoolId: approval.schoolId.toString(),
-      schoolAdminId: adminUser?._id?.toString(),
+      schoolId: approval.schoolId?.toString(),
+      schoolAdminId: approval.requestedBy?.toString(),
     };
   }
 
