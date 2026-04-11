@@ -108,24 +108,33 @@ export class ApprovalService {
     });
 
     if (approval.schoolId) {
-      await schoolRepository.updateById(approval.schoolId.toString(), {
-        status: 'approved',
-      });
+      try {
+        await schoolRepository.updateById(approval.schoolId.toString(), {
+          status: 'approved',
+        });
+      } catch (e) {
+        console.error('Failed to update school:', e);
+      }
     }
 
     if (approval.requestedBy) {
-      await userRepository.updateById(approval.requestedBy.toString(), {
-        isApproved: true,
-      });
-
-      const adminUser = await userRepository.findById(approval.requestedBy.toString());
-      if (adminUser) {
-        await notificationRepository.create({
-          userId: adminUser._id,
-          title: 'School Approved',
-          message: `Your school "${approval.schoolName}" has been approved. You can now access all features.`,
-          type: 'school_approved',
+      try {
+        const requestedById = approval.requestedBy.toString();
+        await userRepository.updateById(requestedById, {
+          isApproved: true,
         });
+
+        const adminUser = await userRepository.findById(requestedById);
+        if (adminUser && String(adminUser.role) !== 'system_admin') {
+          await notificationRepository.create({
+            userId: adminUser._id,
+            title: 'School Approved',
+            message: `Your school "${approval.schoolName}" has been approved. You can now access all features.`,
+            type: 'school_approved',
+          });
+        }
+      } catch (e) {
+        console.error('Failed to update user:', e);
       }
     }
 
