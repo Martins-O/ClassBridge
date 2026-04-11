@@ -47,12 +47,10 @@ export function AdminLayout() {
   useEffect(() => {
     async function fetchNotifications() {
       try {
-        console.log('Fetching notifications...');
         const response = await notificationService.getAll({ limit: 10 });
-        console.log('Notifications response:', response);
-        if (response.notifications) {
-          setNotifications(response.notifications);
-          setUnreadCount(response.unreadCount || 0);
+        if (response.data?.notifications) {
+          setNotifications(response.data.notifications);
+          setUnreadCount(response.data.unreadCount || 0);
         }
       } catch (error) {
         console.error('Failed to fetch notifications:', error);

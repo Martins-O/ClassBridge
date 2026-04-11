@@ -17,11 +17,8 @@ export function SchoolsDetailsPage() {
     async function fetchSchool() {
       if (!id) return;
       try {
-        console.log('Fetching school:', id);
         const response = await schoolService.getById(id);
-        console.log('School response:', response);
-        console.log('response.data:', response.data);
-        console.log('response.data.school:', response.data?.school);
+        if (response.data?.school) setSchool(response.data.school);
       } catch (error) {
         console.error('Failed to fetch school:', error);
       } finally {
