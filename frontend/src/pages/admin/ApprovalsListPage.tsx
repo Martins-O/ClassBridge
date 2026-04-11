@@ -97,7 +97,9 @@ export function ApprovalsListPage() {
                         {approval.schoolName}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 text-gray-500">{approval.requestedBy}</td>
+                    <td className="px-6 py-4 text-gray-500">
+                      {approval.requestedBy?.name || approval.requestedBy?.email || String(approval.requestedBy)}
+                    </td>
                     <td className="px-6 py-4">{getStatusBadge(approval.status)}</td>
                     <td className="px-6 py-4 text-gray-500">
                       {new Date(approval.createdAt).toLocaleDateString()}
