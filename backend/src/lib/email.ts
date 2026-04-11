@@ -673,3 +673,183 @@ export function generateWelcomeEmail(data: WelcomeEmailData): EmailData {
     htmlContent
   };
 }
+
+export interface SchoolApprovedNotificationData {
+  recipientEmail: string;
+  recipientName: string;
+  schoolName: string;
+}
+
+export function generateSchoolApprovedNotificationEmail(data: SchoolApprovedNotificationData): EmailData {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0fdf4; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; }
+        .header { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 30px; border-radius: 8px; text-align: center; }
+        .content { padding: 20px 0; }
+        .cta-button { display: inline-block; background: #22c55e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; }
+        .footer { text-align: center; color: #64748b; font-size: 14px; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🎉 School Approved!</h1>
+        </div>
+        <div class="content">
+          <p>Hello ${data.recipientName},</p>
+          <p>Great news! Your school <strong>${data.schoolName}</strong> has been approved on ClassBridge.</p>
+          <p>You can now access all features and start managing your educational institution.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${baseUrl}/dashboard" class="cta-button">Go to Dashboard</a>
+          </div>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} ClassBridge</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return {
+    to: data.recipientEmail,
+    toName: data.recipientName,
+    subject: `Your school "${data.schoolName}" has been approved!`,
+    htmlContent
+  };
+}
+
+export interface SchoolRejectedNotificationData {
+  recipientEmail: string;
+  recipientName: string;
+  schoolName: string;
+  reason: string;
+}
+
+export function generateSchoolRejectedNotificationEmail(data: SchoolRejectedNotificationData): EmailData {
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #fef2f2; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; }
+        .header { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 30px; border-radius: 8px; text-align: center; }
+        .reason-box { background: #fef3c7; border: 1px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .footer { text-align: center; color: #64748b; font-size: 14px; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>School Registration Update</h1>
+        </div>
+        <p>Hello ${data.recipientName},</p>
+        <p>Unfortunately, your school registration for <strong>${data.schoolName}</strong> was not approved at this time.</p>
+        <div class="reason-box">
+          <p><strong>Reason:</strong> ${data.reason}</p>
+        </div>
+        <p>Please review the reason above and submit a new request with the necessary corrections.</p>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} ClassBridge</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return {
+    to: data.recipientEmail,
+    toName: data.recipientName,
+    subject: `School registration update for "${data.schoolName}"`,
+    htmlContent
+  };
+}
+
+export interface DailyDigestData {
+  recipientEmail: string;
+  recipientName: string;
+  schoolName: string;
+  notifications: Array<{
+    title: string;
+    message: string;
+    type: string;
+    createdAt: Date;
+  }>;
+  unreadCount: number;
+}
+
+export function generateDailyDigestEmail(data: DailyDigestData): EmailData {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const date = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  const notificationsHtml = data.notifications.length > 0
+    ? data.notifications.map(n => `
+        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 10px 0;">
+          <p style="margin: 0; font-weight: 600; color: #1f2937;">${n.title}</p>
+          <p style="margin: 5px 0 0; color: #6b7280;">${n.message}</p>
+        </div>
+      `).join('')
+    : '<p style="color: #6b7280;">No new notifications today.</p>';
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; }
+        .header { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 30px; border-radius: 8px; text-align: center; }
+        .date { color: #c7d2fe; font-size: 14px; margin-top: 10px; }
+        .notifications { margin: 30px 0; }
+        .summary { background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; }
+        .summary-count { font-size: 32px; font-weight: bold; color: #6366f1; }
+        .cta-button { display: inline-block; background: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; }
+        .footer { text-align: center; color: #64748b; font-size: 14px; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📬 Daily Digest</h1>
+          <p class="date">${date}</p>
+        </div>
+        <p>Hello ${data.recipientName},</p>
+        <p>Here's your daily summary for <strong>${data.schoolName}</strong>:</p>
+        <div class="summary">
+          <p style="margin: 0; color: #6b7280;">You have</p>
+          <p class="summary-count">${data.unreadCount}</p>
+          <p style="margin: 0; color: #6b7280;">unread notification${data.unreadCount !== 1 ? 's' : ''}</p>
+        </div>
+        <div class="notifications">
+          <h3 style="color: #1f2937;">Recent Notifications:</h3>
+          ${notificationsHtml}
+        </div>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${baseUrl}/dashboard" class="cta-button">View All Notifications</a>
+        </div>
+        <p style="font-size: 14px; color: #6b7280;">
+          You're receiving this because you enabled daily digest emails.<br>
+          <a href="${baseUrl}/settings" style="color: #6366f1;">Manage email preferences</a>
+        </p>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} ClassBridge</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return {
+    to: data.recipientEmail,
+    toName: data.recipientName,
+    subject: `Daily Digest - ${data.unreadCount} new notification${data.unreadCount !== 1 ? 's' : ''} for ${data.schoolName}`,
+    htmlContent
+  };
+}

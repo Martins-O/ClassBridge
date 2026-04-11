@@ -147,6 +147,8 @@ function gracefulShutdown(signal: string) {
 
 validateEnvironment();
 
+import { startCronScheduler } from './lib/cron';
+
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
@@ -179,6 +181,12 @@ initializeServices().then(() => {
         setupSocketIO(httpServer);
     } catch (error) {
         console.warn('Socket.io initialization failed, continuing without Socket.io:', error);
+    }
+
+    try {
+        startCronScheduler();
+    } catch (error) {
+        console.warn('Cron scheduler initialization failed:', error);
     }
 });
 
