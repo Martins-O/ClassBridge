@@ -16,7 +16,9 @@ export function ApprovalsListPage() {
   useEffect(() => {
     async function fetchApprovals() {
       try {
+        console.log('Fetching approvals...');
         const response = await approvalService.getPending();
+        console.log('Approvals response:', response);
         if (response.data?.success) {
           setApprovals(response.data.approvals);
         }
