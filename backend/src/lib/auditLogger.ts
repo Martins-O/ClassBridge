@@ -31,10 +31,10 @@ export async function createAuditLog(data: AuditLogData): Promise<void> {
 }
 
 export function extractRequestInfo(req: Request): { ipAddress: string; userAgent: string } {
-    const ipAddress = req.ip || 
-                      req.headers['x-forwarded-for'] as string || 
-                      req.socket.remoteAddress || 
-                      'unknown';
+    const forwardedFor = req.headers['x-forwarded-for'];
+    const ipAddress = typeof forwardedFor === 'string' 
+        ? forwardedFor.split(',')[0].trim()
+        : req.ip || req.socket.remoteAddress || 'unknown';
     
     const userAgent = req.headers['user-agent'] || 'unknown';
     
