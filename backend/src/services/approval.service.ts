@@ -68,6 +68,17 @@ export class ApprovalService {
       approvalId: approval._id
     });
 
+    const systemAdmins = await userRepository.findByRole('system_admin');
+    for (const admin of systemAdmins) {
+      await notificationRepository.create({
+        userId: admin._id,
+        title: 'New School Registration',
+        message: `${data.name} has submitted a registration request. Please review and approve or reject.`,
+        type: 'school_request',
+        link: '/approvals',
+      });
+    }
+
     return {
       success: true,
       message: 'School registration request submitted. Awaiting approval from system administrator.',
