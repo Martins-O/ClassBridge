@@ -124,6 +124,9 @@ export const courseService = {
   
   update: (id: string, data: Partial<Course>) =>
     api.patch<ApiResponse<Course>>(`/courses/${id}`, data),
+  
+  delete: (id: string) =>
+    api.delete<ApiResponse<void>>(`/courses/${id}`),
 };
 
 export interface Approval {

@@ -101,9 +101,11 @@ export function ClassesListPage() {
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
-                        <Button variant="ghost" size="icon">
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <Link to={`/classes/${cls._id}/edit`}>
+                          <Button variant="ghost" size="icon">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </Link>
                       </div>
                     </td>
                   </tr>
