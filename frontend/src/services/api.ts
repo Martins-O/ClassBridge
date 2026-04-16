@@ -31,21 +31,30 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
         try {
-          const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
-          if (data.success && data.accessToken) {
+          const refreshApi = axios.create({
+            baseURL: API_BASE_URL,
+            headers: { 'Content-Type': 'application/json' },
+            withCredentials: true,
+          });
+          const { data } = await refreshApi.post('/auth/refresh', { refreshToken });
+          if (data.accessToken) {
             localStorage.setItem('accessToken', data.accessToken);
-            localStorage.setItem('refreshToken', data.refreshToken);
+            if (data.refreshToken) {
+              localStorage.setItem('refreshToken', data.refreshToken);
+            }
             originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
             return api(originalRequest);
           }
         } catch (refreshError) {
-          useAuthStore.getState().logout();
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
           window.location.href = '/login';
           return Promise.reject(refreshError);
         }
       }
       
-      useAuthStore.getState().logout();
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       window.location.href = '/login';
     }
     
