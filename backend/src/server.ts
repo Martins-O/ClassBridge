@@ -8,6 +8,8 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import http from 'http';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
+import User from './models/User';
 
 import apiRouter from './routes/v1';
 import { setupSwagger } from './lib/swagger';
@@ -171,6 +173,53 @@ async function initializeServices() {
         initCloudinary();
     } catch (error) {
         console.warn('Cloudinary initialization failed, continuing without Cloudinary:', error);
+    }
+
+    await seedAdminIfNeeded();
+}
+
+async function seedAdminIfNeeded() {
+    const autoSeed = process.env.AUTO_SEED_ADMIN !== 'false';
+    if (!autoSeed) {
+        return;
+    }
+
+    const adminEmail = process.env.SUPER_ADMIN_EMAIL || 'superadmin@classbridge.com';
+    const adminPassword = process.env.SUPER_ADMIN_PASSWORD || 'Admin@ClassBridge2026';
+
+    try {
+        const existingAdmin = await User.findOne({ role: 'system_admin' });
+
+        if (existingAdmin) {
+            console.log('System admin already exists, skipping seed.');
+            return;
+        }
+
+        const hashedPassword = await bcrypt.hash(adminPassword, 12);
+
+        const admin = new User({
+            email: adminEmail,
+            name: process.env.SUPER_ADMIN_NAME || 'System Administrator',
+            role: 'system_admin',
+            password: hashedPassword,
+            isActive: true,
+            isApproved: true,
+        });
+
+        await admin.save();
+
+        console.log(`
+╔══════════════════════════════════════════════════════════════════════╗
+║  🚀 System Admin Created Successfully!                               ║
+║                                                                      ║
+║  Email:    ${adminEmail.padEnd(48)}║
+║  Password:  ${adminPassword.padEnd(48)}║
+║                                                                      ║
+║  Please change the password after first login!                      ║
+╚══════════════════════════════════════════════════════════════════════╝
+        `);
+    } catch (error) {
+        console.error('Failed to seed admin:', error);
     }
 }
 
