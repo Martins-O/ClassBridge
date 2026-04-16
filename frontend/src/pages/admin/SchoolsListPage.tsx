@@ -16,8 +16,12 @@ export function SchoolsListPage() {
   useEffect(() => {
     async function fetchSchools() {
       try {
-        const { data } = await schoolService.getAll({ limit: 50 });
-        setSchools((data as { data?: School[] })?.data || []);
+        console.log('Fetching schools...');
+        const response = await schoolService.getAll({ limit: 50 });
+        console.log('Schools response:', response);
+        if (response.data?.data) {
+          setSchools(response.data.data);
+        }
       } catch (error) {
         console.error('Failed to fetch schools:', error);
       } finally {
