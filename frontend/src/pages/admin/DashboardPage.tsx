@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Building2, Users, GraduationCap, FileText, CheckCircle, Settings, Shield, Clock, AlertCircle } from 'lucide-react';
-import { approvalService } from '@/services/api';
+import { approvalService, auditService } from '@/services/api';
 import api from '@/services/api';
 
 interface Stats {
@@ -48,13 +48,15 @@ export function DashboardPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [statsRes, approvalsRes] = await Promise.all([
+        const [statsRes, approvalsRes, auditRes] = await Promise.all([
           api.get<{ stats: any }>('/stats/global'),
           approvalService.getPending(),
+          auditService.getRecent(5),
         ]);
 
         const statsData = statsRes.data?.stats;
         const approvalsData = approvalsRes.data;
+        const auditData = auditRes.data;
 
         setStats({
           totalSchools: statsData?.totalSchools || 0,
@@ -66,6 +68,16 @@ export function DashboardPage() {
           approvedSchools: statsData?.totalApprovedSchools || 0,
           pendingSchools: statsData?.totalPendingSchools || 0,
         });
+
+        if (auditData?.logs) {
+          setRecentActivity(auditData.logs.map((log: any) => ({
+            id: log._id,
+            action: log.action,
+            description: log.description || `${log.action} on ${log.resource}`,
+            timestamp: log.createdAt,
+            type: log.resource as any,
+          })));
+        }
       } catch (error) {
         console.error('Failed to fetch stats:', error);
       } finally {
