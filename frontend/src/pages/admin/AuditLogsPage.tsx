@@ -49,7 +49,7 @@ export function AuditLogsPage() {
       update: 'warning',
       delete: 'destructive',
       login: 'default',
-      logout: 'secondary',
+      logout: 'default',
       read: 'default',
     };
     return <Badge variant={variants[action] || 'default'}>{action}</Badge>;

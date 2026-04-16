@@ -18,7 +18,8 @@ export function SchoolsDetailsPage() {
       if (!id) return;
       try {
         const response = await schoolService.getById(id);
-        if (response.data?.school) setSchool(response.data.school);
+        const schoolData = (response.data as any)?.school;
+        if (schoolData) setSchool(schoolData);
       } catch (error) {
         console.error('Failed to fetch school:', error);
       } finally {

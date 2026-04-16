@@ -1,0 +1,50 @@
+databasePreset: none
+
+services:
+  - type: web
+    name: classbridge-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: CSRF_SECRET
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_FROM_NAME
+        value: ClassBridge
+      - key: EMAIL_FROM_ADDRESS
+        value: noreply@classbridge.com
+      - key: NEXT_PUBLIC_BASE_URL
+        fromService:
+          type: web
+          name: classbridge-frontend
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: CORS_ORIGIN
+        fromService:
+          type: web
+          name: classbridge-frontend
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: REDIS_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
