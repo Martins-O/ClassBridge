@@ -3,18 +3,18 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Building2, Users, GraduationCap, FileText, CheckCircle, Settings, Shield, Clock, AlertCircle } from 'lucide-react';
-import { schoolService, userService, classService, approvalService } from '@/services/api';
+import { approvalService } from '@/services/api';
+import api from '@/services/api';
 
 interface Stats {
   totalSchools: number;
-  totalUsers: number;
+  totalStudents: number;
+  totalMentors: number;
+  totalStaff: number;
   pendingApprovals: number;
   totalClasses: number;
-  schoolsByStatus: {
-    approved: number;
-    pending: number;
-    rejected: number;
-  };
+  approvedSchools: number;
+  pendingSchools: number;
 }
 
 interface RecentActivity {
@@ -28,10 +28,13 @@ interface RecentActivity {
 export function DashboardPage() {
   const [stats, setStats] = useState<Stats>({
     totalSchools: 0,
-    totalUsers: 0,
+    totalStudents: 0,
+    totalMentors: 0,
+    totalStaff: 0,
     pendingApprovals: 0,
     totalClasses: 0,
-    schoolsByStatus: { approved: 0, pending: 0, rejected: 0 },
+    approvedSchools: 0,
+    pendingSchools: 0,
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([
     { id: '1', action: 'LOGIN', description: 'Super Admin logged in', timestamp: new Date().toISOString(), type: 'user' },
@@ -45,29 +48,23 @@ export function DashboardPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [schoolsRes, usersRes, approvalsRes, classesRes] = await Promise.all([
-          schoolService.getAll({ limit: 1 }),
-          userService.getAll({ limit: 1 }),
+        const [statsRes, approvalsRes] = await Promise.all([
+          api.get<{ stats: any }>('/stats/global'),
           approvalService.getPending(),
-          classService.getAll({ limit: 1 }),
         ]);
 
-        const schoolsData = schoolsRes.data as { total?: number; data?: any[] };
-        const usersData = usersRes.data as { total?: number };
-        const approvalsData = approvalsRes.data as { success?: boolean; approvals?: any[] };
-        const classesData = classesRes.data as { total?: number };
-
-        const schools = (schoolsData.data as any[]) || [];
-        const approved = schools.filter((s: any) => s.status === 'approved').length;
-        const pending = schools.filter((s: any) => s.status === 'pending').length;
-        const rejected = schools.filter((s: any) => s.status === 'rejected').length;
+        const statsData = statsRes.data?.stats;
+        const approvalsData = approvalsRes.data;
 
         setStats({
-          totalSchools: schoolsData.total || 0,
-          totalUsers: usersData.total || 0,
-          pendingApprovals: approvalsData.approvals?.length || 0,
-          totalClasses: classesData.total || 0,
-          schoolsByStatus: { approved, pending, rejected },
+          totalSchools: statsData?.totalSchools || 0,
+          totalStudents: statsData?.totalStudents || 0,
+          totalMentors: statsData?.totalMentors || 0,
+          totalStaff: statsData?.totalStaff || 0,
+          pendingApprovals: statsData?.pendingSchoolApprovals || 0,
+          totalClasses: statsData?.totalClasses || 0,
+          approvedSchools: statsData?.totalApprovedSchools || 0,
+          pendingSchools: statsData?.totalPendingSchools || 0,
         });
       } catch (error) {
         console.error('Failed to fetch stats:', error);
@@ -96,10 +93,10 @@ export function DashboardPage() {
       color: 'bg-yellow-500',
     },
     {
-      title: 'Total Users',
-      value: stats.totalUsers,
+      title: 'Students',
+      value: stats.totalStudents,
       icon: Users,
-      description: 'Registered users',
+      description: 'Active students',
       href: '/users',
       color: 'bg-green-500',
     },
@@ -179,20 +176,14 @@ export function DashboardPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Badge variant="success">{stats.schoolsByStatus.approved}</Badge>
+                <Badge variant="success">{stats.approvedSchools}</Badge>
                 <span className="text-gray-600">Approved</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Badge variant="warning">{stats.schoolsByStatus.pending}</Badge>
+                <Badge variant="warning">{stats.pendingSchools}</Badge>
                 <span className="text-gray-600">Pending</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Badge variant="destructive">{stats.schoolsByStatus.rejected}</Badge>
-                <span className="text-gray-600">Rejected</span>
               </div>
             </div>
             <Link to="/schools" className="block mt-4 text-center text-sm text-blue-600 hover:underline">
