@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,43 +6,77 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Save, Shield, Bell, Mail, Globe, Palette } from 'lucide-react';
+import { settingsService, type Settings } from '@/services/api';
+
+const DEFAULT_SETTINGS: Settings = {
+  general: {
+    systemName: 'ClassBridge',
+    timezone: 'UTC',
+    language: 'en',
+    dateFormat: 'MM/DD/YYYY',
+  },
+  notifications: {
+    emailNotifications: true,
+    approvalAlerts: true,
+    registrationAlerts: true,
+    dailyDigest: false,
+  },
+  security: {
+    twoFactorAuth: false,
+    sessionTimeout: 30,
+    passwordExpiry: 90,
+  },
+};
 
 export function SettingsPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [settings, setSettings] = useState({
-    general: {
-      systemName: 'ClassBridge',
-      timezone: 'UTC',
-      language: 'en',
-      dateFormat: 'MM/DD/YYYY',
-    },
-    notifications: {
-      emailNotifications: true,
-      approvalAlerts: true,
-      registrationAlerts: true,
-      dailyDigest: false,
-    },
-    security: {
-      twoFactorAuth: false,
-      sessionTimeout: '30',
-      passwordExpiry: '90',
-    },
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
 
-  const handleChange = (section: string, field: string, value: string | boolean) => {
+  useEffect(() => {
+    async function fetchSettings() {
+      try {
+        const response = await settingsService.get();
+        if (response.data?.settings) {
+          setSettings(response.data.settings);
+        }
+      } catch (error) {
+        console.error('Failed to fetch settings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchSettings();
+  }, []);
+
+  const handleChange = (section: keyof Settings, field: string, value: string | boolean | number) => {
     setSettings(prev => ({
       ...prev,
       [section]: {
-        ...prev[section as keyof typeof prev],
+        ...prev[section],
         [field]: value,
       },
     }));
   };
 
   const handleSave = async () => {
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 1000);
+    setIsSaving(true);
+    try {
+      await settingsService.update(settings);
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -213,8 +247,8 @@ export function SettingsPage() {
             <div className="space-y-2">
               <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
               <Select
-                value={settings.security.sessionTimeout}
-                onValueChange={(value) => handleChange('security', 'sessionTimeout', value)}
+                value={String(settings.security.sessionTimeout)}
+                onValueChange={(value) => handleChange('security', 'sessionTimeout', parseInt(value))}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -230,8 +264,8 @@ export function SettingsPage() {
             <div className="space-y-2">
               <Label htmlFor="passwordExpiry">Password Expiry (days)</Label>
               <Select
-                value={settings.security.passwordExpiry}
-                onValueChange={(value) => handleChange('security', 'passwordExpiry', value)}
+                value={String(settings.security.passwordExpiry)}
+                onValueChange={(value) => handleChange('security', 'passwordExpiry', parseInt(value))}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -250,9 +284,9 @@ export function SettingsPage() {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700">
           <Save className="h-4 w-4 mr-2" />
-          {isLoading ? 'Saving...' : 'Save Settings'}
+          {isSaving ? 'Saving...' : 'Save Settings'}
         </Button>
       </div>
     </div>

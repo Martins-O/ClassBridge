@@ -16,6 +16,7 @@ import * as healthController from '@/controllers/health';
 import * as approvalsController from '@/controllers/approvals';
 import * as deletionRequestsController from '@/controllers/deletionRequests';
 import * as auditController from '@/controllers/audit';
+import * as settingsController from '@/controllers/settings';
 import uploadRoutes from './upload';
 import { csrfProtection } from '@/middleware/csrf';
 import { jwtAuthMiddleware, optionalAuthMiddleware, AuthenticatedRequest } from '@/lib/auth';
@@ -775,5 +776,9 @@ router.use('/upload', uploadRoutes);
 // Audit Logs Routes
 router.get('/audit-logs', systemAdminHandler(auditController.getAuditLogs));
 router.get('/audit-logs/recent', systemAdminHandler(auditController.getRecentLogs));
+
+// Settings Routes
+router.get('/settings', jwtAuthMiddleware, asyncHandler(settingsController.getSettings));
+router.put('/settings', jwtAuthMiddleware, asyncHandler(settingsController.updateSettings));
 
 export default router;

@@ -211,4 +211,32 @@ export const notificationService = {
     api.patch<{ success: boolean }>('/notifications/read-all'),
 };
 
+export interface Settings {
+  general: {
+    systemName: string;
+    timezone: string;
+    language: string;
+    dateFormat: string;
+  };
+  notifications: {
+    emailNotifications: boolean;
+    approvalAlerts: boolean;
+    registrationAlerts: boolean;
+    dailyDigest: boolean;
+  };
+  security: {
+    twoFactorAuth: boolean;
+    sessionTimeout: number;
+    passwordExpiry: number;
+  };
+}
+
+export const settingsService = {
+  get: () =>
+    api.get<{ settings: Settings }>('/settings'),
+  
+  update: (settings: Partial<Settings>) =>
+    api.put<{ settings: Settings; message: string }>('/settings', settings),
+};
+
 export default api;
