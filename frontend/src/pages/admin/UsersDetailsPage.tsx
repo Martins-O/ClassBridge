@@ -17,8 +17,8 @@ export function UsersDetailsPage() {
     async function fetchUser() {
       if (!id) return;
       try {
-        const { data } = await userService.getById(id);
-        const userData = (data as { data?: User })?.data;
+        const response = await userService.getById(id);
+        const userData = (response.data as any)?.user;
         if (userData) setUser(userData);
       } catch (error) {
         console.error('Failed to fetch user:', error);

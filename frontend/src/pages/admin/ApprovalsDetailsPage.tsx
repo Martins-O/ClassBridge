@@ -21,12 +21,9 @@ export function ApprovalsDetailsPage() {
     async function fetchApproval() {
       if (!id) return;
       try {
-        console.log('Fetching approval:', id);
         const response = await approvalService.getById(id);
-        console.log('Approval response:', response);
-        if (response.data) {
-          setApproval(response.data.approval || response.data);
-        }
+        const approvalData = (response.data as any)?.approval;
+        if (approvalData) setApproval(approvalData);
       } catch (error) {
         console.error('Failed to fetch approval:', error);
       } finally {
@@ -120,7 +117,9 @@ export function ApprovalsDetailsPage() {
               <div>
                 <p className="text-sm text-gray-500">Requested By</p>
                 <p className="font-medium">
-                  {approval.requestedBy?.name || approval.requestedBy?.email || String(approval.requestedBy)}
+                  {typeof approval.requestedBy === 'object' && approval.requestedBy !== null
+                    ? (approval.requestedBy as any).name || (approval.requestedBy as any).email
+                    : String(approval.requestedBy || 'Unknown')}
                 </p>
               </div>
             </div>

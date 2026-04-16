@@ -17,8 +17,8 @@ export function ClassesDetailsPage() {
     async function fetchClass() {
       if (!id) return;
       try {
-        const { data } = await classService.getById(id);
-        const classData = (data as { data?: Class })?.data;
+        const response = await classService.getById(id);
+        const classData = (response.data as any)?.class;
         if (classData) setCls(classData);
       } catch (error) {
         console.error('Failed to fetch class:', error);

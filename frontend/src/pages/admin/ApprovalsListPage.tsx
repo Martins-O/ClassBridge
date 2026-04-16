@@ -138,7 +138,9 @@ export function ApprovalsListPage() {
                       </Link>
                     </td>
                     <td className="px-6 py-4 text-gray-500">
-                      {approval.requestedBy?.name || approval.requestedBy?.email || String(approval.requestedBy)}
+                      {typeof approval.requestedBy === 'object' && approval.requestedBy !== null
+                        ? (approval.requestedBy as any).name || (approval.requestedBy as any).email
+                        : String(approval.requestedBy || 'Unknown')}
                     </td>
                     <td className="px-6 py-4">{getStatusBadge(approval.status)}</td>
                     <td className="px-6 py-4 text-gray-500">

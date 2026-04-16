@@ -16,8 +16,8 @@ export function CoursesDetailsPage() {
     async function fetchCourse() {
       if (!id) return;
       try {
-        const { data } = await courseService.getById(id);
-        const courseData = (data as { data?: Course })?.data;
+        const response = await courseService.getById(id);
+        const courseData = (response.data as any)?.course;
         if (courseData) setCourse(courseData);
       } catch (error) {
         console.error('Failed to fetch course:', error);
