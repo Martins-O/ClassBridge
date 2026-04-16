@@ -78,3 +78,114 @@ export async function updateUser(req: Request, res: Response) {
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
+
+export async function getPasswordStatus(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { id } = req.params;
+    const requestingUser = await userService.getById(userId);
+    
+    if (!requestingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (requestingUser.role !== 'system_admin' && userId !== id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const targetUser = await userService.getById(id);
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const passwordChangedAt = targetUser.passwordChangedAt ? new Date(targetUser.passwordChangedAt) : new Date(targetUser.createdAt);
+    const daysSinceChange = Math.floor((Date.now() - passwordChangedAt.getTime()) / (1000 * 60 * 60 * 24));
+
+    return res.json({
+      success: true,
+      passwordExpired: targetUser.passwordExpired || false,
+      passwordChangedAt: passwordChangedAt.toISOString(),
+      daysSinceChange,
+      remindersSent: targetUser.remindersSent || 0,
+      requirePasswordChange: targetUser.requirePasswordChange || false,
+    });
+  } catch (error) {
+    console.error('Get password status error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function forcePasswordChange(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const requestingUser = await userService.getById(userId);
+    if (!requestingUser || requestingUser.role !== 'system_admin') {
+      return res.status(403).json({ error: 'Only system admin can force password change' });
+    }
+
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    const updated = await userService.forcePasswordChange(id, userId, reason);
+    if (!updated) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'User will be required to change password on next login',
+    });
+  } catch (error) {
+    console.error('Force password change error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function resetPassword(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const requestingUser = await userService.getById(userId);
+    if (!requestingUser || requestingUser.role !== 'system_admin') {
+      return res.status(403).json({ error: 'Only system admin can reset passwords' });
+    }
+
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword) {
+      return res.status(400).json({ error: 'New password is required' });
+    }
+
+    const tempPassword = await userService.resetPassword(id, newPassword);
+    if (!tempPassword) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Password has been reset',
+      tempPassword,
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}

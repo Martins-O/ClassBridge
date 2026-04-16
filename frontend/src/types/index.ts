@@ -26,11 +26,14 @@ export interface School {
   website?: string;
   description?: string;
   adminId: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'suspended' | 'active';
   isActive: boolean;
   subscriptionType: 'basic' | 'premium' | 'enterprise' | 'free';
   maxStudents?: number;
   maxTeachers?: number;
+  suspendedAt?: string;
+  suspendedBy?: string;
+  suspensionReason?: string;
   createdAt?: string;
 }
 

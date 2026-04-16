@@ -853,3 +853,120 @@ export function generateDailyDigestEmail(data: DailyDigestData): EmailData {
     htmlContent
   };
 }
+
+export interface PasswordExpiryData {
+  recipientEmail: string;
+  recipientName?: string;
+}
+
+export function generatePasswordExpiryEmail(data: PasswordExpiryData): EmailData {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #fef2f2; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; }
+        .header { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 30px; border-radius: 8px; text-align: center; }
+        .content { padding: 20px 0; }
+        .warning-box { background: #fef3c7; border: 1px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .cta-button { display: inline-block; background: #ef4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+        .footer { text-align: center; color: #64748b; font-size: 14px; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🔒 Password Expired</h1>
+        </div>
+        <div class="content">
+          <p>Hello ${data.recipientName || 'there'},</p>
+          <p>Your ClassBridge password has expired. You must change it before you can access your account again.</p>
+          <div class="warning-box">
+            <p><strong>Important:</strong> You will not be able to log in until you change your password.</p>
+          </div>
+          <div style="text-align: center;">
+            <a href="${baseUrl}/reset-password" class="cta-button">Change Password Now</a>
+          </div>
+          <p>If you did not request a password change and believe this is an error, please contact your administrator immediately.</p>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} ClassBridge</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return {
+    to: data.recipientEmail,
+    toName: data.recipientName,
+    subject: 'Your ClassBridge password has expired',
+    htmlContent,
+  };
+}
+
+export interface PasswordExpiryWarningData {
+  recipientEmail: string;
+  recipientName?: string;
+  daysRemaining: number;
+  isUrgent: boolean;
+}
+
+export function generatePasswordExpiryWarningEmail(data: PasswordExpiryWarningData): EmailData {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const urgencyClass = data.isUrgent ? 'urgent' : 'normal';
+  const headerGradient = data.isUrgent ? 'linear-gradient(135deg, #f59e0b, #dc2626)' : 'linear-gradient(135deg, #3b82f6, #2563eb)';
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; }
+        .header { background: ${headerGradient}; color: white; padding: 30px; border-radius: 8px; text-align: center; }
+        .content { padding: 20px 0; }
+        .warning-box { background: ${data.isUrgent ? '#fef3c7' : '#f1f5f9'}; border: 1px solid ${data.isUrgent ? '#f59e0b' : '#e2e8f0'}; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .days-remaining { font-size: 48px; font-weight: bold; color: ${data.isUrgent ? '#dc2626' : '#3b82f6'}; text-align: center; margin: 20px 0; }
+        .cta-button { display: inline-block; background: ${data.isUrgent ? '#f59e0b' : '#3b82f6'}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+        .footer { text-align: center; color: #64748b; font-size: 14px; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>${data.isUrgent ? '⚠️ Password Expiring Soon!' : '🔔 Password Reminder'}</h1>
+        </div>
+        <div class="content">
+          <p>Hello ${data.recipientName || 'there'},</p>
+          <p>${data.isUrgent ? 'Your ClassBridge password will expire very soon!' : 'This is a friendly reminder about your ClassBridge password.'}</p>
+          <div class="days-remaining">${data.daysRemaining} day${data.daysRemaining !== 1 ? 's' : ''}</div>
+          <div class="warning-box">
+            <p><strong>${data.isUrgent ? 'Urgent:' : 'Note:'} Your password will expire in ${data.daysRemaining} day${data.daysRemaining !== 1 ? 's' : ''}.</strong></p>
+            <p>Please change your password soon to avoid being locked out of your account.</p>
+          </div>
+          <div style="text-align: center;">
+            <a href="${baseUrl}/settings" class="cta-button">Change Password Now</a>
+          </div>
+        </div>
+        <div class="footer">
+          <p>You're receiving this because password expiration reminders are enabled.</p>
+          <p>© ${new Date().getFullYear()} ClassBridge</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return {
+    to: data.recipientEmail,
+    toName: data.recipientName,
+    subject: data.isUrgent 
+      ? `⚠️ Urgent: Your password expires in ${data.daysRemaining} days!`
+      : `Your ClassBridge password expires in ${data.daysRemaining} days`,
+    htmlContent,
+  };
+}

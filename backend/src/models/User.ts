@@ -31,6 +31,10 @@ export interface IUser extends Document {
   deletionRequested: boolean;
   deletionRequestedBy?: mongoose.Types.ObjectId;
   deletionRequestedAt?: Date;
+  passwordChangedAt?: Date;
+  passwordExpired: boolean;
+  remindersSent: number;
+  requirePasswordChange: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -127,6 +131,22 @@ const UserSchema = new Schema({
   },
   deletionRequestedAt: {
     type: Date
+  },
+  passwordChangedAt: {
+    type: Date,
+    default: Date.now
+  },
+  passwordExpired: {
+    type: Boolean,
+    default: false
+  },
+  remindersSent: {
+    type: Number,
+    default: 0
+  },
+  requirePasswordChange: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true
@@ -140,5 +160,7 @@ UserSchema.index({ lockoutUntil: 1 }, { sparse: true });
 UserSchema.index({ lockoutUntil: 1, isActive: 1 });
 UserSchema.index({ deletionRequested: 1, schoolId: 1 });
 UserSchema.index({ role: 1, isApproved: 1 });
+UserSchema.index({ passwordChangedAt: 1 });
+UserSchema.index({ passwordExpired: 1, isActive: 1 });
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

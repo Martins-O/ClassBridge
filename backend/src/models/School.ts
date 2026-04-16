@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export type SchoolStatus = 'pending' | 'approved' | 'rejected';
+export type SchoolStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
 
 export interface ISchool extends Document {
   name: string;
@@ -15,6 +15,9 @@ export interface ISchool extends Document {
   isActive: boolean;
   subscriptionType: 'basic' | 'premium' | 'enterprise';
   rejectionReason?: string;
+  suspendedAt?: Date;
+  suspendedBy?: mongoose.Types.ObjectId;
+  suspensionReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -74,6 +77,17 @@ const SchoolSchema = new Schema({
   rejectionReason: {
     type: String,
     trim: true
+  },
+  suspendedAt: {
+    type: Date
+  },
+  suspendedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  suspensionReason: {
+    type: String,
+    trim: true
   }
 }, {
   timestamps: true
@@ -84,5 +98,6 @@ SchoolSchema.index({ isActive: 1 });
 SchoolSchema.index({ subscriptionType: 1, isActive: 1 });
 SchoolSchema.index({ status: 1 });
 SchoolSchema.index({ approvalId: 1 });
+SchoolSchema.index({ suspendedAt: 1 });
 
 export default mongoose.models.School || mongoose.model<ISchool>('School', SchoolSchema);

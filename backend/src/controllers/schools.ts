@@ -213,3 +213,77 @@ export async function getSchoolStatus(req: Request, res: Response) {
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
+
+export async function updateSchoolStatus(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.role !== 'system_admin') {
+      return res.status(403).json({ error: 'Only system admin can update school status' });
+    }
+
+    const { id } = req.params;
+    const { status, reason } = req.body;
+
+    if (!status || !['active', 'suspended'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status. Must be "active" or "suspended"' });
+    }
+
+    const school = await schoolService.updateStatus(id, status, userId, reason);
+
+    if (!school) {
+      return res.status(404).json({ error: 'School not found' });
+    }
+
+    return res.json({
+      success: true,
+      message: `School ${status === 'suspended' ? 'suspended' : 'activated'} successfully`,
+      school,
+    });
+  } catch (error) {
+    console.error('Update school status error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function getSchoolStats(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const { id } = req.params;
+
+    if (user.role !== 'system_admin' && String(user.schoolId) !== id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const stats = await schoolService.getSchoolStats(id);
+
+    return res.json({
+      success: true,
+      ...stats,
+    });
+  } catch (error) {
+    console.error('Get school stats error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}

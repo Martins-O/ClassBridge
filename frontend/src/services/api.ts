@@ -102,6 +102,12 @@ export const schoolService = {
   update: (id: string, data: Partial<School>) =>
     api.patch<ApiResponse<School>>(`/schools/${id}`, data),
   
+  updateStatus: (id: string, data: { status: string; reason?: string }) =>
+    api.patch<ApiResponse<School>>(`/schools/${id}/status`, data),
+  
+  getStats: (id: string) =>
+    api.get<{ success: boolean; totalUsers: number; totalClasses: number; totalCourses: number; activeStudents: number; pendingApprovals: number }>(`/schools/${id}/stats`),
+  
   delete: (id: string) =>
     api.delete<ApiResponse<void>>(`/schools/${id}`),
 };
@@ -248,6 +254,124 @@ export const settingsService = {
   
   update: (settings: Partial<Settings>) =>
     api.put<{ settings: Settings; message: string }>('/settings', settings),
+};
+
+export interface SystemStatus {
+  success: boolean;
+  uptime: number;
+  uptimeFormatted: string;
+  apiStatus: 'healthy' | 'degraded' | 'down';
+  databaseStatus: 'connected' | 'disconnected';
+  memory: {
+    used: number;
+    total: number;
+    percentage: number;
+  };
+  cpu: {
+    cores: number;
+    loadAverage: number[];
+  };
+  activeUsers: number;
+  requestsLast24h: number;
+  timestamp: string;
+}
+
+export interface SystemMetrics {
+  success: boolean;
+  requestsCount: number;
+  errorRate: number;
+  avgResponseTime: number;
+  uptime: number;
+  timestamp: string;
+  history: Array<{
+    timestamp: string;
+    memoryUsed: number;
+    memoryTotal: number;
+    activeConnections: number;
+  }>;
+}
+
+export const systemService = {
+  getStatus: () =>
+    api.get<SystemStatus>('/system/status'),
+  
+  getMetrics: () =>
+    api.get<SystemMetrics>('/system/metrics'),
+};
+
+export const passwordService = {
+  changePassword: (data: { currentPassword?: string; newPassword: string }) =>
+    api.post<{ success: boolean; message: string }>('/auth/change-password', data),
+  
+  getPasswordStatus: (userId: string) =>
+    api.get<{
+      success: boolean;
+      passwordExpired: boolean;
+      passwordChangedAt: string;
+      daysSinceChange: number;
+      remindersSent: number;
+      requirePasswordChange: boolean;
+    }>(`/users/${userId}/password-status`),
+  
+  forcePasswordChange: (userId: string, reason?: string) =>
+    api.post<{ success: boolean; message: string }>(`/users/${userId}/force-password-change`, { reason }),
+  
+  resetPassword: (userId: string, newPassword: string) =>
+    api.post<{ success: boolean; message: string; tempPassword?: string }>(`/users/${userId}/reset-password`, { newPassword }),
+};
+
+export interface ActivityReport {
+  success: boolean;
+  totalLogins: number;
+  totalActions: number;
+  activeUsers: number;
+  byRole: Record<string, number>;
+  byAction: Record<string, number>;
+}
+
+export interface AuditLogReport {
+  success: boolean;
+  logs: Array<{
+    _id: string;
+    userId: string;
+    userEmail: string;
+    action: string;
+    resource: string;
+    resourceId?: string;
+    ipAddress?: string;
+    userAgent?: string;
+    timestamp: string;
+  }>;
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export const reportsService = {
+  getAuditLogs: (params?: {
+    startDate?: string;
+    endDate?: string;
+    action?: string;
+    resource?: string;
+    page?: number;
+    limit?: number;
+  }) =>
+    api.get<AuditLogReport>('/reports/audit', { params }),
+  
+  getActivity: (params?: {
+    startDate?: string;
+    endDate?: string;
+  }) =>
+    api.get<ActivityReport>('/reports/activity', { params }),
+  
+  exportAuditLogsCsv: (params?: {
+    startDate?: string;
+    endDate?: string;
+    action?: string;
+    resource?: string;
+  }) =>
+    api.get('/reports/audit', { params: { ...params, format: 'csv' }, responseType: 'blob' }),
 };
 
 export default api;

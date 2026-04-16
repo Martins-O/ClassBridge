@@ -2,6 +2,10 @@ import { schoolRepository } from '@/repositories';
 import { userRepository } from '@/repositories';
 import { isSystemAdmin } from '@/lib/permissions';
 import { UserRole } from '@/models/User';
+import User from '@/models/User';
+import ClassModel from '@/models/Class';
+import Course from '@/models/Course';
+import mongoose from 'mongoose';
 
 export interface PaginatedSchools {
   schools: any[];
@@ -145,6 +149,54 @@ export class SchoolService {
       return schoolRepository.findByAdmin(userId);
     }
     return [];
+  }
+
+  async updateStatus(id: string, status: 'active' | 'suspended', suspendedBy: string, reason?: string): Promise<any> {
+    const school = await schoolRepository.findByIdBasic(id);
+    if (!school) {
+      return null;
+    }
+
+    const updateData: any = {
+      status,
+      isActive: status === 'active',
+    };
+
+    if (status === 'suspended') {
+      updateData.suspendedAt = new Date();
+      updateData.suspendedBy = new mongoose.Types.ObjectId(suspendedBy);
+      updateData.suspensionReason = reason;
+    } else {
+      updateData.suspendedAt = undefined;
+      updateData.suspendedBy = undefined;
+      updateData.suspensionReason = undefined;
+    }
+
+    return schoolRepository.updateById(id, updateData);
+  }
+
+  async getSchoolStats(id: string): Promise<{
+    totalUsers: number;
+    totalClasses: number;
+    totalCourses: number;
+    activeStudents: number;
+    pendingApprovals: number;
+  }> {
+    const [totalUsers, totalClasses, totalCourses, activeStudents, pendingApprovals] = await Promise.all([
+      User.countDocuments({ schoolId: new mongoose.Types.ObjectId(id) }),
+      ClassModel.countDocuments({ schoolId: new mongoose.Types.ObjectId(id) }),
+      Course.countDocuments({ schoolId: new mongoose.Types.ObjectId(id) }),
+      User.countDocuments({ schoolId: new mongoose.Types.ObjectId(id), role: 'student', isActive: true }),
+      User.countDocuments({ schoolId: new mongoose.Types.ObjectId(id), isApproved: false, role: { $ne: 'system_admin' } }),
+    ]);
+
+    return {
+      totalUsers,
+      totalClasses,
+      totalCourses,
+      activeStudents,
+      pendingApprovals,
+    };
   }
 }
 

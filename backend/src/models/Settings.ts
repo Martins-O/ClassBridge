@@ -19,6 +19,14 @@ export interface ISettings extends Document {
     sessionTimeout: number;
     passwordExpiry: number;
   };
+  passwordRotation: {
+    enabled: boolean;
+    maxAgeDays: number;
+    reminder1Days: number;
+    reminder2Days: number;
+    gracePeriodDays: number;
+    maxRemindersIgnored: number;
+  };
 }
 
 const SettingsSchema = new Schema<ISettings>(
@@ -40,6 +48,14 @@ const SettingsSchema = new Schema<ISettings>(
       twoFactorAuth: { type: Boolean, default: false },
       sessionTimeout: { type: Number, default: 30 },
       passwordExpiry: { type: Number, default: 90 },
+    },
+    passwordRotation: {
+      enabled: { type: Boolean, default: true },
+      maxAgeDays: { type: Number, default: 90 },
+      reminder1Days: { type: Number, default: 60 },
+      reminder2Days: { type: Number, default: 80 },
+      gracePeriodDays: { type: Number, default: 0 },
+      maxRemindersIgnored: { type: Number, default: 3 },
     },
   },
   { timestamps: true }

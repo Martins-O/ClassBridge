@@ -17,6 +17,8 @@ import * as approvalsController from '@/controllers/approvals';
 import * as deletionRequestsController from '@/controllers/deletionRequests';
 import * as auditController from '@/controllers/audit';
 import * as settingsController from '@/controllers/settings';
+import * as systemController from '@/controllers/system';
+import * as reportsController from '@/controllers/reports';
 import uploadRoutes from './upload';
 import { csrfProtection } from '@/middleware/csrf';
 import { jwtAuthMiddleware, optionalAuthMiddleware, AuthenticatedRequest } from '@/lib/auth';
@@ -127,6 +129,105 @@ router.get('/health/ready', asyncHandler(healthController.getReadiness));
 
 /**
  * @swagger
+ * /system/status:
+ *   get:
+ *     summary: Get system status
+ *     tags: [System]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: System status information
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.get('/system/status', systemController.systemStatusHandler());
+
+/**
+ * @swagger
+ * /system/metrics:
+ *   get:
+ *     summary: Get system metrics
+ *     tags: [System]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: System metrics information
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.get('/system/metrics', systemController.systemMetricsHandler());
+
+/**
+ * @swagger
+ * /reports/audit:
+ *   get:
+ *     summary: Get audit log report
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: action
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: resource
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: format
+ *         schema:
+ *           type: string
+ *           enum: [json, csv]
+ *     responses:
+ *       200:
+ *         description: Audit log report
+ */
+router.get('/reports/audit', systemAdminHandler(reportsController.getAuditLogsReport));
+
+/**
+ * @swagger
+ * /reports/activity:
+ *   get:
+ *     summary: Get activity report
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *     responses:
+ *       200:
+ *         description: Activity report
+ */
+router.get('/reports/activity', systemAdminHandler(reportsController.getActivityReport));
+
+/**
+ * @swagger
  * /auth/login:
  *   post:
  *     summary: User login
@@ -156,6 +257,35 @@ router.post('/auth/login', asyncHandler(authController.login));
  *         description: Logout successful
  */
 router.post('/auth/logout', csrfHandler(authController.logout));
+
+/**
+ * @swagger
+ * /auth/change-password:
+ *   post:
+ *     summary: Change password
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *       400:
+ *         description: Invalid request
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/auth/change-password', jwtAuthMiddleware, asyncHandler(authController.changePassword));
 
 /**
  * @swagger
@@ -409,6 +539,8 @@ router.post('/schools', systemAdminHandler(schoolsController.createSchool));
  */
 router.get('/schools/:id', jwtAuthMiddleware, asyncHandler(schoolsController.getSchoolById));
 router.put('/schools/:id', systemAdminHandler(schoolsController.updateSchool));
+router.patch('/schools/:id/status', systemAdminHandler(schoolsController.updateSchoolStatus));
+router.get('/schools/:id/stats', jwtAuthMiddleware, asyncHandler(schoolsController.getSchoolStats));
 
 // School Approval Routes
 router.post('/schools/request', asyncHandler(approvalsController.requestSchool));
@@ -654,6 +786,9 @@ router.delete('/grades/:id', requirePermissionCsrfHandler(PERMISSIONS.GRADE_STUD
  */
 router.get('/users/:id', jwtAuthMiddleware, asyncHandler(usersController.getUser));
 router.patch('/users/:id', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_USERS)(usersController.updateUser));
+router.get('/users/:id/password-status', jwtAuthMiddleware, asyncHandler(usersController.getPasswordStatus));
+router.post('/users/:id/force-password-change', systemAdminHandler(usersController.forcePasswordChange));
+router.post('/users/:id/reset-password', systemAdminHandler(usersController.resetPassword));
 
 /**
  * @swagger

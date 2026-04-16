@@ -1,6 +1,8 @@
 import { userRepository } from '@/repositories';
 import { schoolService } from '@/services/school.service';
+import RefreshToken from '@/models/RefreshToken';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 export class UserService {
   async getById(id: string): Promise<any> {
@@ -110,6 +112,38 @@ export class UserService {
 
   async getActiveMentorCount(schoolId: string): Promise<number> {
     return userRepository.count({ schoolId, role: 'mentor', isActive: true });
+  }
+
+  async forcePasswordChange(userId: string, adminId: string, reason?: string): Promise<any> {
+    const user = await userRepository.findById(userId);
+    if (!user) return null;
+
+    await RefreshToken.deleteMany({ userId });
+
+    return userRepository.updateById(userId, {
+      requirePasswordChange: true,
+      passwordExpired: false,
+      remindersSent: 0,
+    });
+  }
+
+  async resetPassword(userId: string, newPassword: string): Promise<string | null> {
+    const user = await userRepository.findById(userId);
+    if (!user) return null;
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    
+    await RefreshToken.deleteMany({ userId });
+
+    await userRepository.updateById(userId, {
+      password: hashedPassword,
+      passwordChangedAt: new Date(),
+      passwordExpired: false,
+      remindersSent: 0,
+      requirePasswordChange: false,
+    });
+
+    return newPassword;
   }
 }
 

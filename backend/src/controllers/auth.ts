@@ -22,6 +22,7 @@ import { authService } from '@/services';
 import { auditService } from '@/services/audit.service';
 import { notificationService } from '@/services/notification.service';
 import User from '@/models/User';
+import RefreshToken from '@/models/RefreshToken';
 
 export async function login(req: Request, res: Response) {
   try {
@@ -414,5 +415,60 @@ export async function disableTwoFactor(req: Request, res: Response) {
   } catch (error) {
     console.error('Disable 2FA error:', error);
     return res.status(500).json({ error: 'Failed to disable two-factor authentication' });
+  }
+}
+
+export async function changePassword(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    const payload = verifyAccessToken(token);
+    if (!payload) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    const user = await User.findById(payload.userId).select('+twoFactorSecret +twoFactorEnabled');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.twoFactorEnabled && !currentPassword) {
+      return res.status(400).json({ error: 'Current password is required when 2FA is enabled' });
+    }
+
+    if (user.twoFactorEnabled && currentPassword) {
+      const bcrypt = await import('bcryptjs');
+      const isPasswordValid = await bcrypt.default.compare(currentPassword, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: 'Current password is incorrect' });
+      }
+    }
+
+    const bcrypt = await import('bcryptjs');
+    const hashedPassword = await bcrypt.default.hash(newPassword, 12);
+
+    await User.findByIdAndUpdate(user._id, {
+      password: hashedPassword,
+      passwordChangedAt: new Date(),
+      passwordExpired: false,
+      remindersSent: 0,
+      requirePasswordChange: false,
+    });
+
+    await RefreshToken.deleteMany({ userId: user._id });
+
+    return res.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    return res.status(500).json({ error: 'Failed to change password' });
   }
 }

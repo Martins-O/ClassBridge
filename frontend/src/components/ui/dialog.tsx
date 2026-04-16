@@ -55,3 +55,11 @@ interface DialogFooterProps {
 export function DialogFooter({ children }: DialogFooterProps) {
   return <div className="flex justify-end gap-3 mt-6">{children}</div>;
 }
+
+interface DialogDescriptionProps {
+  children: React.ReactNode;
+}
+
+export function DialogDescription({ children }: DialogDescriptionProps) {
+  return <p className="text-sm text-gray-500 mt-2">{children}</p>;
+}

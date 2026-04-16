@@ -5,6 +5,7 @@ import AdminLayout from './layouts/AdminLayout';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import { ResetExpiredPasswordPage } from './pages/ResetExpiredPasswordPage';
 
 import { DashboardPage } from './pages/admin/DashboardPage';
 import { SchoolsListPage } from './pages/admin/SchoolsListPage';
@@ -19,6 +20,8 @@ import { CoursesListPage } from './pages/admin/CoursesListPage';
 import { CoursesDetailsPage } from './pages/admin/CoursesDetailsPage';
 import { SettingsPage } from './pages/admin/SettingsPage';
 import { AuditLogsPage } from './pages/admin/AuditLogsPage';
+import { SystemStatusPage } from './pages/admin/SystemStatusPage';
+import { ReportsPage } from './pages/admin/ReportsPage';
 
 const queryClient = new QueryClient();
 
@@ -36,6 +39,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/reset-password-expired" element={<ResetExpiredPasswordPage />} />
           
           <Route
             path="/dashboard"
@@ -129,6 +133,28 @@ function App() {
             }
           >
             <Route index element={<AuditLogsPage />} />
+          </Route>
+
+          <Route
+            path="/system-status"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<SystemStatusPage />} />
+          </Route>
+
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<ReportsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

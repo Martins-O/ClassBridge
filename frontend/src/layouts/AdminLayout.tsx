@@ -19,6 +19,8 @@ import {
   CheckCircle,
   AlertCircle,
   XCircle,
+  Activity,
+  BarChart3,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 import { notificationService } from '@/services/api';
@@ -32,6 +34,8 @@ const navigation = [
   { name: 'Courses', href: '/courses', icon: BookOpen },
   { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'Audit Logs', href: '/audit-logs', icon: ClipboardList },
+  { name: 'System Status', href: '/system-status', icon: Activity },
+  { name: 'Reports', href: '/reports', icon: BarChart3 },
 ];
 
 export function AdminLayout() {
