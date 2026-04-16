@@ -4,11 +4,9 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  VITE_API_URL = "https://classbridge-s8o4.onrender.com/api/v1"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-[context.production.environment]
-  VITE_API_URL = "https://classbridge-s8o4.onrender.com"
