@@ -2,8 +2,10 @@ import axios from 'axios';
 import type { AuthResponse, ApiResponse, PaginatedResponse, User, School, Class, Course, Grade } from '../types';
 import { useAuthStore } from '../stores/auth';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
+
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
