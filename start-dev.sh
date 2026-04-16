@@ -15,8 +15,8 @@ NC='\033[0m' # No Color
 
 # --- Configuration ---
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-FRONTEND_DIR="$ROOT_DIR/Frontend"
-BACKEND_DIR="$ROOT_DIR/Backend"
+FRONTEND_DIR="$ROOT_DIR/frontend"
+BACKEND_DIR="$ROOT_DIR/backend"
 FRONTEND_PORT=3000
 BACKEND_PORT=4000
 
