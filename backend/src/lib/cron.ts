@@ -3,6 +3,7 @@ import connectDB from './mongodb';
 import User from '@/models/User';
 import Notification from '@/models/Notification';
 import School from '@/models/School';
+import Settings from '@/models/Settings';
 import { sendEmail, generateDailyDigestEmail, DailyDigestData } from '@/lib/email';
 
 async function sendDailyDigestEmails() {
@@ -16,9 +17,13 @@ async function sendDailyDigestEmails() {
     for (const user of users) {
       if (!user.school) continue;
 
+      const userId = String(user._id);
+      const userSettings = await Settings.findOne({ userId: userId });
+      if (userSettings?.notifications?.dailyDigest === false) continue;
+
       const school = user.school as unknown as { name: string };
       const unreadNotifications = await Notification.find({
-        userId: user._id,
+        userId: userId,
         isRead: false,
         createdAt: {
           $gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
@@ -26,7 +31,7 @@ async function sendDailyDigestEmails() {
       }).lean();
 
       const unreadCount = await Notification.countDocuments({
-        userId: user._id,
+        userId: userId,
         isRead: false
       });
 
