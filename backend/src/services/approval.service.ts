@@ -3,6 +3,7 @@ import { approvalRepository } from '@/repositories';
 import { userRepository } from '@/repositories';
 import { schoolRepository } from '@/repositories';
 import { notificationRepository } from '@/repositories';
+import { sendEmail, generateSchoolApprovedNotificationEmail, generateSchoolRejectedNotificationEmail } from '@/lib/email';
 
 export interface CreateSchoolRequestData {
   name: string;
@@ -132,6 +133,17 @@ export class ApprovalService {
             message: `Your school "${approval.schoolName}" has been approved. You can now access all features.`,
             type: 'school_approved',
           });
+
+          try {
+            const email = generateSchoolApprovedNotificationEmail({
+              recipientEmail: adminUser.email,
+              recipientName: adminUser.name,
+              schoolName: approval.schoolName,
+            });
+            await sendEmail(email);
+          } catch (emailError) {
+            console.error('Failed to send approval email:', emailError);
+          }
         }
       } catch (e) {
         console.error('Failed to update user:', e);
@@ -172,13 +184,25 @@ export class ApprovalService {
 
     if (approval.requestedBy) {
       const adminUser = await userRepository.findById(approval.requestedBy.toString());
-      if (adminUser) {
+      if (adminUser && String(adminUser.role) !== 'system_admin') {
         await notificationRepository.create({
           userId: adminUser._id,
           title: 'School Registration Rejected',
           message: `Your school "${approval.schoolName}" registration has been rejected. Reason: ${reason}`,
           type: 'school_rejected',
         });
+
+        try {
+          const email = generateSchoolRejectedNotificationEmail({
+            recipientEmail: adminUser.email,
+            recipientName: adminUser.name,
+            schoolName: approval.schoolName,
+            reason,
+          });
+          await sendEmail(email);
+        } catch (emailError) {
+          console.error('Failed to send rejection email:', emailError);
+        }
       }
     }
 
