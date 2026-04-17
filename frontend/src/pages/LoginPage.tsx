@@ -16,21 +16,105 @@ export function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    if (!email) {
+      setError('Please enter your email address');
+      return;
+    }
+    
+    if (!password) {
+      setError('Please enter your password');
+      return;
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
       const { data } = await authService.login(email, password);
       
-      // Backend returns { success, user, accessToken, refreshToken } directly
       if (data.success && data.accessToken && data.user) {
         login(data.user, data.accessToken, data.refreshToken || '');
         navigate('/dashboard');
       } else {
-        setError(data.error || 'Login failed');
+        const errorCode = data.errorCode;
+        
+        switch (errorCode) {
+          case 'INVALID_CREDENTIALS':
+          case 'INVALID_PASSWORD':
+            setError('Incorrect password. Please try again or reset your password.');
+            break;
+          case 'USER_NOT_FOUND':
+          case 'INVALID_EMAIL':
+            setError('No account found with this email address.');
+            break;
+          case 'ACCOUNT_LOCKED':
+            setError('Your account is locked. Please try again later or contact support.');
+            break;
+          case 'ACCOUNT_DISABLED':
+            setError('Your account has been disabled. Please contact your administrator.');
+            break;
+          case 'PASSWORD_EXPIRED':
+            navigate('/reset-password-expired');
+            return;
+          case 'EMAIL_NOT_VERIFIED':
+            setError('Please verify your email address before signing in.');
+            break;
+          case 'SCHOOL_PENDING_APPROVAL':
+            setError('Your school registration is pending approval. You will be notified once approved.');
+            break;
+          case 'SCHOOL_REJECTED':
+            setError('Your school registration has been rejected. Please contact support.');
+            break;
+          default:
+            setError(data.error || 'Unable to sign in. Please check your credentials and try again.');
+        }
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'An error occurred';
-      setError(message);
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { error?: string; code?: string } } };
+        const errorCode = axiosErr.response?.data?.code;
+        const errorMessage = axiosErr.response?.data?.error;
+        
+        switch (errorCode) {
+          case 'INVALID_CREDENTIALS':
+          case 'INVALID_PASSWORD':
+            setError('Incorrect password. Please try again or reset your password.');
+            break;
+          case 'USER_NOT_FOUND':
+          case 'INVALID_EMAIL':
+            setError('No account found with this email address.');
+            break;
+          case 'ACCOUNT_LOCKED':
+            setError('Your account is locked. Please try again later or contact support.');
+            break;
+          case 'ACCOUNT_DISABLED':
+            setError('Your account has been disabled. Please contact your administrator.');
+            break;
+          case 'PASSWORD_EXPIRED':
+            navigate('/reset-password-expired');
+            return;
+          case 'EMAIL_NOT_VERIFIED':
+            setError('Please verify your email address before signing in.');
+            break;
+          case 'SCHOOL_PENDING_APPROVAL':
+            setError('Your school registration is pending approval. You will be notified once approved.');
+            break;
+          case 'SCHOOL_REJECTED':
+            setError('Your school registration has been rejected. Please contact support.');
+            break;
+          default:
+            setError(errorMessage || 'Unable to sign in. Please check your credentials and try again.');
+        }
+      } else if (err instanceof Error) {
+        setError('Unable to connect to the server. Please check your internet connection and try again.');
+      } else {
+        setError('An unexpected error occurred. Please try again later.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -69,6 +153,7 @@ export function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@school.edu"
+              autoComplete="email"
               required
             />
             
@@ -77,7 +162,8 @@ export function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="Enter your password"
+              autoComplete="current-password"
               required
             />
             

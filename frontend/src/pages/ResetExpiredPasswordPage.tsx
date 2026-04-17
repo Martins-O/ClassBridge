@@ -3,6 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Check, X } from 'lucide-react';
+
+const passwordRequirements = [
+  { id: 'length', label: 'At least 8 characters', test: (p: string) => p.length >= 8 },
+  { id: 'upper', label: 'One uppercase letter', test: (p: string) => /[A-Z]/.test(p) },
+  { id: 'lower', label: 'One lowercase letter', test: (p: string) => /[a-z]/.test(p) },
+  { id: 'number', label: 'One number', test: (p: string) => /\d/.test(p) },
+  { id: 'special', label: 'One special character', test: (p: string) => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
+];
 
 export function ResetExpiredPasswordPage() {
   const navigate = useNavigate();
@@ -20,8 +29,9 @@ export function ResetExpiredPasswordPage() {
       return;
     }
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+    const allRequirementsMet = passwordRequirements.every(req => req.test(password));
+    if (!allRequirementsMet) {
+      setError('Please meet all password requirements');
       return;
     }
 
@@ -38,6 +48,9 @@ export function ResetExpiredPasswordPage() {
       setIsLoading(false);
     }
   };
+
+  const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
+  const passwordsDoNotMatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center px-4">
@@ -67,6 +80,25 @@ export function ResetExpiredPasswordPage() {
                 placeholder="Enter new password"
                 required
               />
+              {password.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {passwordRequirements.map((req) => {
+                    const met = req.test(password);
+                    return (
+                      <div key={req.id} className="flex items-center gap-2 text-sm">
+                        {met ? (
+                          <Check className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <X className="h-4 w-4 text-gray-400" />
+                        )}
+                        <span className={met ? 'text-green-600' : 'text-gray-500'}>
+                          {req.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div>
@@ -80,6 +112,21 @@ export function ResetExpiredPasswordPage() {
                 placeholder="Confirm new password"
                 required
               />
+              {confirmPassword.length > 0 && (
+                <p className={`mt-1 text-sm flex items-center gap-1 ${passwordsMatch ? 'text-green-600' : 'text-red-500'}`}>
+                  {passwordsMatch ? (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Passwords match
+                    </>
+                  ) : (
+                    <>
+                      <X className="h-4 w-4" />
+                      Passwords do not match
+                    </>
+                  )}
+                </p>
+              )}
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>

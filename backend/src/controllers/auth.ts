@@ -37,15 +37,51 @@ export async function login(req: Request, res: Response) {
     const result = await authService.login(email, password);
     
     if (!result) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Invalid email or password', errorCode: 'INVALID_CREDENTIALS' });
     }
 
-    const isLockedOut = 'errorCode' in result && result.errorCode === 'ACCOUNT_LOCKED';
-    if (isLockedOut) {
-      return res.status(423).json({ 
-        error: (result as any).error,
-        errorCode: (result as any).errorCode,
-        lockoutUntil: (result as any).lockoutUntil
+    if ('errorCode' in result) {
+      const errorResult = result as { error: string; errorCode: string; lockoutUntil?: Date };
+      
+      if (errorResult.errorCode === 'ACCOUNT_LOCKED') {
+        return res.status(423).json({ 
+          error: errorResult.error,
+          errorCode: errorResult.errorCode,
+          lockoutUntil: errorResult.lockoutUntil
+        });
+      }
+      
+      if (errorResult.errorCode === 'SCHOOL_PENDING_APPROVAL') {
+        return res.status(403).json({ 
+          error: errorResult.error,
+          errorCode: errorResult.errorCode
+        });
+      }
+      
+      if (errorResult.errorCode === 'SCHOOL_REJECTED') {
+        return res.status(403).json({ 
+          error: errorResult.error,
+          errorCode: errorResult.errorCode
+        });
+      }
+      
+      if (errorResult.errorCode === 'SCHOOL_SUSPENDED') {
+        return res.status(403).json({ 
+          error: errorResult.error,
+          errorCode: errorResult.errorCode
+        });
+      }
+      
+      if (errorResult.errorCode === 'ACCOUNT_PENDING_DELETION') {
+        return res.status(403).json({ 
+          error: errorResult.error,
+          errorCode: errorResult.errorCode
+        });
+      }
+      
+      return res.status(401).json({ 
+        error: errorResult.error,
+        errorCode: errorResult.errorCode
       });
     }
 

@@ -95,6 +95,12 @@ export class AuthService extends BaseService {
           errorCode: 'SCHOOL_REJECTED'
         };
       }
+      if (school && school.status === 'suspended') {
+        return {
+          error: `Your school has been suspended. Reason: ${school.suspensionReason || 'No reason provided'}`,
+          errorCode: 'SCHOOL_SUSPENDED'
+        };
+      }
     }
 
     const schoolStatus = user.schoolId 
