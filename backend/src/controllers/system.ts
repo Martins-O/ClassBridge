@@ -22,8 +22,10 @@ export async function getSystemStatus(req: Request, res: Response) {
 
 export async function getSystemMetrics(req: Request, res: Response) {
   try {
-    const metrics = await systemService.getMetrics();
-    const history = systemService.getMetricsHistory();
+    const [metrics, history] = await Promise.all([
+      systemService.getMetrics(),
+      systemService.getMetricsHistory(),
+    ]);
     
     res.json({
       success: true,

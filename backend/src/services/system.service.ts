@@ -1,7 +1,6 @@
 import os from 'os';
 import mongoose from 'mongoose';
-import User from '../models/User';
-import RefreshToken from '../models/RefreshToken';
+import MetricsHistory from '../models/MetricsHistory';
 
 interface SystemStatus {
   uptime: number;
@@ -29,7 +28,7 @@ interface SystemMetrics {
   timestamp: string;
 }
 
-interface MetricsHistory {
+interface MetricsHistoryEntry {
   timestamp: string;
   memoryUsed: number;
   memoryTotal: number;
@@ -41,8 +40,6 @@ class SystemService {
   private requestCount: number = 0;
   private errorCount: number = 0;
   private responseTimes: number[] = [];
-  private metricsHistory: MetricsHistory[] = [];
-  private maxHistorySize: number = 288;
 
   async getStatus(): Promise<SystemStatus> {
     const uptimeSeconds = Math.floor((Date.now() - this.startTime) / 1000);
@@ -52,10 +49,12 @@ class SystemService {
     const memoryPercentage = (usedMemory / totalMemory) * 100;
 
     const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-    const activeTokens = await RefreshToken.countDocuments({
-      isRevoked: false,
-      expiresAt: { $gt: new Date() }
-    });
+
+    const last24hCount = await MetricsHistory.aggregate([
+      { $match: { timestamp: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } } },
+      { $group: { _id: null, total: { $sum: '$requestsCount' } } }
+    ]);
+    const requestsLast24h = last24hCount[0]?.total || 0;
 
     const loadAverage = os.loadavg();
 
@@ -79,8 +78,8 @@ class SystemService {
         cores: os.cpus().length,
         loadAverage: loadAverage.map(v => Math.round(v * 100) / 100),
       },
-      activeUsers: activeTokens,
-      requestsLast24h: this.requestCount,
+      activeUsers: 0,
+      requestsLast24h: requestsLast24h,
       timestamp: new Date().toISOString(),
     };
   }
@@ -103,8 +102,40 @@ class SystemService {
     };
   }
 
-  getMetricsHistory(): MetricsHistory[] {
-    return [...this.metricsHistory];
+  async getMetricsHistory(): Promise<MetricsHistoryEntry[]> {
+    const last48h = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    const history = await MetricsHistory.find({ timestamp: { $gte: last48h } })
+      .sort({ timestamp: 1 })
+      .limit(288)
+      .lean();
+
+    return history.map(h => ({
+      timestamp: h.timestamp.toISOString(),
+      memoryUsed: Math.round(h.heapUsed / 1024 / 1024),
+      memoryTotal: Math.round(h.heapTotal / 1024 / 1024),
+      activeConnections: h.activeConnections || 0,
+    }));
+  }
+
+  async recordMetrics(): Promise<void> {
+    const memoryUsage = process.memoryUsage();
+    const heapUsedMB = memoryUsage.heapUsed;
+    const heapTotalMB = memoryUsage.heapTotal;
+    const totalMemory = os.totalmem();
+    const freeMemory = os.freemem();
+    const memoryUsedMB = totalMemory - freeMemory;
+
+    await MetricsHistory.create({
+      timestamp: new Date(),
+      memoryUsed: Math.round(memoryUsedMB / 1024 / 1024),
+      memoryTotal: Math.round(totalMemory / 1024 / 1024),
+      heapUsed: heapUsedMB,
+      heapTotal: heapTotalMB,
+      cpuLoad: os.loadavg(),
+      activeConnections: 0,
+      requestsCount: this.requestCount,
+      uptime: Math.floor((Date.now() - this.startTime) / 1000),
+    });
   }
 
   recordRequest(responseTime: number): void {
@@ -113,20 +144,6 @@ class SystemService {
     
     if (this.responseTimes.length > 1000) {
       this.responseTimes = this.responseTimes.slice(-1000);
-    }
-
-    const memoryUsage = process.memoryUsage();
-    const historyEntry: MetricsHistory = {
-      timestamp: new Date().toISOString(),
-      memoryUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
-      memoryTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
-      activeConnections: 0,
-    };
-
-    this.metricsHistory.push(historyEntry);
-    
-    if (this.metricsHistory.length > this.maxHistorySize) {
-      this.metricsHistory = this.metricsHistory.slice(-this.maxHistorySize);
     }
   }
 

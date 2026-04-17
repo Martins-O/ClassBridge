@@ -5,6 +5,7 @@ import Notification from '@/models/Notification';
 import School from '@/models/School';
 import Settings from '@/models/Settings';
 import RefreshToken from '@/models/RefreshToken';
+import { systemService } from '@/services/system.service';
 import { sendEmail, generateDailyDigestEmail, DailyDigestData, generatePasswordExpiryEmail, generatePasswordExpiryWarningEmail } from '@/lib/email';
 
 async function sendDailyDigestEmails() {
@@ -183,6 +184,15 @@ async function processPasswordRotation() {
   }
 }
 
+async function recordSystemMetrics() {
+  try {
+    await connectDB();
+    await systemService.recordMetrics();
+  } catch (error) {
+    console.error('Error recording system metrics:', error);
+  }
+}
+
 export function startCronScheduler() {
   nodeCron.schedule('0 9 * * *', sendDailyDigestEmails, {
     timezone: 'UTC'
@@ -192,7 +202,13 @@ export function startCronScheduler() {
     timezone: 'UTC'
   });
 
-  console.log('Cron scheduler started - daily digest at 9:00 AM UTC, password rotation check at midnight UTC');
+  recordSystemMetrics();
+
+  nodeCron.schedule('*/5 * * * *', recordSystemMetrics, {
+    timezone: 'UTC'
+  });
+
+  console.log('Cron scheduler started - daily digest at 9:00 AM UTC, password rotation at midnight UTC, metrics every 5 minutes');
 }
 
 export default startCronScheduler;
