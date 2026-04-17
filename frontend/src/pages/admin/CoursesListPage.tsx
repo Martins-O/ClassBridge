@@ -6,17 +6,21 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Search, Eye, Edit } from 'lucide-react';
 import { courseService } from '@/services/api';
+import { useAuthStore } from '@/stores/auth';
 import type { Course } from '@/types';
 
 export function CoursesListPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const getSchoolId = useAuthStore((state) => state.getSchoolId);
+  const isSystemAdmin = useAuthStore((state) => state.isSystemAdmin);
 
   useEffect(() => {
     async function fetchCourses() {
       try {
-        const { data } = await courseService.getAll({ limit: 50 });
+        const schoolId = isSystemAdmin() ? undefined : getSchoolId();
+        const { data } = await courseService.getAll({ limit: 100, schoolId });
         setCourses((data as { data?: Course[] })?.data || []);
       } catch (error) {
         console.error('Failed to fetch courses:', error);
@@ -25,7 +29,7 @@ export function CoursesListPage() {
       }
     }
     fetchCourses();
-  }, []);
+  }, [getSchoolId, isSystemAdmin]);
 
   const filteredCourses = courses.filter(course =>
     course.name.toLowerCase().includes(search.toLowerCase()) ||

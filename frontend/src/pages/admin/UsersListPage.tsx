@@ -1,22 +1,26 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Edit, Trash2 } from 'lucide-react';
+import { Search, Eye, Edit } from 'lucide-react';
 import { userService } from '@/services/api';
+import { useAuthStore } from '@/stores/auth';
 import type { User } from '@/types';
 
 export function UsersListPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const getSchoolId = useAuthStore((state) => state.getSchoolId);
+  const isSystemAdmin = useAuthStore((state) => state.isSystemAdmin);
 
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const { data } = await userService.getAll({ limit: 50 });
+        const schoolId = isSystemAdmin() ? undefined : getSchoolId();
+        const { data } = await userService.getAll({ limit: 100, schoolId });
         setUsers((data as { data?: User[] })?.data || []);
       } catch (error) {
         console.error('Failed to fetch users:', error);
@@ -25,7 +29,7 @@ export function UsersListPage() {
       }
     }
     fetchUsers();
-  }, []);
+  }, [getSchoolId, isSystemAdmin]);
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(search.toLowerCase()) ||

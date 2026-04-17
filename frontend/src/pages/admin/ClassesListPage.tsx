@@ -4,19 +4,23 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Eye, Edit } from 'lucide-react';
+import { Search, Eye, Edit } from 'lucide-react';
 import { classService } from '@/services/api';
+import { useAuthStore } from '@/stores/auth';
 import type { Class } from '@/types';
 
 export function ClassesListPage() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const getSchoolId = useAuthStore((state) => state.getSchoolId);
+  const isSystemAdmin = useAuthStore((state) => state.isSystemAdmin);
 
   useEffect(() => {
     async function fetchClasses() {
       try {
-        const { data } = await classService.getAll({ limit: 50 });
+        const schoolId = isSystemAdmin() ? undefined : getSchoolId();
+        const { data } = await classService.getAll({ limit: 100, schoolId });
         setClasses((data as { data?: Class[] })?.data || []);
       } catch (error) {
         console.error('Failed to fetch classes:', error);
@@ -25,7 +29,7 @@ export function ClassesListPage() {
       }
     }
     fetchClasses();
-  }, []);
+  }, [getSchoolId, isSystemAdmin]);
 
   const filteredClasses = classes.filter(cls =>
     cls.name.toLowerCase().includes(search.toLowerCase()) ||

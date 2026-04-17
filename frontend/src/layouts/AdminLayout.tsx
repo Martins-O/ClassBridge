@@ -25,7 +25,7 @@ import {
 import { useAuthStore } from '@/stores/auth';
 import { notificationService } from '@/services/api';
 
-const navigation = [
+const systemAdminNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Schools', href: '/schools', icon: Building2 },
   { name: 'Approvals', href: '/approvals', icon: FileText },
@@ -38,10 +38,23 @@ const navigation = [
   { name: 'Reports', href: '/reports', icon: BarChart3 },
 ];
 
+const schoolAdminNavigation = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Users', href: '/users', icon: Users },
+  { name: 'Classes', href: '/classes', icon: GraduationCap },
+  { name: 'Courses', href: '/courses', icon: BookOpen },
+  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'School Reports', href: '/school-reports', icon: BarChart3 },
+];
+
 export function AdminLayout() {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const isSystemAdmin = useAuthStore((state) => state.isSystemAdmin);
+  const isSchoolAdmin = useAuthStore((state) => state.isSchoolAdmin);
+  
+  const navigation = isSystemAdmin() ? systemAdminNavigation : schoolAdminNavigation;
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);

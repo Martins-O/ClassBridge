@@ -19,6 +19,7 @@ import * as auditController from '@/controllers/audit';
 import * as settingsController from '@/controllers/settings';
 import * as systemController from '@/controllers/system';
 import * as reportsController from '@/controllers/reports';
+import * as schoolReportController from '@/controllers/schoolReport';
 import uploadRoutes from './upload';
 import { csrfProtection } from '@/middleware/csrf';
 import { jwtAuthMiddleware, optionalAuthMiddleware, AuthenticatedRequest } from '@/lib/auth';
@@ -541,6 +542,9 @@ router.get('/schools/:id', jwtAuthMiddleware, asyncHandler(schoolsController.get
 router.put('/schools/:id', systemAdminHandler(schoolsController.updateSchool));
 router.patch('/schools/:id/status', systemAdminHandler(schoolsController.updateSchoolStatus));
 router.get('/schools/:id/stats', jwtAuthMiddleware, asyncHandler(schoolsController.getSchoolStats));
+router.get('/schools/:id/report', jwtAuthMiddleware, asyncHandler(schoolReportController.getSchoolReport));
+router.get('/schools/:id/activity', jwtAuthMiddleware, asyncHandler(schoolReportController.getSchoolActivity));
+router.get('/schools/:id/audit-export', jwtAuthMiddleware, asyncHandler(schoolReportController.exportSchoolAuditCsv));
 
 // School Approval Routes
 router.post('/schools/request', asyncHandler(approvalsController.requestSchool));

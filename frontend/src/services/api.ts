@@ -76,7 +76,7 @@ export const authService = {
 };
 
 export const userService = {
-  getAll: (params?: { page?: number; limit?: number }) =>
+  getAll: (params?: { page?: number; limit?: number; schoolId?: string | null }) =>
     api.get<PaginatedResponse<User>>('/users', { params }),
   
   getById: (id: string) =>
@@ -130,7 +130,7 @@ export const classService = {
 };
 
 export const courseService = {
-  getAll: (params?: { classId?: string; page?: number; limit?: number }) =>
+  getAll: (params?: { classId?: string; schoolId?: string | null; page?: number; limit?: number }) =>
     api.get<PaginatedResponse<Course>>('/courses', { params }),
   
   getById: (id: string) =>
@@ -372,6 +372,44 @@ export const reportsService = {
     resource?: string;
   }) =>
     api.get('/reports/audit', { params: { ...params, format: 'csv' }, responseType: 'blob' }),
+};
+
+export interface SchoolReport {
+  success: boolean;
+  schoolId: string;
+  schoolName: string;
+  totalStudents: number;
+  totalMentors: number;
+  totalClasses: number;
+  totalCourses: number;
+  activeStudents: number;
+  activeMentors: number;
+  totalLogins: number;
+  totalActions: number;
+  byRole: Record<string, number>;
+  byAction: Record<string, number>;
+  recentActivity: Array<{
+    _id: string;
+    userId: string;
+    userEmail: string;
+    action: string;
+    resource: string;
+    timestamp: string;
+  }>;
+}
+
+export const schoolReportsService = {
+  getSchoolReport: (schoolId: string) =>
+    api.get<SchoolReport>(`/schools/${schoolId}/report`),
+  
+  getSchoolActivity: (schoolId: string, params?: {
+    startDate?: string;
+    endDate?: string;
+  }) =>
+    api.get<ActivityReport>(`/schools/${schoolId}/activity`, { params }),
+  
+  exportSchoolAuditCsv: (schoolId: string) =>
+    api.get(`/schools/${schoolId}/audit-export`, { responseType: 'blob' }),
 };
 
 export default api;

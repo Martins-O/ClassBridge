@@ -22,12 +22,25 @@ import { SettingsPage } from './pages/admin/SettingsPage';
 import { AuditLogsPage } from './pages/admin/AuditLogsPage';
 import { SystemStatusPage } from './pages/admin/SystemStatusPage';
 import { ReportsPage } from './pages/admin/ReportsPage';
+import { SchoolReportsPage } from './pages/admin/SchoolReportsPage';
 
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
+function SystemAdminRoute({ children }: { children: React.ReactNode }) {
+  const isSystemAdmin = useAuthStore((state) => state.isSystemAdmin);
+  if (!isSystemAdmin()) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
+
+function SchoolAdminRoute({ children }: { children: React.ReactNode }) {
+  const isSchoolAdmin = useAuthStore((state) => state.isSchoolAdmin);
+  if (!isSchoolAdmin()) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -56,7 +69,9 @@ function App() {
             path="/schools"
             element={
               <ProtectedRoute>
-                <AdminLayout />
+                <SystemAdminRoute>
+                  <AdminLayout />
+                </SystemAdminRoute>
               </ProtectedRoute>
             }
           >
@@ -69,7 +84,9 @@ function App() {
             path="/approvals"
             element={
               <ProtectedRoute>
-                <AdminLayout />
+                <SystemAdminRoute>
+                  <AdminLayout />
+                </SystemAdminRoute>
               </ProtectedRoute>
             }
           >
@@ -128,7 +145,9 @@ function App() {
             path="/audit-logs"
             element={
               <ProtectedRoute>
-                <AdminLayout />
+                <SystemAdminRoute>
+                  <AdminLayout />
+                </SystemAdminRoute>
               </ProtectedRoute>
             }
           >
@@ -139,7 +158,9 @@ function App() {
             path="/system-status"
             element={
               <ProtectedRoute>
-                <AdminLayout />
+                <SystemAdminRoute>
+                  <AdminLayout />
+                </SystemAdminRoute>
               </ProtectedRoute>
             }
           >
@@ -150,11 +171,26 @@ function App() {
             path="/reports"
             element={
               <ProtectedRoute>
-                <AdminLayout />
+                <SystemAdminRoute>
+                  <AdminLayout />
+                </SystemAdminRoute>
               </ProtectedRoute>
             }
           >
             <Route index element={<ReportsPage />} />
+          </Route>
+
+          <Route
+            path="/school-reports"
+            element={
+              <ProtectedRoute>
+                <SchoolAdminRoute>
+                  <AdminLayout />
+                </SchoolAdminRoute>
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<SchoolReportsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

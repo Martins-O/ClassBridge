@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Users, GraduationCap, FileText, CheckCircle, Settings, Shield, Clock, AlertCircle } from 'lucide-react';
-import { approvalService, auditService } from '@/services/api';
+import { Building2, Users, GraduationCap, FileText, CheckCircle, Settings, Shield, Clock, AlertCircle, BookOpen } from 'lucide-react';
+import { approvalService, auditService, schoolReportsService } from '@/services/api';
+import { useAuthStore } from '@/stores/auth';
 import api from '@/services/api';
 
 interface Stats {
@@ -15,6 +16,16 @@ interface Stats {
   totalClasses: number;
   approvedSchools: number;
   pendingSchools: number;
+  totalCourses: number;
+}
+
+interface SchoolStats {
+  totalStudents: number;
+  totalMentors: number;
+  totalClasses: number;
+  totalCourses: number;
+  activeStudents: number;
+  activeMentors: number;
 }
 
 interface RecentActivity {
@@ -26,6 +37,11 @@ interface RecentActivity {
 }
 
 export function DashboardPage() {
+  const isSystemAdmin = useAuthStore((state) => state.isSystemAdmin);
+  const isSchoolAdmin = useAuthStore((state) => state.isSchoolAdmin);
+  const getSchoolId = useAuthStore((state) => state.getSchoolId);
+  const user = useAuthStore((state) => state.user);
+  
   const [stats, setStats] = useState<Stats>({
     totalSchools: 0,
     totalStudents: 0,
@@ -35,48 +51,68 @@ export function DashboardPage() {
     totalClasses: 0,
     approvedSchools: 0,
     pendingSchools: 0,
+    totalCourses: 0,
   });
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([
-    { id: '1', action: 'LOGIN', description: 'Super Admin logged in', timestamp: new Date().toISOString(), type: 'user' },
-    { id: '2', action: 'SCHOOL_APPROVED', description: 'Approved school: ABC Academy', timestamp: new Date(Date.now() - 3600000).toISOString(), type: 'approval' },
-    { id: '3', action: 'USER_CREATED', description: 'New user registered: John Doe', timestamp: new Date(Date.now() - 7200000).toISOString(), type: 'user' },
-    { id: '4', action: 'SCHOOL_REGISTERED', description: 'New school registration: XYZ School', timestamp: new Date(Date.now() - 10800000).toISOString(), type: 'school' },
-    { id: '5', action: 'LOGIN', description: 'Admin User logged in', timestamp: new Date(Date.now() - 14400000).toISOString(), type: 'user' },
-  ]);
+  const [schoolStats, setSchoolStats] = useState<SchoolStats | null>(null);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [statsRes, approvalsRes, auditRes] = await Promise.all([
-          api.get<{ stats: any }>('/stats/global'),
-          approvalService.getPending(),
-          auditService.getRecent(5),
-        ]);
+        if (isSystemAdmin()) {
+          const [statsRes, approvalsRes, auditRes] = await Promise.all([
+            api.get<{ stats: any }>('/stats/global'),
+            approvalService.getPending(),
+            auditService.getRecent(5),
+          ]);
 
-        const statsData = statsRes.data?.stats;
-        const approvalsData = approvalsRes.data;
-        const auditData = auditRes.data;
+          const statsData = statsRes.data?.stats;
+          const auditData = auditRes.data;
 
-        setStats({
-          totalSchools: statsData?.totalSchools || 0,
-          totalStudents: statsData?.totalStudents || 0,
-          totalMentors: statsData?.totalMentors || 0,
-          totalStaff: statsData?.totalStaff || 0,
-          pendingApprovals: statsData?.pendingSchoolApprovals || 0,
-          totalClasses: statsData?.totalClasses || 0,
-          approvedSchools: statsData?.totalApprovedSchools || 0,
-          pendingSchools: statsData?.totalPendingSchools || 0,
-        });
+          setStats({
+            totalSchools: statsData?.totalSchools || 0,
+            totalStudents: statsData?.totalStudents || 0,
+            totalMentors: statsData?.totalMentors || 0,
+            totalStaff: statsData?.totalStaff || 0,
+            pendingApprovals: statsData?.pendingSchoolApprovals || 0,
+            totalClasses: statsData?.totalClasses || 0,
+            approvedSchools: statsData?.totalApprovedSchools || 0,
+            pendingSchools: statsData?.totalPendingSchools || 0,
+            totalCourses: statsData?.totalCourses || 0,
+          });
 
-        if (auditData?.logs) {
-          setRecentActivity(auditData.logs.map((log: any) => ({
-            id: log._id,
-            action: log.action,
-            description: log.description || `${log.action} on ${log.resource}`,
-            timestamp: log.createdAt,
-            type: log.resource as any,
-          })));
+          if (auditData?.logs) {
+            setRecentActivity(auditData.logs.map((log: any) => ({
+              id: log._id,
+              action: log.action,
+              description: log.description || `${log.action} on ${log.resource}`,
+              timestamp: log.createdAt,
+              type: log.resource as any,
+            })));
+          }
+        } else if (isSchoolAdmin()) {
+          const schoolId = getSchoolId();
+          if (schoolId) {
+            const reportRes = await schoolReportsService.getSchoolReport(schoolId);
+            if (reportRes.data) {
+              setSchoolStats({
+                totalStudents: reportRes.data.totalStudents || 0,
+                totalMentors: reportRes.data.totalMentors || 0,
+                totalClasses: reportRes.data.totalClasses || 0,
+                totalCourses: reportRes.data.totalCourses || 0,
+                activeStudents: reportRes.data.activeStudents || 0,
+                activeMentors: reportRes.data.activeMentors || 0,
+              });
+              setRecentActivity(reportRes.data.recentActivity?.slice(0, 5).map((log: any) => ({
+                id: log._id,
+                action: log.action,
+                description: `${log.userEmail} - ${log.action}`,
+                timestamp: log.timestamp,
+                type: 'school' as const,
+              })) || []);
+            }
+          }
         }
       } catch (error) {
         console.error('Failed to fetch stats:', error);
@@ -85,9 +121,9 @@ export function DashboardPage() {
       }
     }
     fetchData();
-  }, []);
+  }, [isSystemAdmin, isSchoolAdmin, getSchoolId]);
 
-  const statCards = [
+  const systemAdminStatCards = [
     {
       title: 'Total Schools',
       value: stats.totalSchools,
@@ -122,10 +158,61 @@ export function DashboardPage() {
     },
   ];
 
-  const quickActions = [
+  const schoolAdminStatCards = schoolStats ? [
+    {
+      title: 'Students',
+      value: schoolStats.totalStudents,
+      icon: Users,
+      description: 'Total students',
+      href: '/users',
+      color: 'bg-blue-500',
+    },
+    {
+      title: 'Active Students',
+      value: schoolStats.activeStudents,
+      icon: CheckCircle,
+      description: 'Currently active',
+      href: '/users',
+      color: 'bg-green-500',
+    },
+    {
+      title: 'Mentors',
+      value: schoolStats.totalMentors,
+      icon: Users,
+      description: 'Total mentors',
+      href: '/users',
+      color: 'bg-teal-500',
+    },
+    {
+      title: 'Classes',
+      value: schoolStats.totalClasses,
+      icon: GraduationCap,
+      description: 'Total classes',
+      href: '/classes',
+      color: 'bg-purple-500',
+    },
+    {
+      title: 'Courses',
+      value: schoolStats.totalCourses,
+      icon: BookOpen,
+      description: 'Total courses',
+      href: '/courses',
+      color: 'bg-orange-500',
+    },
+  ] : [];
+
+  const systemAdminQuickActions = [
     { name: 'View Schools', href: '/schools', icon: Building2 },
     { name: 'View Approvals', href: '/approvals', icon: CheckCircle },
     { name: 'Audit Logs', href: '/audit-logs', icon: Shield },
+    { name: 'Settings', href: '/settings', icon: Settings },
+  ];
+
+  const schoolAdminQuickActions = [
+    { name: 'View Users', href: '/users', icon: Users },
+    { name: 'View Classes', href: '/classes', icon: GraduationCap },
+    { name: 'View Courses', href: '/courses', icon: BookOpen },
+    { name: 'School Reports', href: '/school-reports', icon: FileText },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
@@ -148,17 +235,26 @@ export function DashboardPage() {
     );
   }
 
+  const isAdmin = isSystemAdmin();
+  const displayStats = isAdmin ? systemAdminStatCards : schoolAdminStatCards;
+  const quickActions = isAdmin ? systemAdminQuickActions : schoolAdminQuickActions;
+
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-6 text-white">
-        <h1 className="text-2xl font-bold">System Admin Dashboard</h1>
-        <p className="text-blue-100 mt-1">Welcome back! Here's an overview of your system.</p>
+      <div className={`rounded-lg p-6 text-white ${isAdmin ? 'bg-gradient-to-r from-blue-600 to-blue-800' : 'bg-gradient-to-r from-green-600 to-green-800'}`}>
+        <h1 className="text-2xl font-bold">{isAdmin ? 'System Admin Dashboard' : 'School Admin Dashboard'}</h1>
+        <p className={`mt-1 ${isAdmin ? 'text-blue-100' : 'text-green-100'}`}>
+          {isAdmin 
+            ? "Welcome back! Here's an overview of your system." 
+            : `Welcome back! Here's an overview of ${user?.schoolName || 'your school'}.`
+          }
+        </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat) => (
+      <div className={`grid gap-4 ${isAdmin ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5'}`}>
+        {displayStats.map((stat) => (
           <Link key={stat.title} to={stat.href}>
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-6">
@@ -179,33 +275,34 @@ export function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Schools by Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Schools Overview</CardTitle>
-            <CardDescription>Schools by status</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Badge variant="success">{stats.approvedSchools}</Badge>
-                <span className="text-gray-600">Approved</span>
+        {isAdmin && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Schools Overview</CardTitle>
+              <CardDescription>Schools by status</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge variant="success">{stats.approvedSchools}</Badge>
+                  <span className="text-gray-600">Approved</span>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Badge variant="warning">{stats.pendingSchools}</Badge>
-                <span className="text-gray-600">Pending</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge variant="warning">{stats.pendingSchools}</Badge>
+                  <span className="text-gray-600">Pending</span>
+                </div>
               </div>
-            </div>
-            <Link to="/schools" className="block mt-4 text-center text-sm text-blue-600 hover:underline">
-              View All Schools →
-            </Link>
-          </CardContent>
-        </Card>
+              <Link to="/schools" className="block mt-4 text-center text-sm text-blue-600 hover:underline">
+                View All Schools →
+              </Link>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quick Actions */}
-        <Card>
+        <Card className={isAdmin ? '' : 'lg:col-span-3'}>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
             <CardDescription>Common tasks</CardDescription>
@@ -224,8 +321,8 @@ export function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Pending Approvals Alert */}
-        {stats.pendingApprovals > 0 && (
+        {/* Pending Approvals Alert (System Admin only) */}
+        {isAdmin && stats.pendingApprovals > 0 && (
           <Card className="border-yellow-300 bg-yellow-50">
             <CardHeader className="py-3">
               <CardTitle className="flex items-center gap-2 text-yellow-800">
@@ -252,30 +349,14 @@ export function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Latest system events</CardDescription>
+          <CardDescription>{isAdmin ? 'Latest system events' : 'Latest events in your school'}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {recentActivity.slice(0, 5).map((activity) => (
               <div key={activity.id} className="flex items-start gap-4">
-                <div
-                  className={`p-2 rounded-full ${
-                    activity.type === 'school'
-                      ? 'bg-blue-100'
-                      : activity.type === 'user'
-                      ? 'bg-green-100'
-                      : 'bg-yellow-100'
-                  }`}
-                >
-                  <FileText
-                    className={`h-4 w-4 ${
-                      activity.type === 'school'
-                        ? 'text-blue-600'
-                        : activity.type === 'user'
-                        ? 'text-green-600'
-                        : 'text-yellow-600'
-                    }`}
-                  />
+                <div className="p-2 rounded-full bg-blue-100">
+                  <FileText className="h-4 w-4 text-blue-600" />
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-gray-900">{activity.description}</p>
@@ -283,10 +364,19 @@ export function DashboardPage() {
                 </div>
               </div>
             ))}
+            {recentActivity.length === 0 && (
+              <p className="text-gray-500 text-center py-4">No recent activity</p>
+            )}
           </div>
-          <Link to="/audit-logs" className="block mt-4 text-center text-sm text-blue-600 hover:underline">
-            View All Activity →
-          </Link>
+          {isAdmin ? (
+            <Link to="/audit-logs" className="block mt-4 text-center text-sm text-blue-600 hover:underline">
+              View All Activity →
+            </Link>
+          ) : (
+            <Link to="/school-reports" className="block mt-4 text-center text-sm text-blue-600 hover:underline">
+              View Full Reports →
+            </Link>
+          )}
         </CardContent>
       </Card>
     </div>

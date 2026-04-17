@@ -14,11 +14,17 @@ interface AuthState {
   setLoading: (loading: boolean) => void;
   login: (user: User, accessToken: string, refreshToken: string) => void;
   logout: () => void;
+  
+  isSystemAdmin: () => boolean;
+  isSchoolAdmin: () => boolean;
+  isMentor: () => boolean;
+  isStudent: () => boolean;
+  getSchoolId: () => string | null;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
       refreshToken: null,
@@ -51,6 +57,31 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: null, 
           isAuthenticated: false 
         });
+      },
+      
+      isSystemAdmin: () => {
+        const user = get().user;
+        return user?.role === 'system_admin';
+      },
+      
+      isSchoolAdmin: () => {
+        const user = get().user;
+        return user?.role === 'school_admin';
+      },
+      
+      isMentor: () => {
+        const user = get().user;
+        return user?.role === 'mentor';
+      },
+      
+      isStudent: () => {
+        const user = get().user;
+        return user?.role === 'student';
+      },
+      
+      getSchoolId: () => {
+        const user = get().user;
+        return user?.schoolId || null;
       },
     }),
     {
