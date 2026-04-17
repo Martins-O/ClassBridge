@@ -143,7 +143,7 @@ router.get('/health/ready', asyncHandler(healthController.getReadiness));
  *       403:
  *         description: Forbidden
  */
-router.get('/system/status', systemController.systemStatusHandler());
+router.get('/system/status', systemAdminHandler(systemController.getSystemStatus));
 
 /**
  * @swagger
@@ -161,7 +161,7 @@ router.get('/system/status', systemController.systemStatusHandler());
  *       403:
  *         description: Forbidden
  */
-router.get('/system/metrics', systemController.systemMetricsHandler());
+router.get('/system/metrics', systemAdminHandler(systemController.getSystemMetrics));
 
 /**
  * @swagger

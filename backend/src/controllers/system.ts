@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { systemService } from '../services/system.service';
-import { requireSystemAdmin } from '../lib/authorization';
 
 export async function getSystemStatus(req: Request, res: Response) {
   try {
@@ -38,16 +37,4 @@ export async function getSystemMetrics(req: Request, res: Response) {
       error: 'Failed to get system metrics' 
     });
   }
-}
-
-export function systemStatusHandler() {
-  return [requireSystemAdmin(), async (req: Request, res: Response) => {
-    await getSystemStatus(req, res);
-  }];
-}
-
-export function systemMetricsHandler() {
-  return [requireSystemAdmin(), async (req: Request, res: Response) => {
-    await getSystemMetrics(req, res);
-  }];
 }
