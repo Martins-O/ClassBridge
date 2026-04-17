@@ -11,6 +11,7 @@ export function SystemStatusPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [chartsReady, setChartsReady] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -41,6 +42,13 @@ export function SystemStatusPage() {
     const interval = setInterval(fetchData, POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [fetchData]);
+
+  useEffect(() => {
+    if (metrics?.history && metrics.history.length > 0) {
+      const timer = setTimeout(() => setChartsReady(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [metrics]);
 
   const getStatusColor = (apiStatus: string) => {
     switch (apiStatus) {
@@ -273,57 +281,69 @@ export function SystemStatusPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg border p-4">
           <h3 className="text-lg font-semibold mb-4">Memory History</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={metrics?.history || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="timestamp"
-                  tickFormatter={(val) => new Date(val).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  fontSize={12}
-                />
-                <YAxis fontSize={12} />
-                <Tooltip
-                  labelFormatter={(val) => new Date(val).toLocaleString()}
-                  formatter={(value) => [`${value} MB`, 'Memory']}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="memoryUsed"
-                  stroke="#8b5cf6"
-                  fill="#8b5cf6"
-                  fillOpacity={0.3}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="h-64 min-h-[256px]">
+            {chartsReady && metrics?.history && metrics.history.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={metrics.history}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="timestamp"
+                    tickFormatter={(val) => new Date(val).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    fontSize={12}
+                  />
+                  <YAxis fontSize={12} />
+                  <Tooltip
+                    labelFormatter={(val) => new Date(val).toLocaleString()}
+                    formatter={(value) => [`${value} MB`, 'Memory']}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="memoryUsed"
+                    stroke="#8b5cf6"
+                    fill="#8b5cf6"
+                    fillOpacity={0.3}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-400">
+                Collecting data...
+              </div>
+            )}
           </div>
         </div>
 
         <div className="bg-white rounded-lg border p-4">
           <h3 className="text-lg font-semibold mb-4">Request Activity</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={metrics?.history || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="timestamp"
-                  tickFormatter={(val) => new Date(val).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  fontSize={12}
-                />
-                <YAxis fontSize={12} />
-                <Tooltip
-                  labelFormatter={(val) => new Date(val).toLocaleString()}
-                  formatter={(value) => [`${value}`, 'Connections']}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="activeConnections"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="h-64 min-h-[256px]">
+            {chartsReady && metrics?.history && metrics.history.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={metrics.history}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="timestamp"
+                    tickFormatter={(val) => new Date(val).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    fontSize={12}
+                  />
+                  <YAxis fontSize={12} />
+                  <Tooltip
+                    labelFormatter={(val) => new Date(val).toLocaleString()}
+                    formatter={(value) => [`${value}`, 'Connections']}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="activeConnections"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-400">
+                Collecting data...
+              </div>
+            )}
           </div>
         </div>
       </div>
