@@ -222,9 +222,9 @@ export class AuthService extends BaseService {
       throw new Error('User with this email already exists');
     }
 
-    const existingSchool = await School.findOne({ name: data.schoolName });
+    const existingSchool = await School.findOne({ name: { $regex: new RegExp(`^${data.schoolName}$`, 'i') } });
     if (existingSchool) {
-      throw new Error('A school with this name already exists');
+      throw new Error('A school with this name already exists. Please choose a different name.');
     }
 
     const hashedPassword = await bcrypt.hash(data.password, SALT_ROUNDS);
