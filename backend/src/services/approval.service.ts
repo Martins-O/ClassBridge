@@ -130,34 +130,26 @@ export class ApprovalService {
     }
 
     if (approval.requestedBy) {
-      try {
-        const requestedById = approval.requestedBy.toString();
-        await userRepository.updateById(requestedById, {
-          isApproved: true,
+      const requestedById = approval.requestedBy.toString();
+      await userRepository.updateById(requestedById, {
+        isApproved: true,
+      });
+
+      const adminUser = await userRepository.findById(requestedById);
+      if (adminUser && String(adminUser.role) !== 'system_admin') {
+        await notificationRepository.create({
+          userId: adminUser._id,
+          title: 'School Approved',
+          message: `Your school "${approval.schoolName}" has been approved. You can now access all features.`,
+          type: 'school_approved',
         });
 
-        const adminUser = await userRepository.findById(requestedById);
-        if (adminUser && String(adminUser.role) !== 'system_admin') {
-          await notificationRepository.create({
-            userId: adminUser._id,
-            title: 'School Approved',
-            message: `Your school "${approval.schoolName}" has been approved. You can now access all features.`,
-            type: 'school_approved',
-          });
-
-          try {
-            const email = generateSchoolApprovedNotificationEmail({
-              recipientEmail: adminUser.email,
-              recipientName: adminUser.name,
-              schoolName: approval.schoolName,
-            });
-            await sendEmail(email);
-          } catch (emailError) {
-            console.error('Failed to send approval email:', emailError);
-          }
-        }
-      } catch (e) {
-        console.error('Failed to update user:', e);
+        const email = generateSchoolApprovedNotificationEmail({
+          recipientEmail: adminUser.email,
+          recipientName: adminUser.name,
+          schoolName: approval.schoolName,
+        });
+        await sendEmail(email);
       }
     }
 
@@ -203,17 +195,13 @@ export class ApprovalService {
           type: 'school_rejected',
         });
 
-        try {
-          const email = generateSchoolRejectedNotificationEmail({
-            recipientEmail: adminUser.email,
-            recipientName: adminUser.name,
-            schoolName: approval.schoolName,
-            reason,
-          });
-          await sendEmail(email);
-        } catch (emailError) {
-          console.error('Failed to send rejection email:', emailError);
-        }
+        const email = generateSchoolRejectedNotificationEmail({
+          recipientEmail: adminUser.email,
+          recipientName: adminUser.name,
+          schoolName: approval.schoolName,
+          reason,
+        });
+        await sendEmail(email);
       }
     }
 

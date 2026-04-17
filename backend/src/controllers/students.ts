@@ -160,14 +160,8 @@ export async function inviteStudent(req: Request, res: Response) {
       inviterName: user.name
     });
 
-    // Send invitation email
-    const emailSent = await sendEmail(emailData);
-
-    if (!emailSent) {
-      // If email fails, delete the invitation
-      await StudentInvitation.findByIdAndDelete(invitation._id);
-      return res.status(500).json({ error: 'Failed to send invitation email' });
-    }
+    // Send invitation email (will throw if fails)
+    await sendEmail(emailData);
 
     return res.status(201).json({
       message: 'Invitation sent successfully',
@@ -467,10 +461,10 @@ export async function bulkInviteStudents(req: Request, res: Response) {
             inviterName: user.name
           });
 
-          const emailSent = await sendEmail(emailData);
-          if (emailSent) {
+          try {
+            await sendEmail(emailData);
             results.success.push(invitation.email);
-          } else {
+          } catch (emailError) {
             await StudentInvitation.findByIdAndDelete(invitation._id);
             results.failed.push({ email: invitation.email, error: 'Failed to send email' });
           }

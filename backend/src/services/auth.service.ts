@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
-import { userRepository, schoolRepository } from '@/repositories';
+import { userRepository, schoolRepository, notificationRepository } from '@/repositories';
 import { encodeSessionToken, getSessionCookieName } from '@/lib/session';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken, TokenPayload } from '@/lib/jwt';
 import PasswordResetToken from '@/models/PasswordResetToken';
@@ -10,7 +10,7 @@ import RefreshToken from '@/models/RefreshToken';
 import User from '@/models/User';
 import School from '@/models/School';
 import SchoolApproval from '@/models/SchoolApproval';
-import { sendEmail, generatePasswordResetEmail, generateSchoolRegistrationSubmittedEmail } from '@/lib/email';
+import { sendEmail, generatePasswordResetEmail, generateSchoolRegistrationSubmittedEmail, generateNewSchoolRegistrationAdminEmail } from '@/lib/email';
 import { withTransaction } from '@/lib/mongodb';
 import { BaseService } from './base.service';
 
@@ -258,14 +258,33 @@ export class AuthService extends BaseService {
     user.schoolId = school._id;
     await user.save();
 
-    try {
-      await sendEmail(generateSchoolRegistrationSubmittedEmail({
-        recipientEmail: data.email.toLowerCase(),
-        recipientName: data.name,
+    // Send confirmation email to school admin (must succeed)
+    await sendEmail(generateSchoolRegistrationSubmittedEmail({
+      recipientEmail: data.email.toLowerCase(),
+      recipientName: data.name,
+      schoolName: data.schoolName,
+    }));
+
+    // Notify all system admins
+    const systemAdmins = await User.find({ role: 'system_admin' });
+    for (const admin of systemAdmins) {
+      // Create in-app notification
+      await notificationRepository.create({
+        userId: admin._id,
+        title: 'New School Registration',
+        message: `New school "${data.schoolName}" has registered and is pending your approval.`,
+        type: 'new_registration',
+      });
+
+      // Send email to system admin (must succeed)
+      await sendEmail(generateNewSchoolRegistrationAdminEmail({
+        recipientEmail: admin.email,
+        recipientName: admin.name,
         schoolName: data.schoolName,
+        adminEmail: data.email.toLowerCase(),
+        adminName: data.name,
+        registrationDate: new Date(),
       }));
-    } catch (emailError) {
-      console.error('Failed to send registration email:', emailError);
     }
 
     const { password: _, ...userWithoutPassword } = user.toObject ? user.toObject() : user;

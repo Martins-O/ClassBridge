@@ -39,7 +39,7 @@ export interface PasswordResetEmailData {
   resetToken: string;
 }
 
-export async function sendEmail(emailData: EmailData): Promise<boolean> {
+export async function sendEmail(emailData: EmailData): Promise<void> {
   try {
     const sendSmtpEmail = new brevo.SendSmtpEmail();
 
@@ -61,9 +61,10 @@ export async function sendEmail(emailData: EmailData): Promise<boolean> {
     }
 
     await apiInstance.sendTransacEmail(sendSmtpEmail);
-    return true;
-  } catch {
-    return false;
+    console.log(`[Email] Sent to ${emailData.to}: ${emailData.subject}`);
+  } catch (error) {
+    console.error(`[Email] Failed to send email to ${emailData.to}:`, error);
+    throw new Error(`Failed to send email: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -726,6 +727,68 @@ export function generateSchoolRegistrationSubmittedEmail(data: SchoolRegistratio
     to: data.recipientEmail,
     toName: data.recipientName,
     subject: `School Registration Received - ${data.schoolName}`,
+    htmlContent
+  };
+}
+
+export interface NewSchoolRegistrationAdminData {
+  recipientEmail: string;
+  recipientName: string;
+  schoolName: string;
+  adminEmail: string;
+  adminName: string;
+  registrationDate: Date;
+}
+
+export function generateNewSchoolRegistrationAdminEmail(data: NewSchoolRegistrationAdminData): EmailData {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #fef3c7; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; }
+        .header { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 30px; border-radius: 8px; text-align: center; }
+        .content { padding: 20px 0; }
+        .info-box { background: #fef9c3; border: 1px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .info-item { margin: 10px 0; }
+        .cta-button { display: inline-block; background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 20px; }
+        .footer { text-align: center; color: #64748b; font-size: 14px; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🏫 New School Registration</h1>
+        </div>
+        <div class="content">
+          <p>Hello <strong>${data.recipientName}</strong>,</p>
+          <p>A new school has registered on ClassBridge and requires your approval.</p>
+          <div class="info-box">
+            <div class="info-item"><strong>School Name:</strong> ${data.schoolName}</div>
+            <div class="info-item"><strong>Admin Name:</strong> ${data.adminName}</div>
+            <div class="info-item"><strong>Admin Email:</strong> ${data.adminEmail}</div>
+            <div class="info-item"><strong>Registration Date:</strong> ${new Date(data.registrationDate).toLocaleDateString()}</div>
+          </div>
+          <p>Please review the registration and approve or reject it.</p>
+          <div style="text-align: center;">
+            <a href="${baseUrl}/approvals" class="cta-button">Review Registrations</a>
+          </div>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} ClassBridge</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return {
+    to: data.recipientEmail,
+    toName: data.recipientName,
+    subject: `New School Registration - ${data.schoolName}`,
     htmlContent
   };
 }

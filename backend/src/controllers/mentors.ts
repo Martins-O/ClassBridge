@@ -182,14 +182,8 @@ export async function createMentor(req: Request, res: Response) {
       inviterName: currentUser.name
     });
 
-    // Send invitation email
-    const emailSent = await sendEmail(emailData);
-
-    if (!emailSent) {
-      // If email fails, delete the invitation
-      await MentorInvitation.findByIdAndDelete(invitation._id);
-      return res.status(500).json({ error: 'Failed to send invitation email' });
-    }
+    // Send invitation email (will throw if fails)
+    await sendEmail(emailData);
 
     return res.status(201).json({
       message: 'Mentor invitation sent successfully',
