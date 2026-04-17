@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, Activity, Server, Database, Cpu, MemoryStick, Users, Zap, AlertTriangle } from 'lucide-react';
-import { systemService, SystemStatus, SystemMetrics } from '../../services/api';
+import { systemService, SystemStatus, SystemMetrics } from '@/services/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
 const POLL_INTERVAL = 30000;
