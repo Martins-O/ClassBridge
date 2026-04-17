@@ -674,6 +674,62 @@ export function generateWelcomeEmail(data: WelcomeEmailData): EmailData {
   };
 }
 
+export interface SchoolRegistrationSubmittedData {
+  recipientEmail: string;
+  recipientName: string;
+  schoolName: string;
+}
+
+export function generateSchoolRegistrationSubmittedEmail(data: SchoolRegistrationSubmittedData): EmailData {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #eff6ff; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; }
+        .header { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; padding: 30px; border-radius: 8px; text-align: center; }
+        .content { padding: 20px 0; }
+        .info-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .footer { text-align: center; color: #64748b; font-size: 14px; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🏫 Registration Submitted</h1>
+        </div>
+        <div class="content">
+          <p>Hello <strong>${data.recipientName}</strong>,</p>
+          <p>Your school registration for <strong>${data.schoolName}</strong> has been submitted and is now pending approval.</p>
+          <div class="info-box">
+            <p style="margin: 0;"><strong>What happens next?</strong></p>
+            <ul style="margin: 10px 0 0; padding-left: 20px;">
+              <li>Our team will review your registration</li>
+              <li>You'll receive an email once approved</li>
+              <li>Approval typically takes 1-2 business days</li>
+            </ul>
+          </div>
+          <p>In the meantime, you can prepare information about your school's courses, classes, and mentors.</p>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} ClassBridge</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return {
+    to: data.recipientEmail,
+    toName: data.recipientName,
+    subject: `School Registration Received - ${data.schoolName}`,
+    htmlContent
+  };
+}
+
 export interface SchoolApprovedNotificationData {
   recipientEmail: string;
   recipientName: string;

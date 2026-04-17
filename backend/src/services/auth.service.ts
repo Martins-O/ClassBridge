@@ -8,7 +8,9 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken, TokenPay
 import PasswordResetToken from '@/models/PasswordResetToken';
 import RefreshToken from '@/models/RefreshToken';
 import User from '@/models/User';
-import { sendEmail, generatePasswordResetEmail } from '@/lib/email';
+import School from '@/models/School';
+import SchoolApproval from '@/models/SchoolApproval';
+import { sendEmail, generatePasswordResetEmail, generateSchoolRegistrationSubmittedEmail } from '@/lib/email';
 import { withTransaction } from '@/lib/mongodb';
 import { BaseService } from './base.service';
 
@@ -214,22 +216,57 @@ export class AuthService extends BaseService {
     }
   }
 
-  async register(data: { name: string; email: string; password: string; role?: string }): Promise<any> {
+  async register(data: { name: string; email: string; password: string; schoolName: string; role?: string }): Promise<any> {
     const existingUser = await userRepository.findByEmail(data.email);
     if (existingUser) {
       throw new Error('User with this email already exists');
     }
 
+    const existingSchool = await School.findOne({ name: data.schoolName });
+    if (existingSchool) {
+      throw new Error('A school with this name already exists');
+    }
+
     const hashedPassword = await bcrypt.hash(data.password, SALT_ROUNDS);
 
-    const user = await userRepository.create({
+    const user = await User.create({
       name: data.name,
       email: data.email.toLowerCase(),
       password: hashedPassword,
       role: 'school_admin',
-      isActive: true,
+      isActive: false,
       isApproved: false,
     });
+
+    const school = await School.create({
+      name: data.schoolName,
+      email: data.email.toLowerCase(),
+      adminId: user._id,
+      status: 'pending',
+      isActive: false,
+    });
+
+    await SchoolApproval.create({
+      schoolId: school._id,
+      schoolName: data.schoolName,
+      schoolEmail: data.email.toLowerCase(),
+      requestedBy: user._id,
+      adminName: data.name,
+      status: 'pending',
+    });
+
+    user.schoolId = school._id;
+    await user.save();
+
+    try {
+      await sendEmail(generateSchoolRegistrationSubmittedEmail({
+        recipientEmail: data.email.toLowerCase(),
+        recipientName: data.name,
+        schoolName: data.schoolName,
+      }));
+    } catch (emailError) {
+      console.error('Failed to send registration email:', emailError);
+    }
 
     const { password: _, ...userWithoutPassword } = user.toObject ? user.toObject() : user;
     return userWithoutPassword;

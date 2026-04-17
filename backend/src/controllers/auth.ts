@@ -203,6 +203,7 @@ export async function register(req: Request, res: Response) {
       ...validateEmail(userData.email, 'email'),
       ...validateString(userData.password, 'password', { required: true, minLength: 8, maxLength: 128 }),
       ...validatePasswordStrength(userData.password),
+      ...validateString(userData.schoolName, 'schoolName', { required: true, minLength: 2, maxLength: 200 }),
     );
 
     if (userData.role) {
@@ -218,9 +219,10 @@ export async function register(req: Request, res: Response) {
 
     const name = sanitizeString(userData.name);
     const email = sanitizeEmail(userData.email);
+    const schoolName = sanitizeString(userData.schoolName);
 
     try {
-      const user = await authService.register({ name, email, password: userData.password });
+      const user = await authService.register({ name, email, password: userData.password, schoolName });
 
       return res.status(201).json({
         success: true,
