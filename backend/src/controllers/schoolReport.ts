@@ -7,6 +7,22 @@ import AuditLog from '../models/AuditLog';
 import School from '../models/School';
 import { isSystemAdmin, isSchoolAdmin } from '@/lib/permissions';
 
+interface LeanAuditLog {
+  _id: any;
+  userId: any;
+  userEmail: string;
+  action: string;
+  resource: string;
+  resourceId?: string;
+  timestamp: Date;
+}
+
+interface LeanUser {
+  _id: any;
+  role: string;
+  isActive: boolean;
+}
+
 export async function getSchoolReport(req: Request, res: Response) {
   try {
     const { id } = req.params;
@@ -25,37 +41,33 @@ export async function getSchoolReport(req: Request, res: Response) {
       return res.status(404).json({ error: 'School not found' });
     }
 
-    const objectId = new mongoose.Types.ObjectId(id);
-
     const [totalStudents, totalMentors, totalClasses, totalCourses, activeUsers, allUsers] = await Promise.all([
       User.countDocuments({ schoolId: id, role: 'student' }),
       User.countDocuments({ schoolId: id, role: 'mentor' }),
       ClassModel.countDocuments({ schoolId: id }),
       Course.countDocuments({ schoolId: id }),
       User.countDocuments({ schoolId: id, isActive: true }),
-      User.find({ schoolId: id }).lean(),
+      User.find({ schoolId: id }).lean() as unknown as LeanUser[],
     ]);
 
     const activeStudents = allUsers.filter(u => u.role === 'student' && u.isActive).length;
     const activeMentors = allUsers.filter(u => u.role === 'mentor' && u.isActive).length;
 
     const byRole: Record<string, number> = {};
-    allUsers.forEach(user => {
-      byRole[user.role] = (byRole[user.role] || 0) + 1;
+    allUsers.forEach(u => {
+      byRole[u.role] = (byRole[u.role] || 0) + 1;
     });
 
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const [recentLogs, totalLogins] = await Promise.all([
-      AuditLog.find({ resourceId: id })
-        .sort({ timestamp: -1 })
-        .limit(20)
-        .lean(),
-      AuditLog.countDocuments({
-        resourceId: id,
-        action: 'login',
-        timestamp: { $gte: oneWeekAgo }
-      }),
-    ]);
+    const recentLogs = await AuditLog.find({ resourceId: id })
+      .sort({ timestamp: -1 })
+      .limit(20)
+      .lean() as unknown as LeanAuditLog[];
+    const totalLogins = await AuditLog.countDocuments({
+      resourceId: id,
+      action: 'login',
+      timestamp: { $gte: oneWeekAgo }
+    });
 
     const totalActions = recentLogs.length;
 
@@ -79,8 +91,8 @@ export async function getSchoolReport(req: Request, res: Response) {
       byRole,
       byAction,
       recentActivity: recentLogs.map(log => ({
-        _id: log._id.toString(),
-        userId: log.userId,
+        _id: String(log._id),
+        userId: String(log.userId),
         userEmail: log.userEmail,
         action: log.action,
         resource: log.resource,
@@ -111,13 +123,13 @@ export async function getSchoolActivity(req: Request, res: Response) {
     if (startDate) dateFilter.timestamp = { $gte: new Date(startDate as string) };
     if (endDate) dateFilter.timestamp = { ...dateFilter.timestamp, $lte: new Date(endDate as string) };
 
-    const users = await User.find({ schoolId: id }).select('_id').lean();
+    const users = await User.find({ schoolId: id }).select('_id').lean() as unknown as LeanUser[];
     const userIds = users.map(u => u._id);
 
     const logs = await AuditLog.find({
       ...dateFilter,
       userId: { $in: userIds }
-    }).lean();
+    }).lean() as unknown as LeanAuditLog[];
 
     const totalLogins = logs.filter(l => l.action === 'login').length;
     const totalActions = logs.length;
@@ -152,13 +164,13 @@ export async function exportSchoolAuditCsv(req: Request, res: Response) {
       return res.status(403).json({ error: 'Access denied to this school' });
     }
 
-    const users = await User.find({ schoolId: id }).select('_id').lean();
+    const users = await User.find({ schoolId: id }).select('_id').lean() as unknown as LeanUser[];
     const userIds = users.map(u => u._id);
 
     const logs = await AuditLog.find({ userId: { $in: userIds } })
       .sort({ timestamp: -1 })
       .limit(1000)
-      .lean();
+      .lean() as unknown as LeanAuditLog[];
 
     const csvHeader = 'Timestamp,User Email,Action,Resource,Resource ID\n';
     const csvRows = logs.map(log =>
