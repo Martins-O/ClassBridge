@@ -481,15 +481,19 @@ router.post('/auth/2fa/disable', csrfHandler(authController.disableTwoFactor));
  * @swagger
  * /schools:
  *   get:
- *     summary: Get all schools
+ *     summary: Get all schools (system admin only)
  *     tags: [Schools]
  *     security:
- *       - cookieAuth: []
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of schools
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (system admin required)
  */
-router.get('/schools', jwtAuthMiddleware, asyncHandler(schoolsController.getSchools));
+router.get('/schools', systemAdminHandler(schoolsController.getSchools));
 
 /**
  * @swagger
@@ -574,13 +578,130 @@ router.get('/schools/:id/audit-export', jwtAuthMiddleware, asyncHandler(schoolRe
  */
 
 // School Approval Routes
+
+/**
+ * @swagger
+ * /approvals/pending:
+ *   get:
+ *     summary: Get all pending approval requests
+ *     tags: [Approvals]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of pending approvals
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.get('/approvals/pending', systemAdminHandler(approvalsController.getPendingApprovals));
+
+/**
+ * @swagger
+ * /approvals/pending/count:
+ *   get:
+ *     summary: Get count of pending approval requests
+ *     tags: [Approvals]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Count of pending approvals
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.get('/approvals/pending/count', systemAdminHandler(approvalsController.getPendingApprovalCount));
+
+/**
+ * @swagger
+ * /approvals/{id}:
+ *   get:
+ *     summary: Get approval request by ID
+ *     tags: [Approvals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Approval request details
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.get('/approvals/:id', systemAdminHandler(approvalsController.getApprovalById));
+
+/**
+ * @swagger
+ * /approvals/{id}/approve:
+ *   post:
+ *     summary: Approve a school registration request
+ *     tags: [Approvals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: School approved successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.post('/approvals/:id/approve', systemAdminHandler(approvalsController.approveSchool));
+
+/**
+ * @swagger
+ * /approvals/{id}/reject:
+ *   post:
+ *     summary: Reject a school registration request
+ *     tags: [Approvals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: School rejected
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.post('/approvals/:id/reject', systemAdminHandler(approvalsController.rejectSchool));
+
 router.post('/schools/request', jwtAuthMiddleware, asyncHandler(approvalsController.requestSchool));
 router.get('/schools/my-request', jwtAuthMiddleware, asyncHandler(approvalsController.getMySchoolRequest));
-router.get('/approvals/pending', systemAdminHandler(approvalsController.getPendingApprovals));
-router.get('/approvals/pending/count', systemAdminHandler(approvalsController.getPendingApprovalCount));
-router.get('/approvals/:id', jwtAuthMiddleware, asyncHandler(approvalsController.getApprovalById));
-router.post('/approvals/:id/approve', systemAdminHandler(approvalsController.approveSchool));
-router.post('/approvals/:id/reject', systemAdminHandler(approvalsController.rejectSchool));
 
 // Deletion Request Routes
 router.get('/deletion-requests/pending', jwtAuthMiddleware, asyncHandler(deletionRequestsController.getPendingDeletionRequests));
