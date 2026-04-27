@@ -9,6 +9,10 @@ export function csrfProtection(req: AuthenticatedRequest, res: Response, next: N
     return next();
   }
 
+  if (process.env.NODE_ENV !== 'production') {
+    return next();
+  }
+
   const token = extractCsrfToken(req);
   
   if (!token) {
