@@ -726,6 +726,86 @@ router.post('/assessments', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_ASSE
 
 /**
  * @swagger
+ * /assessments/{id}/attempt:
+ *   post:
+ *     summary: Start taking an assessment
+ *     tags: [Assessments]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               respondentId:
+ *                 type: string
+ *               classId:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Assessment attempt created
+ */
+router.post('/assessments/:id/attempt', requirePermissionCsrfHandler(PERMISSIONS.TAKE_ASSESSMENT)(assessmentsController.createAssessmentAttempt));
+
+/**
+ * @swagger
+ * /assessments/attempts/{attemptId}:
+ *   get:
+ *     summary: Get assessment attempt
+ *     tags: [Assessments]
+ *     security:
+ *       - cookieAuth: []
+ *   put:
+ *     summary: Submit/update assessment attempt
+ *     tags: [Assessments]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               answers:
+ *                 type: array
+ *               isComplete:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Attempt updated
+ */
+router.get('/assessments/attempts/:attemptId', jwtAuthMiddleware, asyncHandler(assessmentsController.getAssessmentAttempt));
+router.put('/assessments/attempts/:attemptId', requirePermissionCsrfHandler(PERMISSIONS.TAKE_ASSESSMENT)(assessmentsController.updateAssessmentAttempt));
+
+/**
+ * @swagger
+ * /assessments/{id}/attempts:
+ *   get:
+ *     summary: Get assessment attempts
+ *     tags: [Assessments]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of attempts
+ */
+router.get('/assessments/:id/attempts', jwtAuthMiddleware, asyncHandler(assessmentsController.getAssessmentAttempts));
+
+/**
+ * @swagger
  * /grades:
  *   get:
  *     summary: Get all grades
@@ -793,6 +873,9 @@ router.patch('/users/:id', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_USERS
 router.get('/users/:id/password-status', jwtAuthMiddleware, asyncHandler(usersController.getPasswordStatus));
 router.post('/users/:id/force-password-change', systemAdminHandler(usersController.forcePasswordChange));
 router.post('/users/:id/reset-password', systemAdminHandler(usersController.resetPassword));
+router.post('/users/invite', jwtAuthMiddleware, asyncHandler(usersController.inviteUser));
+router.patch('/users/:id/deactivate', jwtAuthMiddleware, asyncHandler(usersController.deactivateUser));
+router.post('/users/bulk-import', jwtAuthMiddleware, asyncHandler(usersController.bulkImportUsers));
 
 /**
  * @swagger

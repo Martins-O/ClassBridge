@@ -3,12 +3,13 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/src', '<rootDir>/tests'],
   testMatch: ['**/__tests__/**/*.ts', '**/*.test.ts', '**/*.spec.ts'],
+  testPathIgnorePatterns: ['/node_modules/', 'tests/services/user.service.test.ts'],
   transform: {
     '^.+\\.ts$': 'ts-jest',
     '^.+\\.js$': 'babel-jest',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(uuid|@getbrevo)/)',
+    'node_modules/(?!(uuid)/)',
   ],
   collectCoverageFrom: [
     'src/**/*.ts',

@@ -12,6 +12,8 @@ import {
   validateEnum,
   validateNumber
 } from '@/lib/validation';
+import { PERMISSIONS, hasPermission } from '@/lib/permissions';
+import { UserRole } from '@/models/User';
 
 export async function getAssessments(req: Request, res: Response) {
   try {
@@ -266,6 +268,16 @@ export async function createAssessmentAttempt(req: Request, res: Response) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check permission - only students can take assessments
+    if (!hasPermission(user.role as UserRole, PERMISSIONS.TAKE_ASSESSMENT)) {
+      return res.status(403).json({ error: 'You do not have permission to take assessments' });
+    }
+
     const { respondentId, classId } = req.body;
 
     // Get assessment
@@ -408,6 +420,16 @@ export async function updateAssessmentAttempt(req: Request, res: Response) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check permission - only students can take assessments
+    if (!hasPermission(user.role as UserRole, PERMISSIONS.TAKE_ASSESSMENT)) {
+      return res.status(403).json({ error: 'You do not have permission to take assessments' });
+    }
+
     const { answers, isComplete = false } = req.body;
 
     // Get attempt
@@ -417,8 +439,8 @@ export async function updateAssessmentAttempt(req: Request, res: Response) {
       return res.status(404).json({ error: 'Assessment attempt not found' });
     }
 
-    // Check authorization (user must be the assessor)
-    if (attempt.assessorId.toString() !== userId) {
+    // Check authorization - user must be the assessor OR the respondent (for students taking assessment)
+    if (attempt.assessorId.toString() !== userId && attempt.respondentId.toString() !== userId) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
