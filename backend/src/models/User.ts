@@ -60,7 +60,7 @@ const UserSchema = new Schema({
   },
   role: {
     type: String,
-    enum: ['system_admin', 'school_admin', 'mentor', 'student', 'admissions', 'counselor', 'office_staff'],
+    enum: ['system_admin', 'school_admin', 'pending_school_admin', 'mentor', 'student', 'admissions', 'counselor', 'office_staff'],
     required: true,
     default: 'student'
   },
