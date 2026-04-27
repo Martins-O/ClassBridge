@@ -71,7 +71,7 @@ const options: swaggerJsdoc.Options = {
             description: { type: 'string' },
           },
         },
-        ClassCreateRequest: {
+        ClassCreate: {
           type: 'object',
           required: ['name', 'schoolId', 'academicYear', 'duration', 'cohort'],
           properties: {
@@ -87,7 +87,7 @@ const options: swaggerJsdoc.Options = {
             isActive: { type: 'boolean' },
           },
         },
-        CourseCreateRequest: {
+        CourseCreate: {
           type: 'object',
           required: ['name', 'classId'],
           properties: {
@@ -100,7 +100,7 @@ const options: swaggerJsdoc.Options = {
             isActive: { type: 'boolean' },
           },
         },
-        AssessmentCreateRequest: {
+        AssessmentCreate: {
           type: 'object',
           required: ['title', 'classId'],
           properties: {
