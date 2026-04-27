@@ -4,6 +4,7 @@ import { userRepository } from '@/repositories';
 import { schoolRepository } from '@/repositories';
 import { notificationRepository } from '@/repositories';
 import { sendEmail, generateSchoolApprovedNotificationEmail, generateSchoolRejectedNotificationEmail } from '@/lib/email';
+import User from '@/models/User';
 
 export interface CreateSchoolRequestData {
   name: string;
@@ -132,30 +133,41 @@ export class ApprovalService {
     }
 
     if (approval.requestedBy) {
-      const requestedById = approval.requestedBy.toString();
-      await userRepository.updateById(requestedById, {
-        role: 'school_admin',
-        isApproved: true,
-        isActive: true,
-      });
+      try {
+        const requestedById = approval.requestedBy.toString();
+        
+        const user = await User.findByIdAndUpdate(
+          requestedById,
+          {
+            role: 'school_admin',
+            isApproved: true,
+            isActive: true,
+            schoolId: approval.schoolId,
+          },
+          { new: true }
+        );
 
-      const adminUser = await userRepository.findById(requestedById);
-      if (adminUser) {
-        await User.findByIdAndUpdate(requestedById, { schoolId: approval.schoolId });
+        if (user) {
+          await notificationRepository.create({
+            userId: user._id,
+            title: 'School Approved',
+            message: `Your school "${approval.schoolName}" has been approved. You can now access all features.`,
+            type: 'school_approved',
+          });
 
-        await notificationRepository.create({
-          userId: adminUser._id,
-          title: 'School Approved',
-          message: `Your school "${approval.schoolName}" has been approved. You can now access all features.`,
-          type: 'school_approved',
-        });
-
-        const email = generateSchoolApprovedNotificationEmail({
-          recipientEmail: adminUser.email,
-          recipientName: adminUser.name,
-          schoolName: approval.schoolName,
-        });
-        await sendEmail(email);
+          try {
+            const email = generateSchoolApprovedNotificationEmail({
+              recipientEmail: user.email,
+              recipientName: user.name,
+              schoolName: approval.schoolName,
+            });
+            await sendEmail(email);
+          } catch (emailError) {
+            console.error('Failed to send approval email:', emailError);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to update user on approval:', error);
       }
     }
 
