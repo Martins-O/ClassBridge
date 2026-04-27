@@ -17,7 +17,7 @@ const NotificationSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['info', 'success', 'warning', 'error', 'assignment', 'grade', 'invitation'],
+        enum: ['info', 'success', 'warning', 'error', 'assignment', 'grade', 'invitation', 'school_request', 'school_approved', 'school_rejected', 'new_registration', 'deletion_approved', 'deletion_rejected'],
         default: 'info'
     },
     link: {
