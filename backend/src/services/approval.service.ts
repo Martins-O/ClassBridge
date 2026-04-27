@@ -3,7 +3,7 @@ import { approvalRepository } from '@/repositories';
 import { userRepository } from '@/repositories';
 import { schoolRepository } from '@/repositories';
 import { notificationRepository } from '@/repositories';
-import { sendEmail, generateSchoolApprovedNotificationEmail, generateSchoolRejectedNotificationEmail } from '@/lib/email';
+import { sendEmail, generateSchoolApprovedNotificationEmail, generateSchoolRejectedNotificationEmail, generateNewSchoolRegistrationAdminEmail } from '@/lib/email';
 import User from '@/models/User';
 
 export interface CreateSchoolRequestData {
@@ -78,6 +78,20 @@ export class ApprovalService {
         type: 'school_request',
         link: '/approvals',
       });
+
+      try {
+        const adminEmail = generateNewSchoolRegistrationAdminEmail({
+          recipientEmail: admin.email,
+          recipientName: admin.name,
+          schoolName: data.name,
+          adminEmail: data.adminEmail,
+          adminName: data.adminName,
+          registrationDate: new Date(),
+        });
+        await sendEmail(adminEmail);
+      } catch (emailError) {
+        console.error('Failed to send admin notification email:', emailError);
+      }
     }
 
     return {
