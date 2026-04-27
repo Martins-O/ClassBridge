@@ -57,10 +57,15 @@ export async function createSchool(req: Request, res: Response) {
     await connectDB();
 
     const body = req.body;
-    const { name, email, phone, address, website, description, adminId } = body;
+    const { name, email, phone, address, website, description } = body;
 
-    if (!name || !email || !adminId) {
-      return res.status(400).json({ error: 'Name, email, and admin ID are required' });
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required' });
+    }
+
+    const adminId = (req as any).user?.id;
+    if (!adminId) {
+      return res.status(401).json({ error: 'Unauthorized: Admin user not found' });
     }
 
     try {

@@ -1,12 +1,13 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export type UserRole = 
-  | 'system_admin' 
-  | 'school_admin' 
-  | 'mentor' 
-  | 'student' 
-  | 'admissions' 
-  | 'counselor' 
+  | 'system_admin'
+  | 'school_admin'
+  | 'pending_school_admin'
+  | 'mentor'
+  | 'student'
+  | 'admissions'
+  | 'counselor'
   | 'office_staff';
 
 export interface IUser extends Document {

@@ -203,11 +203,10 @@ export async function register(req: Request, res: Response) {
       ...validateEmail(userData.email, 'email'),
       ...validateString(userData.password, 'password', { required: true, minLength: 8, maxLength: 128 }),
       ...validatePasswordStrength(userData.password),
-      ...validateString(userData.schoolName, 'schoolName', { required: true, minLength: 2, maxLength: 200 }),
     );
 
     if (userData.role) {
-      validation.errors.push(...validateEnum(userData.role, 'role', ['student', 'mentor', 'school_admin']));
+      validation.errors.push(...validateEnum(userData.role, 'role', ['student', 'mentor', 'school_admin', 'pending_school_admin']));
     }
 
     if (!validation.isValid()) {
@@ -219,7 +218,7 @@ export async function register(req: Request, res: Response) {
 
     const name = sanitizeString(userData.name);
     const email = sanitizeEmail(userData.email);
-    const schoolName = sanitizeString(userData.schoolName);
+    const schoolName = userData.schoolName ? sanitizeString(userData.schoolName) : undefined;
 
     try {
       const user = await authService.register({ name, email, password: userData.password, schoolName });

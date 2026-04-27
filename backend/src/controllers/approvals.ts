@@ -4,19 +4,25 @@ import { auditService } from '@/services/audit.service';
 import { requireSystemAdmin } from '@/lib/authorization';
 import { AuthRequest } from '@/lib/authorization';
 
-export async function requestSchool(req: Request, res: Response) {
+export async function requestSchool(req: AuthRequest, res: Response) {
   try {
-    const { name, email, phone, address, website, description, adminEmail, adminName, adminPassword } = req.body;
-
-    if (!name || !email || !adminEmail || !adminName || !adminPassword) {
-      return res.status(400).json({
-        error: 'Missing required fields: name, email, adminEmail, adminName, adminPassword are required'
-      });
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ error: 'Authentication required' });
     }
 
-    if (adminPassword.length < 8) {
+    const isPending = user.role === 'pending_school_admin';
+    const isSchoolAdmin = user.role === 'school_admin';
+
+    if (!isPending && !isSchoolAdmin) {
+      return res.status(403).json({ error: 'Only pending or active school administrators can request a school' });
+    }
+
+    const { name, email, phone, address, website, description } = req.body;
+
+    if (!name || !email) {
       return res.status(400).json({
-        error: 'Admin password must be at least 8 characters'
+        error: 'School name and email are required'
       });
     }
 
@@ -27,13 +33,25 @@ export async function requestSchool(req: Request, res: Response) {
       address,
       website,
       description,
-      adminEmail,
-      adminName,
-      adminPassword,
+      adminId: user.userId,
+      adminEmail: user.email,
+      adminName: user.name,
     });
 
     if (!result.success) {
       return res.status(400).json({ error: result.message });
+    }
+
+    if (isSchoolAdmin) {
+      await auditService.logResourceCreation(
+        user.userId,
+        user.email,
+        'school',
+        result.schoolId || '',
+        { action: 'created', name },
+        req.ip || 'unknown',
+        req.headers['user-agent']
+      );
     }
 
     return res.status(201).json({

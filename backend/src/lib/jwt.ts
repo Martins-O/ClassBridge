@@ -31,6 +31,7 @@ const REFRESH_TOKEN_EXPIRY = '7d';
 export interface TokenPayload {
     userId: string;
     email: string;
+    name: string;
     role: string;
     schoolId?: string;
     schoolApproved?: boolean;

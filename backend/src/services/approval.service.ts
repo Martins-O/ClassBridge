@@ -12,9 +12,9 @@ export interface CreateSchoolRequestData {
   address?: string;
   website?: string;
   description?: string;
+  adminId: string;
   adminEmail: string;
   adminName: string;
-  adminPassword: string;
 }
 
 export interface ApprovalResult {
@@ -32,19 +32,14 @@ export class ApprovalService {
       return { success: false, message: 'School with this email already exists' };
     }
 
-    const existingUser = await userRepository.findByEmail(data.adminEmail);
-    if (existingUser) {
-      return { success: false, message: 'User with this email already exists' };
+    const adminUser = await userRepository.findById(data.adminId);
+    if (!adminUser) {
+      return { success: false, message: 'Admin user not found' };
     }
 
-    const user = await userRepository.create({
-      email: data.adminEmail.toLowerCase(),
-      password: data.adminPassword,
-      name: data.adminName,
-      role: 'school_admin',
-      isActive: true,
-      isApproved: false,
-    });
+    if (adminUser.role !== 'pending_school_admin' && adminUser.role !== 'school_admin') {
+      return { success: false, message: 'User must be a school admin to create a school' };
+    }
 
     const school = await schoolRepository.create({
       name: data.name,
@@ -53,19 +48,23 @@ export class ApprovalService {
       address: data.address,
       website: data.website,
       description: data.description,
-      adminId: user._id,
+      adminId: new mongoose.Types.ObjectId(data.adminId),
       status: 'pending',
     });
 
     const approval = await approvalRepository.create({
       schoolId: school._id as mongoose.Types.ObjectId,
-      requestedBy: user._id as mongoose.Types.ObjectId,
+      requestedBy: new mongoose.Types.ObjectId(data.adminId),
       schoolName: data.name,
       schoolEmail: data.email.toLowerCase(),
     });
 
     await schoolRepository.updateById(school._id.toString(), {
       approvalId: approval._id
+    });
+
+    await userRepository.updateById(data.adminId, {
+      schoolId: school._id,
     });
 
     const systemAdmins = await userRepository.findByRole('system_admin');
@@ -84,6 +83,7 @@ export class ApprovalService {
       message: 'School registration request submitted. Awaiting approval from system administrator.',
       schoolId: school._id.toString(),
       approvalId: approval._id.toString(),
+      schoolAdminId: data.adminId,
     };
   }
 

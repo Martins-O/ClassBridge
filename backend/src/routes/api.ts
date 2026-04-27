@@ -488,23 +488,8 @@ router.post('/auth/2fa/disable', csrfHandler(authController.disableTwoFactor));
  *     responses:
  *       200:
  *         description: List of schools
- *   post:
- *     summary: Create new school
- *     tags: [Schools]
- *     security:
- *       - cookieAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/School'
- *     responses:
- *       201:
- *         description: School created
  */
 router.get('/schools', jwtAuthMiddleware, asyncHandler(schoolsController.getSchools));
-router.post('/schools', systemAdminHandler(schoolsController.createSchool));
 
 /**
  * @swagger

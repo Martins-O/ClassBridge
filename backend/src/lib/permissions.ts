@@ -36,6 +36,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.VIEW_GLOBAL_STATS,
     PERMISSIONS.APPROVE_SCHOOL,
   ],
+  pending_school_admin: [],
   school_admin: [
     PERMISSIONS.MANAGE_SCHOOL,
     PERMISSIONS.MANAGE_USERS,
@@ -137,6 +138,10 @@ export function canRequestSchool(role: UserRole): boolean {
 
 export function isSystemAdmin(role: UserRole): boolean {
   return role === 'system_admin';
+}
+
+export function isPendingSchoolAdmin(role: UserRole): boolean {
+  return role === 'pending_school_admin';
 }
 
 export function isSchoolAdmin(role: UserRole): boolean {

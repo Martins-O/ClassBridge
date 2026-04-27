@@ -111,6 +111,7 @@ export class AuthService extends BaseService {
 
     const tokenPayload: TokenPayload = {
       userId: user._id.toString(),
+      name: user.name,
       email: user.email,
       role: user.role,
       schoolId: user.schoolId?.toString(),
@@ -173,13 +174,14 @@ export class AuthService extends BaseService {
         ? (await schoolRepository.findByIdBasic(user.schoolId.toString()))?.status
         : undefined;
 
-      const tokenPayload: TokenPayload = {
+const tokenPayload: TokenPayload = {
         userId: user._id.toString(),
+        name: user.name,
         email: user.email,
         role: user.role,
         schoolId: user.schoolId?.toString(),
         schoolApproved: user.isApproved,
-        schoolStatus
+        schoolStatus: 'approved'
       };
 
       const accessToken = generateAccessToken(tokenPayload);
@@ -216,75 +218,87 @@ export class AuthService extends BaseService {
     }
   }
 
-  async register(data: { name: string; email: string; password: string; schoolName: string; role?: string }): Promise<any> {
+  async register(data: { name: string; email: string; password: string; schoolName?: string; role?: string }): Promise<any> {
     const existingUser = await userRepository.findByEmail(data.email);
     if (existingUser) {
       throw new Error('User with this email already exists');
     }
 
-    const existingSchool = await School.findOne({ name: { $regex: new RegExp(`^${data.schoolName}$`, 'i') } });
-    if (existingSchool) {
-      throw new Error('A school with this name already exists. Please choose a different name.');
-    }
-
     const hashedPassword = await bcrypt.hash(data.password, SALT_ROUNDS);
 
-    const user = await User.create({
-      name: data.name,
-      email: data.email.toLowerCase(),
-      password: hashedPassword,
-      role: 'school_admin',
-      isActive: false,
-      isApproved: false,
-    });
+    let user: any;
+    let school: any;
 
-    const school = await School.create({
-      name: data.schoolName,
-      email: data.email.toLowerCase(),
-      adminId: user._id,
-      status: 'pending',
-      isActive: false,
-    });
+    if (data.schoolName) {
+      const existingSchool = await School.findOne({ name: { $regex: new RegExp(`^${data.schoolName}$`, 'i') } });
+      if (existingSchool) {
+        throw new Error('A school with this name already exists. Please choose a different name.');
+      }
 
-    await SchoolApproval.create({
-      schoolId: school._id,
-      schoolName: data.schoolName,
-      schoolEmail: data.email.toLowerCase(),
-      requestedBy: user._id,
-      adminName: data.name,
-      status: 'pending',
-    });
-
-    user.schoolId = school._id;
-    await user.save();
-
-    // Send confirmation email to school admin (must succeed)
-    await sendEmail(generateSchoolRegistrationSubmittedEmail({
-      recipientEmail: data.email.toLowerCase(),
-      recipientName: data.name,
-      schoolName: data.schoolName,
-    }));
-
-    // Notify all system admins
-    const systemAdmins = await User.find({ role: 'system_admin' });
-    for (const admin of systemAdmins) {
-      // Create in-app notification
-      await notificationRepository.create({
-        userId: admin._id,
-        title: 'New School Registration',
-        message: `New school "${data.schoolName}" has registered and is pending your approval.`,
-        type: 'new_registration',
+      user = await User.create({
+        name: data.name,
+        email: data.email.toLowerCase(),
+        password: hashedPassword,
+        role: 'school_admin',
+        isActive: false,
+        isApproved: false,
       });
 
-      // Send email to system admin (must succeed)
-      await sendEmail(generateNewSchoolRegistrationAdminEmail({
-        recipientEmail: admin.email,
-        recipientName: admin.name,
+      school = await School.create({
+        name: data.schoolName,
+        email: data.email.toLowerCase(),
+        adminId: user._id,
+        status: 'pending',
+        isActive: false,
+      });
+
+      await SchoolApproval.create({
+        schoolId: school._id,
         schoolName: data.schoolName,
-        adminEmail: data.email.toLowerCase(),
+        schoolEmail: data.email.toLowerCase(),
+        requestedBy: user._id,
         adminName: data.name,
-        registrationDate: new Date(),
+        status: 'pending',
+      });
+
+      user.schoolId = school._id;
+      await user.save();
+
+      await sendEmail(generateSchoolRegistrationSubmittedEmail({
+        recipientEmail: data.email.toLowerCase(),
+        recipientName: data.name,
+        schoolName: data.schoolName,
       }));
+    } else {
+      user = await User.create({
+        name: data.name,
+        email: data.email.toLowerCase(),
+        password: hashedPassword,
+        role: 'pending_school_admin',
+        isActive: false,
+        isApproved: false,
+      });
+    }
+
+    if (data.schoolName) {
+      const systemAdmins = await User.find({ role: 'system_admin' });
+      for (const admin of systemAdmins) {
+        await notificationRepository.create({
+          userId: admin._id,
+          title: 'New School Registration',
+          message: `New school "${data.schoolName}" has registered and is pending your approval.`,
+          type: 'new_registration',
+        });
+
+        await sendEmail(generateNewSchoolRegistrationAdminEmail({
+          recipientEmail: admin.email,
+          recipientName: admin.name,
+          schoolName: data.schoolName!,
+          adminEmail: data.email.toLowerCase(),
+          adminName: data.name,
+          registrationDate: new Date(),
+        }));
+      }
     }
 
     const { password: _, ...userWithoutPassword } = user.toObject ? user.toObject() : user;

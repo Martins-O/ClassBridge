@@ -30,11 +30,12 @@ export async function jwtAuthMiddleware(req: AuthenticatedRequest, res: Response
             if (user) {
                 req.user = {
                     userId: user._id.toString(),
+                    name: user.name,
                     email: user.email,
                     role: user.role,
                     schoolId: user.schoolId?.toString(),
                     schoolApproved: user.isApproved,
-                    schoolStatus: user.isActive ? 'approved' : 'pending' // Simplified status
+                    schoolStatus: user.isActive ? 'approved' : 'pending'
                 };
                 return next();
             }
