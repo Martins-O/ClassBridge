@@ -531,6 +531,48 @@ router.get('/schools/:id/report', jwtAuthMiddleware, asyncHandler(schoolReportCo
 router.get('/schools/:id/activity', jwtAuthMiddleware, asyncHandler(schoolReportController.getSchoolActivity));
 router.get('/schools/:id/audit-export', jwtAuthMiddleware, asyncHandler(schoolReportController.exportSchoolAuditCsv));
 
+/**
+ * @swagger
+ * /schools/request:
+ *   post:
+ *     summary: Request to create a new school
+ *     tags: [Schools]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               website:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: School request submitted
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+
 // School Approval Routes
 router.post('/schools/request', asyncHandler(approvalsController.requestSchool));
 router.get('/schools/my-request', jwtAuthMiddleware, asyncHandler(approvalsController.getMySchoolRequest));
