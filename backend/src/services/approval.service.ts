@@ -124,6 +124,7 @@ export class ApprovalService {
       try {
         await schoolRepository.updateById(approval.schoolId.toString(), {
           status: 'approved',
+          isActive: true,
         });
       } catch (e) {
         console.error('Failed to update school:', e);
@@ -133,11 +134,15 @@ export class ApprovalService {
     if (approval.requestedBy) {
       const requestedById = approval.requestedBy.toString();
       await userRepository.updateById(requestedById, {
+        role: 'school_admin',
         isApproved: true,
+        isActive: true,
       });
 
       const adminUser = await userRepository.findById(requestedById);
-      if (adminUser && String(adminUser.role) !== 'system_admin') {
+      if (adminUser) {
+        await User.findByIdAndUpdate(requestedById, { schoolId: approval.schoolId });
+
         await notificationRepository.create({
           userId: adminUser._id,
           title: 'School Approved',
