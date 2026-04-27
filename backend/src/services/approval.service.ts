@@ -50,6 +50,7 @@ export class ApprovalService {
       description: data.description,
       adminId: new mongoose.Types.ObjectId(data.adminId),
       status: 'pending',
+      isActive: false,
     });
 
     const approval = await approvalRepository.create({
