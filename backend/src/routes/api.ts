@@ -574,7 +574,7 @@ router.get('/schools/:id/audit-export', jwtAuthMiddleware, asyncHandler(schoolRe
  */
 
 // School Approval Routes
-router.post('/schools/request', asyncHandler(approvalsController.requestSchool));
+router.post('/schools/request', jwtAuthMiddleware, asyncHandler(approvalsController.requestSchool));
 router.get('/schools/my-request', jwtAuthMiddleware, asyncHandler(approvalsController.getMySchoolRequest));
 router.get('/approvals/pending', systemAdminHandler(approvalsController.getPendingApprovals));
 router.get('/approvals/pending/count', systemAdminHandler(approvalsController.getPendingApprovalCount));
