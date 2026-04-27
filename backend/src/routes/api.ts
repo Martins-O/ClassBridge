@@ -734,7 +734,7 @@ router.delete('/deletion-requests/:id', jwtAuthMiddleware, asyncHandler(deletion
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Class'
+ *             $ref: '#/components/schemas/ClassCreateRequest'
  *     responses:
  *       201:
  *         description: Class created
@@ -833,7 +833,7 @@ router.post('/classes/:id/students', protectedCsrfHandler(classesController.addS
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Course'
+ *             $ref: '#/components/schemas/CourseCreateRequest'
  *     responses:
  *       201:
  *         description: Course created
@@ -864,7 +864,7 @@ router.delete('/courses/:id', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_CO
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Assessment'
+ *             $ref: '#/components/schemas/AssessmentCreateRequest'
  *     responses:
  *       201:
  *         description: Assessment created
