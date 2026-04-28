@@ -80,10 +80,11 @@ export function verifyAccessToken(token: string): TokenPayload {
     }) as TokenPayload;
 }
 
-export function verifyRefreshToken(token: string): { userId: string } {
-    return jwt.verify(token, JWT_REFRESH_SECRET, {
+export function verifyRefreshToken(token: string): { userId: string; jti?: string } {
+    const decoded = jwt.verify(token, JWT_REFRESH_SECRET, {
         issuer: 'classbridge'
-    }) as { userId: string };
+    }) as { userId: string; jti?: string };
+    return { userId: decoded.userId, jti: decoded.jti };
 }
 
 export function decodeToken(token: string): TokenPayload | null {

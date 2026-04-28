@@ -37,11 +37,35 @@ export class UserService {
     return userRepository.findStudentsByClass(classId);
   }
 
-  async update(id: string, data: any): Promise<any> {
-    if (data.password) {
-      data.password = await bcrypt.hash(data.password, 12);
+  async update(id: string, data: any, userRole: string): Promise<any> {
+    // Define allowed fields per role
+    const isSystemAdmin = userRole === 'system_admin';
+    const isSchoolAdmin = userRole === 'school_admin';
+    
+    let allowedFields: string[];
+    if (isSystemAdmin) {
+      allowedFields = Object.keys(data); // System admin can update anything
+    } else if (isSchoolAdmin) {
+      // School admin can update basic user fields but not role/schoolId for non-admins
+      allowedFields = ['name', 'email', 'password', 'phone', 'bio', 'profileImage', 'classIds'];
+    } else {
+      // Regular users can only update their own basic info
+      allowedFields = ['name', 'email', 'password', 'phone', 'bio', 'profileImage'];
     }
-    return userRepository.updateById(id, data);
+
+    // Filter data to only allowed fields
+    const filteredData: any = {};
+    for (const key of allowedFields) {
+      if (key in data) {
+        filteredData[key] = data[key];
+      }
+    }
+
+    if (filteredData.password) {
+      filteredData.password = await bcrypt.hash(filteredData.password, 12);
+    }
+    
+    return userRepository.updateById(id, filteredData);
   }
 
   async delete(id: string): Promise<boolean> {
