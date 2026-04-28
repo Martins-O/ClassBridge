@@ -6,6 +6,7 @@ import Course from '../models/Course';
 import AuditLog from '../models/AuditLog';
 import School from '../models/School';
 import { isSystemAdmin, isSchoolAdmin } from '@/lib/permissions';
+import { getUserIdFromRequest } from '@/lib/session';
 
 interface LeanAuditLog {
   _id: any;
@@ -21,18 +22,28 @@ interface LeanUser {
   _id: any;
   role: string;
   isActive: boolean;
+  schoolId?: any;
 }
 
 export async function getSchoolReport(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const user = (req as any).user;
+    const userId = getUserIdFromRequest(req);
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required', code: 'AUTH_REQUIRED' });
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ error: 'Invalid school ID' });
     }
 
-    if (!isSystemAdmin(user.role) && (!isSchoolAdmin(user.role) || user.schoolId !== id)) {
+    const user = await User.findById(userId).lean() as LeanUser | null;
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    if (!isSystemAdmin(user.role as any) && (!isSchoolAdmin(user.role as any) || user.schoolId?.toString() !== id)) {
       return res.status(403).json({ error: 'Access denied to this school' });
     }
 
@@ -109,13 +120,22 @@ export async function getSchoolActivity(req: Request, res: Response) {
   try {
     const { id } = req.params;
     const { startDate, endDate } = req.query;
-    const user = (req as any).user;
+    const userId = getUserIdFromRequest(req);
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required', code: 'AUTH_REQUIRED' });
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ error: 'Invalid school ID' });
     }
 
-    if (!isSystemAdmin(user.role) && (!isSchoolAdmin(user.role) || user.schoolId !== id)) {
+    const user = await User.findById(userId).lean() as LeanUser | null;
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    if (!isSystemAdmin(user.role as any) && (!isSchoolAdmin(user.role as any) || user.schoolId?.toString() !== id)) {
       return res.status(403).json({ error: 'Access denied to this school' });
     }
 
@@ -154,13 +174,22 @@ export async function getSchoolActivity(req: Request, res: Response) {
 export async function exportSchoolAuditCsv(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const user = (req as any).user;
+    const userId = getUserIdFromRequest(req);
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required', code: 'AUTH_REQUIRED' });
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ error: 'Invalid school ID' });
     }
 
-    if (!isSystemAdmin(user.role) && (!isSchoolAdmin(user.role) || user.schoolId !== id)) {
+    const user = await User.findById(userId).lean() as LeanUser | null;
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    if (!isSystemAdmin(user.role as any) && (!isSchoolAdmin(user.role as any) || user.schoolId?.toString() !== id)) {
       return res.status(403).json({ error: 'Access denied to this school' });
     }
 
