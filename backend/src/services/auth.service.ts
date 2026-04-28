@@ -151,13 +151,14 @@ export class AuthService extends BaseService {
 
   async refreshTokens(refreshToken: string): Promise<{
     accessToken: string;
-    refreshToken: string
+    refreshToken: string;
   } | {
     error: string;
-    errorCode: string
+    errorCode: string;
   } | null> {
     try {
       const decoded = verifyRefreshToken(refreshToken);
+      const tokenJti = decoded.jti;
 
       const tokenRecord = await RefreshToken.findOne({
         token: refreshToken,
@@ -169,7 +170,9 @@ export class AuthService extends BaseService {
         return null;
       }
 
+      // If token is already used, it's a reuse attack
       if (tokenRecord.isUsed) {
+        // Invalidate entire token family
         await RefreshToken.updateMany(
           { tokenFamily: tokenRecord.tokenFamily },
           { isRevoked: true }
@@ -201,11 +204,13 @@ export class AuthService extends BaseService {
       const newRefreshTokenDoc = generateRefreshToken(user._id.toString());
 
       await withTransaction(async (session) => {
+        // Mark old token as used
         await RefreshToken.findByIdAndUpdate(tokenRecord._id, {
           isUsed: true,
           isRevoked: true
         }, { session });
 
+        // Create new token in same family
         await RefreshToken.create([{
           userId: user._id,
           token: newRefreshTokenDoc.token,

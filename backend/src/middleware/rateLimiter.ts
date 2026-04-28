@@ -88,27 +88,29 @@ export const signupRateLimiter = createUserRateLimiter({
 
 // Email-based rate limiting for signup
 export const signupEmailRateLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3,
-    message: {
-        success: false,
-        error: 'Too many signup attempts for this email address.',
-        code: 'RATE_LIMIT_EXCEEDED',
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    validate: false,
-    keyGenerator: (req: Request) => {
-        return `email:${req.body?.email?.toLowerCase() || 'unknown'}`;
-    },
-    handler: (req: Request, res: Response) => {
-        res.status(429).json({
-            success: false,
-            error: 'Too many signup attempts for this email address.',
-            code: 'RATE_LIMIT_EXCEEDED',
-            retryAfter: 3600,
-        });
-    },
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3,
+  message: {
+    success: false,
+    error: 'Too many signup attempts for this email address.',
+    code: 'RATE_LIMIT_EXCEEDED',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: false,
+  keyGenerator: (req: Request) => {
+    // Normalize email to prevent case-based bypass
+    const email = (req.body?.email || '').toString().toLowerCase().trim();
+    return `email:${email || 'unknown'}`;
+  },
+  handler: (req: Request, res: Response) => {
+    res.status(429).json({
+      success: false,
+      error: 'Too many signup attempts for this email address.',
+      code: 'RATE_LIMIT_EXCEEDED',
+      retryAfter: 3600,
+    });
+  },
 });
 
 // Combined signup limiter (IP + email)
@@ -117,6 +119,32 @@ export function signupCombinedLimiter(req: Request, res: Response, next: () => v
         signupEmailRateLimiter(req, res, next);
     });
 }
+
+// Password reset rate limiter - stricter to prevent abuse
+export const passwordResetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // Limit each IP to 3 password reset requests per hour
+  message: {
+    success: false,
+    error: 'Too many password reset attempts. Please try again later.',
+    code: 'RATE_LIMIT_EXCEEDED',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: false,
+  keyGenerator: (req: Request) => {
+    // Rate limit by IP for password reset requests
+    return req.ip || req.socket.remoteAddress || 'unknown';
+  },
+  handler: (req: Request, res: Response) => {
+    res.status(429).json({
+      success: false,
+      error: 'Too many password reset attempts. Please try again in 1 hour.',
+      code: 'RATE_LIMIT_EXCEEDED',
+      retryAfter: 3600,
+    });
+  },
+});
 
 interface TieredRateLimitOptions {
     tiers: {

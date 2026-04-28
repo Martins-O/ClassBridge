@@ -63,9 +63,9 @@ export async function createSchool(req: Request, res: Response) {
       return res.status(400).json({ error: 'Name and email are required' });
     }
 
-    const adminId = (req as any).user?.id;
-    if (!adminId) {
-      return res.status(401).json({ error: 'Unauthorized: Admin user not found' });
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required', code: 'AUTH_REQUIRED' });
     }
 
     try {
@@ -76,7 +76,7 @@ export async function createSchool(req: Request, res: Response) {
         address,
         website,
         description,
-        adminId,
+        adminId: userId,
         status: 'approved',
       });
 
