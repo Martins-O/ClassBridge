@@ -26,7 +26,7 @@ import { jwtAuthMiddleware, optionalAuthMiddleware, AuthenticatedRequest } from 
 import { authenticate, AuthRequest } from '@/lib/authorization';
 import { requirePermission, requireSystemAdmin, requireSchoolAdmin, requireAnyPermission } from '@/lib/authorization';
 import { PERMISSIONS } from '@/lib/permissions';
-import { signupCombinedLimiter, signupEmailRateLimiter, passwordResetLimiter } from '@/middleware/rateLimiter';
+import { signupCombinedLimiter, signupEmailRateLimiter, passwordResetLimiter, sensitiveActionLimiter } from '@/middleware/rateLimiter';
 import { captchaVerification } from '@/middleware/captcha';
 import { validateObjectId } from '@/middleware/validateObjectId';
 import { fullSanitize } from '@/middleware/sanitize';
@@ -333,7 +333,7 @@ router.post('/auth/change-password', protectedCsrfHandler(authController.changeP
  *       401:
  *         description: Invalid refresh token
  */
-router.post('/auth/refresh', csrfHandler(authController.refreshToken));
+router.post('/auth/refresh', sensitiveActionLimiter, csrfHandler(authController.refreshToken));
 
 /**
  * @swagger
