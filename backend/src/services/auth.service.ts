@@ -15,6 +15,7 @@ import SchoolApproval from '@/models/SchoolApproval';
 import { sendEmail, generatePasswordResetEmail, generateSchoolRegistrationSubmittedEmail, generateNewSchoolRegistrationAdminEmail, generateEmailVerificationEmail } from '@/lib/email';
 import { withTransaction } from '@/lib/mongodb';
 import { BaseService } from './base.service';
+import { createAuditLog } from '@/lib/auditLogger';
 
 const RESET_TOKEN_TTL_MINUTES = 60;
 const SALT_ROUNDS = 12;
@@ -181,6 +182,17 @@ export class AuthService extends BaseService {
     // Update login info (IP, device, timestamp)
     await this.updateLoginInfo(user._id.toString(), ip, userAgent);
 
+    // Audit log for successful login
+    await createAuditLog({
+      userId: user._id.toString(),
+      userEmail: user.email,
+      action: 'login',
+      resource: 'auth',
+      details: { method: 'password', ip, userAgent },
+      ipAddress: ip,
+      userAgent,
+    });
+
     const { password: _, ...userWithoutPassword } = user;
     return { user: userWithoutPassword, accessToken, refreshToken: refreshTokenDoc.token };
   }
@@ -263,12 +275,25 @@ export class AuthService extends BaseService {
     }
   }
 
-  async logout(refreshToken: string): Promise<void> {
+  async logout(refreshToken: string, userId?: string, userEmail?: string, ip?: string, userAgent?: string): Promise<void> {
     if (refreshToken) {
       await RefreshToken.updateOne(
         { token: refreshToken },
         { isRevoked: true }
       );
+    }
+
+    // Audit log for logout
+    if (userId && userEmail) {
+      await createAuditLog({
+        userId,
+        userEmail,
+        action: 'logout',
+        resource: 'auth',
+        details: { method: 'token', ip, userAgent },
+        ipAddress: ip,
+        userAgent,
+      });
     }
   }
 
