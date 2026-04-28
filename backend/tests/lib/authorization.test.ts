@@ -77,7 +77,7 @@ describe('Authorization Middleware', () => {
   describe('authorize', () => {
     it('should call next if user has allowed role', () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      (mockReq as AuthRequest).user = { userId: '123', email: 'test@test.com', role: 'school_admin' };
+      (mockReq as AuthRequest).user = { userId: '123', name: 'Test User', email: 'test@test.com', role: 'school_admin' };
       
       const middleware = authorize('school_admin', 'system_admin');
       middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -87,7 +87,7 @@ describe('Authorization Middleware', () => {
 
     it('should return 403 if user role not allowed', () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      (mockReq as AuthRequest).user = { userId: '123', email: 'test@test.com', role: 'student' };
+      (mockReq as AuthRequest).user = { userId: '123', name: 'Test User', email: 'test@test.com', role: 'student' };
       
       const middleware = authorize('school_admin');
       middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -107,7 +107,7 @@ describe('Authorization Middleware', () => {
   describe('requirePermission', () => {
     it('should call next if user has permission', () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      (mockReq as AuthRequest).user = { userId: '123', email: 'test@test.com', role: 'school_admin' };
+      (mockReq as AuthRequest).user = { userId: '123', name: 'Test User', email: 'test@test.com', role: 'school_admin' };
       
       const middleware = requirePermission(PERMISSIONS.MANAGE_USERS);
       middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -117,7 +117,7 @@ describe('Authorization Middleware', () => {
 
     it('should return 403 if user lacks permission', () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      (mockReq as AuthRequest).user = { userId: '123', email: 'test@test.com', role: 'student' };
+      (mockReq as AuthRequest).user = { userId: '123', name: 'Test User', email: 'test@test.com', role: 'student' };
       
       const middleware = requirePermission(PERMISSIONS.MANAGE_USERS);
       middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -129,7 +129,7 @@ describe('Authorization Middleware', () => {
   describe('requireSystemAdmin', () => {
     it('should call next if user is system_admin', () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      (mockReq as AuthRequest).user = { userId: '123', email: 'test@test.com', role: 'system_admin' };
+      (mockReq as AuthRequest).user = { userId: '123', name: 'Test User', email: 'test@test.com', role: 'system_admin' };
       
       const middleware = requireSystemAdmin();
       middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -139,7 +139,7 @@ describe('Authorization Middleware', () => {
 
     it('should return 403 if user is not system_admin', () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      (mockReq as AuthRequest).user = { userId: '123', email: 'test@test.com', role: 'school_admin' };
+      (mockReq as AuthRequest).user = { userId: '123', name: 'Test User', email: 'test@test.com', role: 'school_admin' };
       
       const middleware = requireSystemAdmin();
       middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -154,7 +154,7 @@ describe('Authorization Middleware', () => {
   describe('requireSchoolAdmin', () => {
     it('should call next if user is school_admin', () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      (mockReq as AuthRequest).user = { userId: '123', email: 'test@test.com', role: 'school_admin' };
+      (mockReq as AuthRequest).user = { userId: '123', name: 'Test User', email: 'test@test.com', role: 'school_admin' };
       
       const middleware = requireSchoolAdmin();
       middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -164,7 +164,7 @@ describe('Authorization Middleware', () => {
 
     it('should return 403 if user is not school_admin', () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      (mockReq as AuthRequest).user = { userId: '123', email: 'test@test.com', role: 'student' };
+      (mockReq as AuthRequest).user = { userId: '123', name: 'Test User', email: 'test@test.com', role: 'student' };
       
       const middleware = requireSchoolAdmin();
       middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -176,7 +176,7 @@ describe('Authorization Middleware', () => {
   describe('requireSchoolStaff', () => {
     it('should call next if user is school staff', () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      (mockReq as AuthRequest).user = { userId: '123', email: 'test@test.com', role: 'mentor' };
+      (mockReq as AuthRequest).user = { userId: '123', name: 'Test User', email: 'test@test.com', role: 'mentor' };
       
       const middleware = requireSchoolStaff();
       middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -186,7 +186,7 @@ describe('Authorization Middleware', () => {
 
     it('should return 403 if user is not school staff', () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      (mockReq as AuthRequest).user = { userId: '123', email: 'test@test.com', role: 'student' };
+      (mockReq as AuthRequest).user = { userId: '123', name: 'Test User', email: 'test@test.com', role: 'student' };
       
       const middleware = requireSchoolStaff();
       middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -198,7 +198,7 @@ describe('Authorization Middleware', () => {
   describe('requireSchoolApproved', () => {
     it('should call next if user is system_admin', () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      (mockReq as AuthRequest).user = { userId: '123', email: 'test@test.com', role: 'system_admin' };
+      (mockReq as AuthRequest).user = { userId: '123', name: 'Test User', email: 'test@test.com', role: 'system_admin' };
       
       const middleware = requireSchoolApproved();
       middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -208,7 +208,7 @@ describe('Authorization Middleware', () => {
 
     it('should return 403 if school status is pending', () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      (mockReq as AuthRequest).user = { userId: '123', email: 'test@test.com', role: 'school_admin', schoolStatus: 'pending' };
+      (mockReq as AuthRequest).user = { userId: '123', name: 'Test User', email: 'test@test.com', role: 'school_admin', schoolStatus: 'pending' };
       
       const middleware = requireSchoolApproved();
       middleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -221,7 +221,7 @@ describe('Authorization Middleware', () => {
 
     it('should return 403 if school status is rejected', () => {
       mockReq.headers = { authorization: 'Bearer valid-token' };
-      (mockReq as AuthRequest).user = { userId: '123', email: 'test@test.com', role: 'school_admin', schoolStatus: 'rejected' };
+      (mockReq as AuthRequest).user = { userId: '123', name: 'Test User', email: 'test@test.com', role: 'school_admin', schoolStatus: 'rejected' };
       
       const middleware = requireSchoolApproved();
       middleware(mockReq as AuthRequest, mockRes as Response, mockNext);

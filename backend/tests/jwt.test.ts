@@ -2,14 +2,15 @@ jest.mock('uuid', () => ({
   v4: jest.fn().mockReturnValue('mock-uuid-123'),
 }));
 
-import { generateAccessToken, verifyAccessToken, generateRefreshToken, verifyRefreshToken } from '../src/lib/jwt';
+import { generateAccessToken, verifyAccessToken, generateRefreshToken, verifyRefreshToken, TokenPayload } from '../src/lib/jwt';
 
 describe('JWT Authentication', () => {
-  const testPayload = {
-    userId: 'test-user-id-123',
-    email: 'test@example.com',
-    role: 'student'
-  };
+const testPayload: TokenPayload = {
+  userId: '507f1f77bcf86cd799439011',
+  name: 'Test User',
+  email: 'test@example.com',
+  role: 'student' as const,
+};
 
   describe('generateAccessToken', () => {
     it('should generate a valid access token', () => {

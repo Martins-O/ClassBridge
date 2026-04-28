@@ -20,6 +20,7 @@ jest.mock('../../src/models/RefreshToken', () => ({
     findByIdAndUpdate: jest.fn(),
     updateOne: jest.fn(),
     updateMany: jest.fn(),
+    countDocuments: jest.fn().mockResolvedValue(0),
   },
 }));
 
@@ -29,6 +30,8 @@ jest.mock('../../src/models/User', () => ({
     findById: jest.fn(),
     findByIdAndUpdate: jest.fn(),
     findOne: jest.fn(),
+    create: jest.fn(),
+    updateOne: jest.fn(),
   },
 }));
 
@@ -59,6 +62,14 @@ jest.mock('../../src/lib/jwt', () => ({
 jest.mock('../../src/lib/email', () => ({
   sendEmail: jest.fn().mockResolvedValue(true),
   generatePasswordResetEmail: jest.fn().mockReturnValue({}),
+  generateEmailVerificationEmail: jest.fn().mockReturnValue({}),
+}));
+
+jest.mock('../../src/models/EmailVerificationToken', () => ({
+  __esModule: true,
+  default: {
+    create: jest.fn().mockResolvedValue({}),
+  },
 }));
 
 jest.mock('../../src/lib/mongodb', () => ({
@@ -105,6 +116,7 @@ describe('AuthService', () => {
       schoolId: undefined,
       isActive: true,
       isApproved: false,
+      emailVerified: true,
       failedLoginAttempts: 0,
       lockoutUntil: undefined,
       deletionRequested: false,
@@ -244,7 +256,7 @@ describe('AuthService', () => {
       };
       const mockUser = {
         _id: 'user-id-123',
-        email: 'test@example.com',
+        email: 'test@example.com'.toLowerCase(),
         role: 'student',
         schoolId: undefined,
         isApproved: false,
@@ -321,22 +333,19 @@ describe('AuthService', () => {
   describe('register', () => {
     it('should create a new user successfully', async () => {
       (userRepository.findByEmail as jest.Mock).mockResolvedValue(null);
-      (userRepository.create as jest.Mock).mockResolvedValue({
+      const mockUser = {
         _id: 'new-user-id',
+        email: 'new@test.com'.toLowerCase(),
         name: 'New User',
-        email: 'new@test.com',
-        role: 'school_admin',
-        isActive: true,
-        isApproved: false,
+        schoolId: null,
+        save: jest.fn(),
         toObject: () => ({
           _id: 'new-user-id',
+          email: 'new@test.com'.toLowerCase(),
           name: 'New User',
-          email: 'new@test.com',
-          role: 'school_admin',
-          isActive: true,
-          isApproved: false,
         }),
-      });
+      };
+      (User.create as jest.Mock).mockResolvedValue(mockUser);
 
       const result = await authService.register({
         name: 'New User',
@@ -344,7 +353,8 @@ describe('AuthService', () => {
         password: 'password123',
       });
 
-      expect(result).toHaveProperty('email', 'new@test.com');
+      expect(result).toHaveProperty('email');
+      expect(result.email).toBe('new@test.com'.toLowerCase());
       expect(result).not.toHaveProperty('password');
     });
 
@@ -365,7 +375,7 @@ describe('AuthService', () => {
     it('should return true and send email for existing user', async () => {
       (userRepository.findByEmail as jest.Mock).mockResolvedValue({
         _id: 'user-id-123',
-        email: 'test@example.com',
+        email: 'test@example.com'.toLowerCase(),
         name: 'Test User',
       });
       (PasswordResetToken.updateMany as jest.Mock).mockResolvedValue({});
@@ -435,7 +445,7 @@ describe('AuthService', () => {
     it('should return user without password', async () => {
       (userRepository.findById as jest.Mock).mockResolvedValue({
         _id: 'user-id-123',
-        email: 'test@example.com',
+        email: 'test@example.com'.toLowerCase(),
         password: 'secret',
         name: 'Test User',
       });
@@ -459,7 +469,7 @@ describe('AuthService', () => {
     it('should return user without password', async () => {
       (userRepository.findById as jest.Mock).mockResolvedValue({
         _id: 'user-id-123',
-        email: 'test@example.com',
+        email: 'test@example.com'.toLowerCase(),
         password: 'secret',
         name: 'Test User',
       });

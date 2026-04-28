@@ -51,14 +51,14 @@ describe('Permissions', () => {
       expect(permissions).toContain(PERMISSIONS.DELETE_USERS);
       expect(permissions).toContain(PERMISSIONS.MANAGE_CLASSES);
       expect(permissions).toContain(PERMISSIONS.GRADE_STUDENTS);
-      expect(permissions).toHaveLength(15);
+      expect(permissions).toHaveLength(14);
     });
 
     it('should grant office_staff similar permissions to school_admin but no delete', () => {
       const permissions = ROLE_PERMISSIONS.office_staff;
       expect(permissions).toContain(PERMISSIONS.INVITE_STUDENTS);
       expect(permissions).not.toContain(PERMISSIONS.DELETE_USERS);
-      expect(permissions).toHaveLength(14);
+      expect(permissions).toHaveLength(13);
     });
 
     it('should grant admissions only INVITE_STUDENTS and VIEW_REPORTS', () => {
@@ -79,7 +79,7 @@ describe('Permissions', () => {
       const permissions = ROLE_PERMISSIONS.mentor;
       expect(permissions).toContain(PERMISSIONS.MANAGE_ASSESSMENTS);
       expect(permissions).toContain(PERMISSIONS.GRADE_STUDENTS);
-      expect(permissions).toHaveLength(5);
+      expect(permissions).toHaveLength(4);
     });
 
     it('should grant student only VIEW_GRADES and TAKE_ASSESSMENT', () => {
