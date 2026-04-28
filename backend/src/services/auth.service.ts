@@ -574,24 +574,31 @@ export class AuthService extends BaseService {
     return !!resetRecord;
   }
 
-  async resetPassword(token: string, newPassword: string): Promise<boolean> {
+  async resetPassword(token: string, newPassword: string, ip?: string, userAgent?: string): Promise<boolean> {
     const resetRecord = await PasswordResetToken.findOne({
       token,
       used: false,
       expiresAt: { $gt: new Date() },
-    });
+    }).populate('userId');
 
     if (!resetRecord) {
       return false;
     }
 
     try {
+      const user = resetRecord.userId as any;
+
       await withTransaction(async (session) => {
         const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
         await User.findByIdAndUpdate(
           resetRecord.userId,
-          { password: hashedPassword },
+          {
+            password: hashedPassword,
+            passwordChangedAt: new Date(),
+            passwordExpired: false,
+            requirePasswordChange: false
+          },
           { session }
         );
 
@@ -601,6 +608,19 @@ export class AuthService extends BaseService {
           { session }
         );
       });
+
+      // Audit log for password reset
+      if (user?._id && user?.email) {
+        await createAuditLog({
+          userId: user._id.toString(),
+          userEmail: user.email,
+          action: 'update',
+          resource: 'password',
+          details: { method: 'reset', ip, userAgent },
+          ipAddress: ip,
+          userAgent,
+        });
+      }
 
       return true;
     } catch (error) {
