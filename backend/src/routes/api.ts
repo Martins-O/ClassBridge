@@ -29,6 +29,7 @@ import { PERMISSIONS } from '@/lib/permissions';
 import { signupCombinedLimiter, signupEmailRateLimiter, passwordResetLimiter } from '@/middleware/rateLimiter';
 import { captchaVerification } from '@/middleware/captcha';
 import { validateObjectId } from '@/middleware/validateObjectId';
+import { fullSanitize } from '@/middleware/sanitize';
 
 const router = Router();
 
@@ -40,24 +41,28 @@ const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => P
 
 const csrfHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    csrfProtection(req, res, (err?: any) => {
-      if (err) return next(err);
-      asyncHandler(fn)(req, res, next);
+    fullSanitize(req, res, () => {
+      csrfProtection(req, res, (err?: any) => {
+        if (err) return next(err);
+        asyncHandler(fn)(req, res, next);
+      });
     });
   };
 };
 
 const protectedHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) => {
-  return [jwtAuthMiddleware, asyncHandler(fn)];
+  return [fullSanitize, jwtAuthMiddleware, asyncHandler(fn)];
 };
 
 const protectedCsrfHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    jwtAuthMiddleware(req, res, (err?: any) => {
-      if (err) return next(err);
-      csrfProtection(req, res, (csrfErr?: any) => {
-        if (csrfErr) return next(csrfErr);
-        asyncHandler(fn)(req, res, next);
+    fullSanitize(req, res, () => {
+      jwtAuthMiddleware(req, res, (err?: any) => {
+        if (err) return next(err);
+        csrfProtection(req, res, (csrfErr?: any) => {
+          if (csrfErr) return next(csrfErr);
+          asyncHandler(fn)(req, res, next);
+        });
       });
     });
   };
@@ -65,21 +70,23 @@ const protectedCsrfHandler = (fn: (req: Request, res: Response, next: NextFuncti
 
 const requirePermissionHandler = (permission: string) => {
   return (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) => {
-    return [jwtAuthMiddleware, requirePermission(permission as any), asyncHandler(fn)];
+    return [fullSanitize, jwtAuthMiddleware, requirePermission(permission as any), asyncHandler(fn)];
   };
 };
 
 const requirePermissionCsrfHandler = (permission: string) => {
   return (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) => {
     return (req: Request, res: Response, next: NextFunction) => {
-      jwtAuthMiddleware(req, res, (err?: any) => {
-        if (err) return next(err);
-        const permMiddleware = requirePermission(permission as any);
-        permMiddleware(req, res, (permErr?: any) => {
-          if (permErr) return next(permErr);
-          csrfProtection(req, res, (csrfErr?: any) => {
-            if (csrfErr) return next(csrfErr);
-            asyncHandler(fn)(req, res, next);
+      fullSanitize(req, res, () => {
+        jwtAuthMiddleware(req, res, (err?: any) => {
+          if (err) return next(err);
+          const permMiddleware = requirePermission(permission as any);
+          permMiddleware(req, res, (permErr?: any) => {
+            if (permErr) return next(permErr);
+            csrfProtection(req, res, (csrfErr?: any) => {
+              if (csrfErr) return next(csrfErr);
+              asyncHandler(fn)(req, res, next);
+            });
           });
         });
       });
@@ -89,14 +96,16 @@ const requirePermissionCsrfHandler = (permission: string) => {
 
 const systemAdminHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    jwtAuthMiddleware(req, res, (err?: any) => {
-      if (err) return next(err);
-      const systemAdminMiddleware = requireSystemAdmin();
-      systemAdminMiddleware(req, res, (adminErr?: any) => {
-        if (adminErr) return next(adminErr);
-        csrfProtection(req, res, (csrfErr?: any) => {
-          if (csrfErr) return next(csrfErr);
-          asyncHandler(fn)(req, res, next);
+    fullSanitize(req, res, () => {
+      jwtAuthMiddleware(req, res, (err?: any) => {
+        if (err) return next(err);
+        const systemAdminMiddleware = requireSystemAdmin();
+        systemAdminMiddleware(req, res, (adminErr?: any) => {
+          if (adminErr) return next(adminErr);
+          csrfProtection(req, res, (csrfErr?: any) => {
+            if (csrfErr) return next(csrfErr);
+            asyncHandler(fn)(req, res, next);
+          });
         });
       });
     });
