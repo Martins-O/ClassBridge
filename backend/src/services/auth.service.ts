@@ -22,6 +22,8 @@ const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MINUTES = 15;
 
 export class AuthService extends BaseService {
+  private readonly MAX_CONCURRENT_SESSIONS = 5;
+
   async login(email: string, password: string, ip?: string, userAgent?: string): Promise<{
     user: any;
     accessToken: string;
@@ -112,6 +114,28 @@ export class AuthService extends BaseService {
           error: `Your school has been suspended. Reason: ${school.suspensionReason || 'No reason provided'}`,
           errorCode: 'SCHOOL_SUSPENDED'
         };
+      }
+    }
+
+    // Enforce concurrent session limit
+    const activeSessions = await RefreshToken.countDocuments({
+      userId: user._id,
+      isRevoked: false,
+      isUsed: false,
+      expiresAt: { $gt: new Date() }
+    });
+
+    if (activeSessions >= this.MAX_CONCURRENT_SESSIONS) {
+      // Revoke oldest session
+      const oldestSession = await RefreshToken.findOne({
+        userId: user._id,
+        isRevoked: false,
+        isUsed: false,
+        expiresAt: { $gt: new Date() }
+      }).sort({ createdAt: 1 });
+
+      if (oldestSession) {
+        await RefreshToken.findByIdAndUpdate(oldestSession._id, { isRevoked: true });
       }
     }
 
