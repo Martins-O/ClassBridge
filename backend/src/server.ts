@@ -5,7 +5,7 @@ import cors from 'cors';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
-// import rateLimit from 'express-rate-limit';
+import rateLimit from 'express-rate-limit';
 import http from 'http';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
@@ -215,10 +215,10 @@ async function seedAdminIfNeeded() {
 ╔══════════════════════════════════════════════════════════════════════╗
 ║  🚀 System Admin Created Successfully!                               ║
 ║                                                                      ║
-║  Email:    ${adminEmail.padEnd(48)}║
-║  Password:  ${adminPassword.padEnd(48)}║
+║  Email:    ${adminEmail.padEnd(48)}          ║
+║  Password:  ${adminPassword.padEnd(48)}         ║
 ║                                                                      ║
-║  Please change the password after first login!                      ║
+║  Please change the password after first login!                       ║
 ╚══════════════════════════════════════════════════════════════════════╝
         `);
   } catch (error) {
@@ -246,18 +246,18 @@ const server = httpServer.listen(port, () => {
   console.log(`
 ╔════════════════════════════════════════════════════════════════════════╗
 ║                                                                        ║
-║   🎓 ClassBridge API Server                                             ║
+║   🎓 ClassBridge API Server                                            ║
 ║                                                                        ║
-║   Version: ${API_VERSION}                                                             ║
+║   Version: ${API_VERSION}                                                          ║
 ║   Port: ${port}                                                           ║
-║   Environment: ${isDevelopment ? 'development' : 'production'}                                        ║
-║                                                                   ║
-║   Endpoints:                                                      ║
-║   • API:       ${API_PREFIX}                                            ║
-║   • Swagger:   http://localhost:${port}/api-docs║
-║   • Health:    http://localhost:${port}/health                    ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
+║   Environment: ${isDevelopment ? 'development' : 'production'}                                             ║
+║                                                                        ║
+║   Endpoints:                                                           ║
+║   • API:       ${API_PREFIX}                                                 ║
+║   • Swagger:   http://localhost:${port}/api-docs                          ║
+║   • Health:    http://localhost:${port}/health                            ║
+║                                                                        ║
+╚════════════════════════════════════════════════════════════════════════╝
   `);
 });
 

@@ -2,15 +2,17 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
+import { compareTwoStrings } from 'string-similarity';
 import { userRepository, schoolRepository, notificationRepository } from '@/repositories';
 import { encodeSessionToken, getSessionCookieName } from '@/lib/session';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken, TokenPayload } from '@/lib/jwt';
 import PasswordResetToken from '@/models/PasswordResetToken';
 import RefreshToken from '@/models/RefreshToken';
+import EmailVerificationToken from '@/models/EmailVerificationToken';
 import User from '@/models/User';
 import School from '@/models/School';
 import SchoolApproval from '@/models/SchoolApproval';
-import { sendEmail, generatePasswordResetEmail, generateSchoolRegistrationSubmittedEmail, generateNewSchoolRegistrationAdminEmail } from '@/lib/email';
+import { sendEmail, generatePasswordResetEmail, generateSchoolRegistrationSubmittedEmail, generateNewSchoolRegistrationAdminEmail, generateEmailVerificationEmail } from '@/lib/email';
 import { withTransaction } from '@/lib/mongodb';
 import { BaseService } from './base.service';
 
@@ -20,19 +22,27 @@ const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MINUTES = 15;
 
 export class AuthService extends BaseService {
-  async login(email: string, password: string): Promise<{ 
-    user: any; 
-    accessToken: string; 
-    refreshToken: string 
-  } | { 
-    error: string; 
+  async login(email: string, password: string, ip?: string, userAgent?: string): Promise<{
+    user: any;
+    accessToken: string;
+    refreshToken: string
+  } | {
+    error: string;
     errorCode: string;
     lockoutUntil?: Date;
   } | null> {
     const user = await userRepository.findByEmail(email);
-    
+
     if (!user) {
       return null;
+    }
+
+    // Check if email is verified
+    if (!user.emailVerified) {
+      return {
+        error: 'Please verify your email before logging in. Check your inbox for the verification link.',
+        errorCode: 'EMAIL_NOT_VERIFIED'
+      };
     }
 
     if (user.lockoutUntil && user.lockoutUntil > new Date()) {
@@ -54,7 +64,7 @@ export class AuthService extends BaseService {
     if (!isPasswordValid) {
       const failedAttempts = (user.failedLoginAttempts || 0) + 1;
       const shouldLockout = failedAttempts >= MAX_FAILED_ATTEMPTS;
-      const lockoutUntil = shouldLockout 
+      const lockoutUntil = shouldLockout
         ? new Date(Date.now() + LOCKOUT_DURATION_MINUTES * 60 * 1000)
         : undefined;
 
@@ -105,7 +115,7 @@ export class AuthService extends BaseService {
       }
     }
 
-    const schoolStatus = user.schoolId 
+    const schoolStatus = user.schoolId
       ? (await schoolRepository.findByIdBasic(user.schoolId.toString()))?.status
       : undefined;
 
@@ -122,7 +132,7 @@ export class AuthService extends BaseService {
     const accessToken = generateAccessToken(tokenPayload);
     const refreshTokenDoc = generateRefreshToken(user._id.toString());
     const tokenFamily = uuidv4();
-    
+
     await RefreshToken.create({
       userId: user._id,
       token: refreshTokenDoc.token,
@@ -132,20 +142,23 @@ export class AuthService extends BaseService {
       isUsed: false
     });
 
+    // Update login info (IP, device, timestamp)
+    await this.updateLoginInfo(user._id.toString(), ip, userAgent);
+
     const { password: _, ...userWithoutPassword } = user;
     return { user: userWithoutPassword, accessToken, refreshToken: refreshTokenDoc.token };
   }
 
-  async refreshTokens(refreshToken: string): Promise<{ 
-    accessToken: string; 
-    refreshToken: string 
-  } | { 
-    error: string; 
-    errorCode: string 
+  async refreshTokens(refreshToken: string): Promise<{
+    accessToken: string;
+    refreshToken: string
+  } | {
+    error: string;
+    errorCode: string
   } | null> {
     try {
       const decoded = verifyRefreshToken(refreshToken);
-      
+
       const tokenRecord = await RefreshToken.findOne({
         token: refreshToken,
         isRevoked: false,
@@ -170,11 +183,11 @@ export class AuthService extends BaseService {
         return null;
       }
 
-      const schoolStatus = user.schoolId 
+      const schoolStatus = user.schoolId
         ? (await schoolRepository.findByIdBasic(user.schoolId.toString()))?.status
         : undefined;
 
-const tokenPayload: TokenPayload = {
+      const tokenPayload: TokenPayload = {
         userId: user._id.toString(),
         name: user.name,
         email: user.email,
@@ -186,7 +199,7 @@ const tokenPayload: TokenPayload = {
 
       const accessToken = generateAccessToken(tokenPayload);
       const newRefreshTokenDoc = generateRefreshToken(user._id.toString());
-      
+
       await withTransaction(async (session) => {
         await RefreshToken.findByIdAndUpdate(tokenRecord._id, {
           isUsed: true,
@@ -230,9 +243,22 @@ const tokenPayload: TokenPayload = {
     let school: any;
 
     if (data.schoolName) {
+      // First check exact match (case-insensitive)
       const existingSchool = await School.findOne({ name: { $regex: new RegExp(`^${data.schoolName}$`, 'i') } });
       if (existingSchool) {
         throw new Error('A school with this name already exists. Please choose a different name.');
+      }
+
+      // Fuzzy match check for similar school names
+      const allSchools = await School.find({}, 'name');
+      for (const schoolDoc of allSchools) {
+        const similarity = compareTwoStrings(
+          data.schoolName.toLowerCase().replace(/\s+/g, ''),
+          schoolDoc.name.toLowerCase().replace(/\s+/g, '')
+        );
+        if (similarity > 0.85) {
+          throw new Error(`A similar school "${schoolDoc.name}" already exists. Please check the name or contact support if this is a different school.`);
+        }
       }
 
       user = await User.create({
@@ -242,6 +268,7 @@ const tokenPayload: TokenPayload = {
         role: 'school_admin',
         isActive: false,
         isApproved: false,
+        emailVerified: false,
       });
 
       school = await School.create({
@@ -264,11 +291,24 @@ const tokenPayload: TokenPayload = {
       user.schoolId = school._id;
       await user.save();
 
-      await sendEmail(generateSchoolRegistrationSubmittedEmail({
+      // Generate email verification token
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      await EmailVerificationToken.create({
+        userId: user._id,
+        token: verificationToken,
+        expiresAt,
+      });
+
+      // Send verification email
+      await sendEmail(generateEmailVerificationEmail({
         recipientEmail: data.email.toLowerCase(),
         recipientName: data.name,
+        verificationToken,
         schoolName: data.schoolName,
       }));
+
     } else {
       user = await User.create({
         name: data.name,
@@ -277,7 +317,24 @@ const tokenPayload: TokenPayload = {
         role: 'pending_school_admin',
         isActive: false,
         isApproved: false,
+        emailVerified: false,
       });
+
+      // Generate email verification token for non-school users too
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      await EmailVerificationToken.create({
+        userId: user._id,
+        token: verificationToken,
+        expiresAt,
+      });
+
+      await sendEmail(generateEmailVerificationEmail({
+        recipientEmail: data.email.toLowerCase(),
+        recipientName: data.name,
+        verificationToken,
+      }));
     }
 
     if (data.schoolName) {
@@ -285,24 +342,137 @@ const tokenPayload: TokenPayload = {
       for (const admin of systemAdmins) {
         await notificationRepository.create({
           userId: admin._id,
-          title: 'New School Registration',
-          message: `New school "${data.schoolName}" has registered and is pending your approval.`,
+          title: 'New School Registration (Pending Email Verification)',
+          message: `New school "${data.schoolName}" has registered. Waiting for email verification before approval.`,
           type: 'new_registration',
         });
-
-        await sendEmail(generateNewSchoolRegistrationAdminEmail({
-          recipientEmail: admin.email,
-          recipientName: admin.name,
-          schoolName: data.schoolName!,
-          adminEmail: data.email.toLowerCase(),
-          adminName: data.name,
-          registrationDate: new Date(),
-        }));
       }
     }
 
     const { password: _, ...userWithoutPassword } = user.toObject ? user.toObject() : user;
     return userWithoutPassword;
+  }
+
+  async verifyEmail(token: string): Promise<{ success: boolean; error?: string; user?: any }> {
+    const verificationRecord = await EmailVerificationToken.findOne({
+      token,
+      used: false,
+      expiresAt: { $gt: new Date() },
+    }).populate('userId');
+
+    if (!verificationRecord) {
+      return { success: false, error: 'Invalid or expired verification token' };
+    }
+
+    const user = verificationRecord.userId as any;
+
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
+    await withTransaction(async (session) => {
+      await User.findByIdAndUpdate(
+        user._id,
+        {
+          emailVerified: true,
+          emailVerifiedAt: new Date(),
+        },
+        { session }
+      );
+
+      await EmailVerificationToken.findByIdAndUpdate(
+        verificationRecord._id,
+        { used: true },
+        { session }
+      );
+    });
+
+    // If this is a school admin, notify system admins that email is verified
+    if (user.role === 'school_admin' && user.schoolId) {
+      const systemAdmins = await User.find({ role: 'system_admin' });
+      for (const admin of systemAdmins) {
+        await notificationRepository.create({
+          userId: admin._id,
+          title: 'Email Verified - School Registration',
+          message: `School "${user.name}" has verified their email. You can now review their registration.`,
+          type: 'new_registration',
+        });
+
+        const school = await School.findById(user.schoolId);
+        if (school) {
+          await sendEmail(generateNewSchoolRegistrationAdminEmail({
+            recipientEmail: admin.email,
+            recipientName: admin.name,
+            schoolName: school.name,
+            adminEmail: user.email,
+            adminName: user.name,
+            registrationDate: new Date(),
+          }));
+        }
+      }
+
+      // Send confirmation email to the user
+      await sendEmail(generateSchoolRegistrationSubmittedEmail({
+        recipientEmail: user.email,
+        recipientName: user.name,
+        schoolName: (await School.findById(user.schoolId))?.name || 'Unknown',
+      }));
+    }
+
+    const { password: _, ...userWithoutPassword } = user.toObject ? user.toObject() : user;
+    return { success: true, user: userWithoutPassword };
+  }
+
+  async resendVerificationEmail(email: string): Promise<{ success: boolean; error?: string }> {
+    const user = await userRepository.findByEmail(email);
+    if (!user) {
+      // Don't reveal user doesn't exist
+      return { success: true };
+    }
+
+    if (user.emailVerified) {
+      return { success: false, error: 'Email is already verified' };
+    }
+
+    // Invalidate old tokens
+    await EmailVerificationToken.updateMany(
+      { userId: user._id, used: false },
+      { $set: { used: true } }
+    );
+
+    // Create new token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await EmailVerificationToken.create({
+      userId: user._id,
+      token: verificationToken,
+      expiresAt,
+    });
+
+    // Get school name if applicable
+    let schoolName: string | undefined;
+    if (user.schoolId) {
+      const school = await School.findById(user.schoolId);
+      schoolName = school?.name;
+    }
+
+    await sendEmail(generateEmailVerificationEmail({
+      recipientEmail: user.email,
+      recipientName: user.name,
+      verificationToken,
+      schoolName,
+    }));
+
+    return { success: true };
+  }
+
+  async updateLoginInfo(userId: string, ip?: string, userAgent?: string): Promise<void> {
+    await User.findByIdAndUpdate(userId, {
+      lastLoginAt: new Date(),
+      lastLoginIP: ip,
+      lastLoginDevice: userAgent,
+    });
   }
 
   async requestPasswordReset(email: string): Promise<boolean> {
@@ -352,7 +522,7 @@ const tokenPayload: TokenPayload = {
     try {
       await withTransaction(async (session) => {
         const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
-        
+
         await User.findByIdAndUpdate(
           resetRecord.userId,
           { password: hashedPassword },
@@ -385,7 +555,7 @@ const tokenPayload: TokenPayload = {
   async getUserWithRelations(userId: string): Promise<any> {
     const user = await userRepository.findById(userId);
     if (!user) return null;
-    
+
     const { password: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }

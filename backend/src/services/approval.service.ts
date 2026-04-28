@@ -147,8 +147,10 @@ export class ApprovalService {
     }
 
     if (approval.requestedBy) {
+      console.log('[approveSchool] Updating user, requestedBy:', approval.requestedBy);
       try {
         const requestedById = approval.requestedBy.toString();
+        console.log('[approveSchool] User ID to update:', requestedById);
         
         const user = await User.findByIdAndUpdate(
           requestedById,
@@ -160,6 +162,8 @@ export class ApprovalService {
           },
           { new: true }
         );
+        
+        console.log('[approveSchool] Updated user:', user);
 
         if (user) {
           await notificationRepository.create({
@@ -170,18 +174,20 @@ export class ApprovalService {
           });
 
           try {
+            console.log('[approveSchool] Sending email to:', user.email);
             const email = generateSchoolApprovedNotificationEmail({
               recipientEmail: user.email,
               recipientName: user.name,
               schoolName: approval.schoolName,
             });
             await sendEmail(email);
+            console.log('[approveSchool] Email sent successfully');
           } catch (emailError) {
-            console.error('Failed to send approval email:', emailError);
+            console.error('[approveSchool] Failed to send approval email:', emailError);
           }
         }
       } catch (error) {
-        console.error('Failed to update user on approval:', error);
+        console.error('[approveSchool] Failed to update user on approval:', error);
       }
     }
 

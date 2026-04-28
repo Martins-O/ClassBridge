@@ -6,6 +6,8 @@ interface UserRateLimitOptions {
     max?: number;
     message?: string;
     keyGenerator?: (req: Request) => string;
+    skipSuccessfulRequests?: boolean;
+    skipFailedRequests?: boolean;
 }
 
 export function createUserRateLimiter(options: UserRateLimitOptions = {}) {
@@ -76,6 +78,45 @@ export const sensitiveActionLimiter = createUserRateLimiter({
     max: 10,
     message: 'Too many sensitive actions',
 });
+
+// Stricter rate limiting for signup - per IP
+export const signupRateLimiter = createUserRateLimiter({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 5,
+    message: 'Too many signup attempts from this IP. Please try again later.',
+});
+
+// Email-based rate limiting for signup
+export const signupEmailRateLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 3,
+    message: {
+        success: false,
+        error: 'Too many signup attempts for this email address.',
+        code: 'RATE_LIMIT_EXCEEDED',
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: false,
+    keyGenerator: (req: Request) => {
+        return `email:${req.body?.email?.toLowerCase() || 'unknown'}`;
+    },
+    handler: (req: Request, res: Response) => {
+        res.status(429).json({
+            success: false,
+            error: 'Too many signup attempts for this email address.',
+            code: 'RATE_LIMIT_EXCEEDED',
+            retryAfter: 3600,
+        });
+    },
+});
+
+// Combined signup limiter (IP + email)
+export function signupCombinedLimiter(req: Request, res: Response, next: () => void) {
+    signupRateLimiter(req, res, () => {
+        signupEmailRateLimiter(req, res, next);
+    });
+}
 
 interface TieredRateLimitOptions {
     tiers: {

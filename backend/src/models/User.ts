@@ -36,6 +36,11 @@ export interface IUser extends Document {
   passwordExpired: boolean;
   remindersSent: number;
   requirePasswordChange: boolean;
+  emailVerified: boolean;
+  emailVerifiedAt?: Date;
+  lastLoginAt?: Date;
+  lastLoginIP?: string;
+  lastLoginDevice?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -148,6 +153,22 @@ const UserSchema = new Schema({
   requirePasswordChange: {
     type: Boolean,
     default: false
+  },
+  emailVerified: {
+    type: Boolean,
+    default: false
+  },
+  emailVerifiedAt: {
+    type: Date
+  },
+  lastLoginAt: {
+    type: Date
+  },
+  lastLoginIP: {
+    type: String
+  },
+  lastLoginDevice: {
+    type: String
   }
 }, {
   timestamps: true

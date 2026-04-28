@@ -34,52 +34,59 @@ export async function login(req: Request, res: Response) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const result = await authService.login(email, password);
-    
+    const result = await authService.login(email, password, req.ip || undefined, req.headers['user-agent'] || undefined);
+
     if (!result) {
       return res.status(401).json({ error: 'Invalid email or password', errorCode: 'INVALID_CREDENTIALS' });
     }
 
     if ('errorCode' in result) {
       const errorResult = result as { error: string; errorCode: string; lockoutUntil?: Date };
-      
+
+      if (errorResult.errorCode === 'EMAIL_NOT_VERIFIED') {
+        return res.status(403).json({
+          error: errorResult.error,
+          errorCode: errorResult.errorCode
+        });
+      }
+
       if (errorResult.errorCode === 'ACCOUNT_LOCKED') {
-        return res.status(423).json({ 
+        return res.status(423).json({
           error: errorResult.error,
           errorCode: errorResult.errorCode,
           lockoutUntil: errorResult.lockoutUntil
         });
       }
-      
+
       if (errorResult.errorCode === 'SCHOOL_PENDING_APPROVAL') {
-        return res.status(403).json({ 
+        return res.status(403).json({
           error: errorResult.error,
           errorCode: errorResult.errorCode
         });
       }
-      
+
       if (errorResult.errorCode === 'SCHOOL_REJECTED') {
-        return res.status(403).json({ 
+        return res.status(403).json({
           error: errorResult.error,
           errorCode: errorResult.errorCode
         });
       }
-      
+
       if (errorResult.errorCode === 'SCHOOL_SUSPENDED') {
-        return res.status(403).json({ 
+        return res.status(403).json({
           error: errorResult.error,
           errorCode: errorResult.errorCode
         });
       }
-      
+
       if (errorResult.errorCode === 'ACCOUNT_PENDING_DELETION') {
-        return res.status(403).json({ 
+        return res.status(403).json({
           error: errorResult.error,
           errorCode: errorResult.errorCode
         });
       }
-      
-      return res.status(401).json({ 
+
+      return res.status(401).json({
         error: errorResult.error,
         errorCode: errorResult.errorCode
       });
@@ -87,9 +94,9 @@ export async function login(req: Request, res: Response) {
 
     const user = (result as any).user;
     const userId = String(user._id || user.id);
-    
+
     await auditService.logLogin(userId, email, req.ip || 'unknown', req.headers['user-agent']);
-    
+
     res.cookie(getSessionCookieName(), encodeSessionToken(userId), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -125,9 +132,9 @@ export async function refreshToken(req: Request, res: Response) {
     }
 
     if ('error' in result) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         error: result.error,
-        errorCode: result.errorCode 
+        errorCode: result.errorCode
       });
     }
 
@@ -147,15 +154,15 @@ export async function logout(req: Request, res: Response) {
     const refreshToken = req.body.refreshToken || req.cookies?.refreshToken;
     const userId = req.headers['x-user-id'] as string;
     const userEmail = req.headers['x-user-email'] as string;
-    
+
     if (refreshToken) {
       await authService.logout(refreshToken);
     }
-    
+
     if (userId && userEmail) {
       await auditService.logLogout(userId, userEmail, req.ip || 'unknown', req.headers['user-agent']);
     }
-    
+
     return res.json({
       success: true,
       message: 'Logged out successfully',
@@ -174,7 +181,7 @@ export async function me(req: Request, res: Response) {
     await connectDB();
 
     const userId = getUserIdFromRequest(req);
-    
+
     if (!userId) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
@@ -210,7 +217,7 @@ export async function register(req: Request, res: Response) {
     }
 
     if (!validation.isValid()) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         ...validation.getResponse(),
         passwordRequirements: PASSWORD_REQUIREMENTS
       });
@@ -294,7 +301,7 @@ export async function resetPassword(req: Request, res: Response) {
     );
 
     if (!validation.isValid()) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         ...validation.getResponse(),
         passwordRequirements: PASSWORD_REQUIREMENTS
       });
@@ -321,7 +328,7 @@ export async function setupTwoFactor(req: Request, res: Response) {
 
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
+
     if (!token) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -378,7 +385,7 @@ export async function verifyTwoFactor(req: Request, res: Response) {
     }
 
     const verification = verifyTwoFactorCode(user.twoFactorSecret, token);
-    
+
     if (!verification.valid) {
       return res.status(401).json({ valid: false, error: 'Invalid verification code' });
     }
@@ -408,7 +415,7 @@ export async function disableTwoFactor(req: Request, res: Response) {
 
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
+
     if (!token) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -461,7 +468,7 @@ export async function changePassword(req: Request, res: Response) {
 
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
+
     if (!token) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -507,5 +514,64 @@ export async function changePassword(req: Request, res: Response) {
   } catch (error) {
     console.error('Change password error:', error);
     return res.status(500).json({ error: 'Failed to change password' });
+  }
+}
+
+export async function verifyEmail(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const { token } = req.params;
+
+    if (!token) {
+      return res.status(400).json({ error: 'Verification token is required' });
+    }
+
+    const result = await authService.verifyEmail(token);
+
+    if (!result.success) {
+      return res.status(400).json({
+        error: result.error || 'Email verification failed',
+        errorCode: 'VERIFICATION_FAILED'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Email verified successfully. You can now log in.',
+      user: result.user
+    });
+  } catch (error) {
+    console.error('Email verification error:', error);
+    return res.status(500).json({ error: 'Failed to verify email' });
+  }
+}
+
+export async function resendVerificationEmail(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const result = await authService.resendVerificationEmail(email.toLowerCase());
+
+    if (!result.success) {
+      return res.status(400).json({
+        error: result.error || 'Failed to resend verification email',
+        errorCode: 'RESEND_FAILED'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'If an account exists with this email, a verification link has been sent.'
+    });
+  } catch (error) {
+    console.error('Resend verification email error:', error);
+    return res.status(500).json({ error: 'Failed to resend verification email' });
   }
 }

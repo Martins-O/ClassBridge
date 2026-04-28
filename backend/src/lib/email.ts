@@ -792,3 +792,63 @@ export function generatePasswordExpiryWarningEmail(data: PasswordExpiryWarningDa
     htmlContent,
   };
 }
+
+export interface EmailVerificationData {
+  recipientEmail: string;
+  recipientName: string;
+  verificationToken: string;
+  schoolName?: string;
+}
+
+export function generateEmailVerificationEmail(data: EmailVerificationData): EmailData {
+  const verificationUrl = `${BASE_URL}/verify-email/${data.verificationToken}`;
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #eff6ff; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; box-shadow: 0 20px 40px rgba(37, 99, 235, 0.08); }
+    .header { background: linear-gradient(135deg, #2563eb, #7c3aed); color: white; padding: 30px; border-radius: 8px; text-align: center; }
+    .content { padding: 20px 0; color: #0f172a; }
+    .button { display: inline-block; background: #2563eb; color: white; text-decoration: none; padding: 12px 24px; border-radius: 9999px; font-weight: 600; margin: 24px 0; }
+    .button:hover { background: #1d4ed8; }
+    .footer { padding: 20px 32px 32px; font-size: 13px; color: #64748b; }
+    .note { margin-top: 24px; padding: 16px; background: #f1f5f9; border-radius: 10px; border: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0; font-size: 22px;">Verify Your Email${data.schoolName ? ' & School Registration' : ''}</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${data.recipientName},</p>
+      ${data.schoolName ? `<p>Thank you for registering <strong>${data.schoolName}</strong> on ClassBridge!</p>` : ''}
+      <p>Please click the button below to verify your email address. ${data.schoolName ? 'Once verified, our team will review your school registration.' : 'You will be able to log in after verification.'}</p>
+      <p style="text-align: center;">
+        <a class="button" href="${verificationUrl}">Verify Email Address</a>
+      </p>
+      <p>If the button doesn't work, copy this link:</p>
+      <p style="word-break: break-all; color: #3b82f6;">${verificationUrl}</p>
+      <div class="note">
+        <p><strong>Note:</strong> This verification link will expire in 24 hours.</p>
+        ${data.schoolName ? '<p>After verification, a system administrator will review your school registration. You will receive an email once approved.</p>' : ''}
+      </div>
+    </div>
+    <div class="footer">
+      <p>&copy; ${new Date().getFullYear()} ClassBridge. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  return {
+    to: data.recipientEmail,
+    toName: data.recipientName,
+    subject: `Verify your email${data.schoolName ? ' - School Registration' : ''} | ClassBridge`,
+    htmlContent,
+  };
+}

@@ -26,6 +26,9 @@ import { jwtAuthMiddleware, optionalAuthMiddleware, AuthenticatedRequest } from 
 import { authenticate, AuthRequest } from '@/lib/authorization';
 import { requirePermission, requireSystemAdmin, requireSchoolAdmin, requireAnyPermission } from '@/lib/authorization';
 import { PERMISSIONS } from '@/lib/permissions';
+import { signupCombinedLimiter, signupEmailRateLimiter } from '@/middleware/rateLimiter';
+import { captchaVerification } from '@/middleware/captcha';
+import { validateObjectId } from '@/middleware/validateObjectId';
 
 const router = Router();
 
@@ -345,7 +348,48 @@ router.get('/auth/me', optionalAuthMiddleware, asyncHandler(authController.me));
  *       409:
  *         description: Email already exists
  */
-router.post('/auth/register', asyncHandler(authController.register));
+router.post('/auth/register', signupCombinedLimiter, captchaVerification, asyncHandler(authController.register));
+
+/**
+ * @swagger
+ * /auth/verify-email/{token}:
+ *   post:
+ *     summary: Verify email with token
+ *     tags: [Authentication]
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Email verified successfully
+ *       400:
+ *         description: Invalid or expired token
+ */
+router.post('/auth/verify-email/:token', asyncHandler(authController.verifyEmail));
+
+/**
+ * @swagger
+ * /auth/resend-verification:
+ *   post:
+ *     summary: Resend email verification
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Verification email sent
+ */
+router.post('/auth/resend-verification', signupEmailRateLimiter, asyncHandler(authController.resendVerificationEmail));
 
 /**
  * @swagger
@@ -527,13 +571,13 @@ router.get('/schools', systemAdminHandler(schoolsController.getSchools));
  *       200:
  *         description: School updated
  */
-router.get('/schools/:id', jwtAuthMiddleware, asyncHandler(schoolsController.getSchoolById));
+router.get('/schools/:id', validateObjectId(), jwtAuthMiddleware, asyncHandler(schoolsController.getSchoolById));
 router.put('/schools/:id', systemAdminHandler(schoolsController.updateSchool));
 router.patch('/schools/:id/status', systemAdminHandler(schoolsController.updateSchoolStatus));
-router.get('/schools/:id/stats', jwtAuthMiddleware, asyncHandler(schoolsController.getSchoolStats));
-router.get('/schools/:id/report', jwtAuthMiddleware, asyncHandler(schoolReportController.getSchoolReport));
-router.get('/schools/:id/activity', jwtAuthMiddleware, asyncHandler(schoolReportController.getSchoolActivity));
-router.get('/schools/:id/audit-export', jwtAuthMiddleware, asyncHandler(schoolReportController.exportSchoolAuditCsv));
+router.get('/schools/:id/stats', validateObjectId(), jwtAuthMiddleware, asyncHandler(schoolsController.getSchoolStats));
+router.get('/schools/:id/report', validateObjectId(), jwtAuthMiddleware, asyncHandler(schoolReportController.getSchoolReport));
+router.get('/schools/:id/activity', validateObjectId(), jwtAuthMiddleware, asyncHandler(schoolReportController.getSchoolActivity));
+router.get('/schools/:id/audit-export', validateObjectId(), jwtAuthMiddleware, asyncHandler(schoolReportController.exportSchoolAuditCsv));
 
 /**
  * @swagger
@@ -637,8 +681,8 @@ router.get('/approvals/pending/count', systemAdminHandler(approvalsController.ge
  *       403:
  *         description: Forbidden
  */
-router.get('/approvals/:id', systemAdminHandler(approvalsController.getApprovalById));
-
+router.get('/approvals/:id', validateObjectId(), systemAdminHandler(approvalsController.getApprovalById));
+  
 /**
  * @swagger
  * /approvals/{id}/approve:
@@ -774,8 +818,8 @@ router.post('/classes', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_CLASSES)
  *       200:
  *         description: Class updated
  */
-router.get('/classes/:id', jwtAuthMiddleware, asyncHandler(classesController.getClassById));
-router.put('/classes/:id', protectedCsrfHandler(classesController.updateClass));
+router.get('/classes/:id', validateObjectId(), jwtAuthMiddleware, asyncHandler(classesController.getClassById));
+router.put('/classes/:id', validateObjectId(), protectedCsrfHandler(classesController.updateClass));
 
 /**
  * @swagger
@@ -809,8 +853,8 @@ router.put('/classes/:id', protectedCsrfHandler(classesController.updateClass));
  *       200:
  *         description: Students added
  */
-router.get('/classes/:id/students', jwtAuthMiddleware, asyncHandler(classesController.getClassStudents));
-router.post('/classes/:id/students', protectedCsrfHandler(classesController.addStudentToClass));
+router.get('/classes/:id/students', validateObjectId(), jwtAuthMiddleware, asyncHandler(classesController.getClassStudents));
+router.post('/classes/:id/students', validateObjectId(), protectedCsrfHandler(classesController.addStudentToClass));
 
 /**
  * @swagger
@@ -950,7 +994,7 @@ router.put('/assessments/attempts/:attemptId', requirePermissionCsrfHandler(PERM
  *       200:
  *         description: List of attempts
  */
-router.get('/assessments/:id/attempts', jwtAuthMiddleware, asyncHandler(assessmentsController.getAssessmentAttempts));
+router.get('/assessments/:id/attempts', validateObjectId(), jwtAuthMiddleware, asyncHandler(assessmentsController.getAssessmentAttempts));
 
 /**
  * @swagger
@@ -981,8 +1025,8 @@ router.get('/assessments/:id/attempts', jwtAuthMiddleware, asyncHandler(assessme
 router.get('/grades', jwtAuthMiddleware, asyncHandler(gradesController.getGrades));
 router.post('/grades', requirePermissionCsrfHandler(PERMISSIONS.GRADE_STUDENTS)(gradesController.createGrade));
 router.post('/grades/bulk', requirePermissionCsrfHandler(PERMISSIONS.GRADE_STUDENTS)(gradesController.bulkCreateGrades));
-router.put('/grades/:id', requirePermissionCsrfHandler(PERMISSIONS.GRADE_STUDENTS)(gradesController.updateGrade));
-router.delete('/grades/:id', requirePermissionCsrfHandler(PERMISSIONS.GRADE_STUDENTS)(gradesController.deleteGrade));
+router.put('/grades/:id', validateObjectId(), requirePermissionCsrfHandler(PERMISSIONS.GRADE_STUDENTS)(gradesController.updateGrade));
+router.delete('/grades/:id', validateObjectId(), requirePermissionCsrfHandler(PERMISSIONS.GRADE_STUDENTS)(gradesController.deleteGrade));
 
 /**
  * @swagger
@@ -1016,11 +1060,11 @@ router.delete('/grades/:id', requirePermissionCsrfHandler(PERMISSIONS.GRADE_STUD
  *       200:
  *         description: User updated
  */
-router.get('/users/:id', jwtAuthMiddleware, asyncHandler(usersController.getUser));
-router.patch('/users/:id', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_USERS)(usersController.updateUser));
-router.get('/users/:id/password-status', jwtAuthMiddleware, asyncHandler(usersController.getPasswordStatus));
-router.post('/users/:id/force-password-change', systemAdminHandler(usersController.forcePasswordChange));
-router.post('/users/:id/reset-password', systemAdminHandler(usersController.resetPassword));
+router.get('/users/:id', validateObjectId(), jwtAuthMiddleware, asyncHandler(usersController.getUser));
+router.patch('/users/:id', validateObjectId(), requirePermissionCsrfHandler(PERMISSIONS.MANAGE_USERS)(usersController.updateUser));
+router.get('/users/:id/password-status', validateObjectId(), jwtAuthMiddleware, asyncHandler(usersController.getPasswordStatus));
+router.post('/users/:id/force-password-change', validateObjectId(), systemAdminHandler(usersController.forcePasswordChange));
+router.post('/users/:id/reset-password', validateObjectId(), systemAdminHandler(usersController.resetPassword));
 router.post('/users/invite', jwtAuthMiddleware, asyncHandler(usersController.inviteUser));
 router.patch('/users/:id/deactivate', jwtAuthMiddleware, asyncHandler(usersController.deactivateUser));
 router.post('/users/bulk-import', jwtAuthMiddleware, asyncHandler(usersController.bulkImportUsers));
@@ -1053,8 +1097,8 @@ router.post('/users/bulk-import', jwtAuthMiddleware, asyncHandler(usersControlle
  */
 router.get('/transcripts', jwtAuthMiddleware, asyncHandler(transcriptsController.getTranscripts));
 router.post('/transcripts', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_TRANSCRIPTS)(transcriptsController.createTranscript));
-router.put('/transcripts/:id', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_TRANSCRIPTS)(transcriptsController.updateTranscript));
-router.delete('/transcripts/:id', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_TRANSCRIPTS)(transcriptsController.deleteTranscript));
+router.put('/transcripts/:id', validateObjectId(), requirePermissionCsrfHandler(PERMISSIONS.MANAGE_TRANSCRIPTS)(transcriptsController.updateTranscript));
+router.delete('/transcripts/:id', validateObjectId(), requirePermissionCsrfHandler(PERMISSIONS.MANAGE_TRANSCRIPTS)(transcriptsController.deleteTranscript));
 
 /**
  * @swagger
@@ -1079,7 +1123,7 @@ router.delete('/transcripts/:id', requirePermissionCsrfHandler(PERMISSIONS.MANAG
  *       200:
  *         description: Exported transcript file
  */
-router.get('/transcripts/:id/export', jwtAuthMiddleware, asyncHandler(transcriptsController.exportTranscript));
+router.get('/transcripts/:id/export', validateObjectId(), jwtAuthMiddleware, asyncHandler(transcriptsController.exportTranscript));
 
 /**
  * @swagger
