@@ -26,7 +26,7 @@ import { jwtAuthMiddleware, optionalAuthMiddleware, AuthenticatedRequest } from 
 import { authenticate, AuthRequest } from '@/lib/authorization';
 import { requirePermission, requireSystemAdmin, requireSchoolAdmin, requireAnyPermission } from '@/lib/authorization';
 import { PERMISSIONS } from '@/lib/permissions';
-import { signupCombinedLimiter, signupEmailRateLimiter } from '@/middleware/rateLimiter';
+import { signupCombinedLimiter, signupEmailRateLimiter, passwordResetLimiter } from '@/middleware/rateLimiter';
 import { captchaVerification } from '@/middleware/captcha';
 import { validateObjectId } from '@/middleware/validateObjectId';
 
@@ -88,7 +88,19 @@ const requirePermissionCsrfHandler = (permission: string) => {
 };
 
 const systemAdminHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) => {
-  return [jwtAuthMiddleware, requireSystemAdmin(), asyncHandler(fn)];
+  return (req: Request, res: Response, next: NextFunction) => {
+    jwtAuthMiddleware(req, res, (err?: any) => {
+      if (err) return next(err);
+      const systemAdminMiddleware = requireSystemAdmin();
+      systemAdminMiddleware(req, res, (adminErr?: any) => {
+        if (adminErr) return next(adminErr);
+        csrfProtection(req, res, (csrfErr?: any) => {
+          if (csrfErr) return next(csrfErr);
+          asyncHandler(fn)(req, res, next);
+        });
+      });
+    });
+  };
 };
 
 /**
@@ -248,7 +260,7 @@ router.get('/reports/activity', systemAdminHandler(reportsController.getActivity
  *       401:
  *         description: Invalid credentials
  */
-router.post('/auth/login', asyncHandler(authController.login));
+router.post('/auth/login', csrfHandler(authController.login));
 
 /**
  * @swagger
@@ -289,7 +301,7 @@ router.post('/auth/logout', csrfHandler(authController.logout));
  *       401:
  *         description: Unauthorized
  */
-router.post('/auth/change-password', jwtAuthMiddleware, asyncHandler(authController.changePassword));
+router.post('/auth/change-password', protectedCsrfHandler(authController.changePassword));
 
 /**
  * @swagger
@@ -348,7 +360,7 @@ router.get('/auth/me', optionalAuthMiddleware, asyncHandler(authController.me));
  *       409:
  *         description: Email already exists
  */
-router.post('/auth/register', signupCombinedLimiter, captchaVerification, asyncHandler(authController.register));
+router.post('/auth/register', signupCombinedLimiter, captchaVerification, csrfHandler(authController.register));
 
 /**
  * @swagger
@@ -368,7 +380,7 @@ router.post('/auth/register', signupCombinedLimiter, captchaVerification, asyncH
  *       400:
  *         description: Invalid or expired token
  */
-router.post('/auth/verify-email/:token', asyncHandler(authController.verifyEmail));
+router.post('/auth/verify-email/:token', csrfHandler(authController.verifyEmail));
 
 /**
  * @swagger
@@ -389,7 +401,7 @@ router.post('/auth/verify-email/:token', asyncHandler(authController.verifyEmail
  *       200:
  *         description: Verification email sent
  */
-router.post('/auth/resend-verification', signupEmailRateLimiter, asyncHandler(authController.resendVerificationEmail));
+router.post('/auth/resend-verification', signupEmailRateLimiter, csrfHandler(authController.resendVerificationEmail));
 
 /**
  * @swagger
@@ -410,7 +422,7 @@ router.post('/auth/resend-verification', signupEmailRateLimiter, asyncHandler(au
  *       200:
  *         description: Reset email sent
  */
-router.post('/auth/password-reset', asyncHandler(authController.requestPasswordReset));
+router.post('/auth/password-reset', passwordResetLimiter, csrfHandler(authController.requestPasswordReset));
 
 /**
  * @swagger
@@ -457,7 +469,7 @@ router.get('/auth/password-reset/:token', asyncHandler(authController.verifyPass
  *       200:
  *         description: Password reset successful
  */
-router.post('/auth/password-reset/:token', asyncHandler(authController.resetPassword));
+router.post('/auth/password-reset/:token', csrfHandler(authController.resetPassword));
 
 /**
  * @swagger
@@ -471,7 +483,7 @@ router.post('/auth/password-reset/:token', asyncHandler(authController.resetPass
  *       200:
  *         description: 2FA setup initiated
  */
-router.post('/auth/2fa/setup', csrfHandler(authController.setupTwoFactor));
+router.post('/auth/2fa/setup', protectedCsrfHandler(authController.setupTwoFactor));
 
 /**
  * @swagger
@@ -494,7 +506,7 @@ router.post('/auth/2fa/setup', csrfHandler(authController.setupTwoFactor));
  *       200:
  *         description: 2FA enabled successfully
  */
-router.post('/auth/2fa/verify', csrfHandler(authController.verifyTwoFactor));
+router.post('/auth/2fa/verify', protectedCsrfHandler(authController.verifyTwoFactor));
 
 /**
  * @swagger
@@ -519,7 +531,7 @@ router.post('/auth/2fa/verify', csrfHandler(authController.verifyTwoFactor));
  *       200:
  *         description: 2FA disabled successfully
  */
-router.post('/auth/2fa/disable', csrfHandler(authController.disableTwoFactor));
+router.post('/auth/2fa/disable', protectedCsrfHandler(authController.disableTwoFactor));
 
 /**
  * @swagger
@@ -744,18 +756,18 @@ router.post('/approvals/:id/approve', systemAdminHandler(approvalsController.app
  */
 router.post('/approvals/:id/reject', systemAdminHandler(approvalsController.rejectSchool));
 
-router.post('/schools/request', jwtAuthMiddleware, asyncHandler(approvalsController.requestSchool));
+router.post('/schools/request', jwtAuthMiddleware, csrfHandler(approvalsController.requestSchool));
 router.get('/schools/my-request', jwtAuthMiddleware, asyncHandler(approvalsController.getMySchoolRequest));
 
 // Deletion Request Routes
 router.get('/deletion-requests/pending', jwtAuthMiddleware, asyncHandler(deletionRequestsController.getPendingDeletionRequests));
 router.get('/deletion-requests/pending/count', jwtAuthMiddleware, asyncHandler(deletionRequestsController.getPendingDeletionCount));
 router.get('/deletion-requests', jwtAuthMiddleware, asyncHandler(deletionRequestsController.getAllDeletionRequests));
-router.post('/deletion-requests', jwtAuthMiddleware, asyncHandler(deletionRequestsController.requestDeletion));
+router.post('/deletion-requests', jwtAuthMiddleware, csrfHandler(deletionRequestsController.requestDeletion));
 router.get('/deletion-requests/:id', jwtAuthMiddleware, asyncHandler(deletionRequestsController.getDeletionRequestById));
-router.post('/deletion-requests/:id/approve', jwtAuthMiddleware, asyncHandler(deletionRequestsController.approveDeletionRequest));
-router.post('/deletion-requests/:id/reject', jwtAuthMiddleware, asyncHandler(deletionRequestsController.rejectDeletionRequest));
-router.delete('/deletion-requests/:id', jwtAuthMiddleware, asyncHandler(deletionRequestsController.cancelDeletionRequest));
+router.post('/deletion-requests/:id/approve', jwtAuthMiddleware, csrfHandler(deletionRequestsController.approveDeletionRequest));
+router.post('/deletion-requests/:id/reject', jwtAuthMiddleware, csrfHandler(deletionRequestsController.rejectDeletionRequest));
+router.delete('/deletion-requests/:id', jwtAuthMiddleware, csrfHandler(deletionRequestsController.cancelDeletionRequest));
 
 /**
  * @swagger
@@ -1065,9 +1077,9 @@ router.patch('/users/:id', validateObjectId(), requirePermissionCsrfHandler(PERM
 router.get('/users/:id/password-status', validateObjectId(), jwtAuthMiddleware, asyncHandler(usersController.getPasswordStatus));
 router.post('/users/:id/force-password-change', validateObjectId(), systemAdminHandler(usersController.forcePasswordChange));
 router.post('/users/:id/reset-password', validateObjectId(), systemAdminHandler(usersController.resetPassword));
-router.post('/users/invite', jwtAuthMiddleware, asyncHandler(usersController.inviteUser));
-router.patch('/users/:id/deactivate', jwtAuthMiddleware, asyncHandler(usersController.deactivateUser));
-router.post('/users/bulk-import', jwtAuthMiddleware, asyncHandler(usersController.bulkImportUsers));
+router.post('/users/invite', jwtAuthMiddleware, csrfHandler(usersController.inviteUser));
+router.patch('/users/:id/deactivate', jwtAuthMiddleware, csrfHandler(usersController.deactivateUser));
+router.post('/users/bulk-import', jwtAuthMiddleware, csrfHandler(usersController.bulkImportUsers));
 
 /**
  * @swagger
@@ -1193,6 +1205,6 @@ router.get('/audit-logs/recent', systemAdminHandler(auditController.getRecentLog
 
 // Settings Routes
 router.get('/settings', jwtAuthMiddleware, asyncHandler(settingsController.getSettings));
-router.put('/settings', jwtAuthMiddleware, asyncHandler(settingsController.updateSettings));
+router.put('/settings', jwtAuthMiddleware, csrfHandler(settingsController.updateSettings));
 
 export default router;
