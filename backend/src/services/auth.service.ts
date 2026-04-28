@@ -20,6 +20,7 @@ const RESET_TOKEN_TTL_MINUTES = 60;
 const SALT_ROUNDS = 12;
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MINUTES = 15;
+const PASSWORD_EXPIRY_DAYS = 90;
 
 export class AuthService extends BaseService {
   private readonly MAX_CONCURRENT_SESSIONS = 5;
@@ -60,6 +61,17 @@ export class AuthService extends BaseService {
         error: 'Your account has a pending deletion request.',
         errorCode: 'ACCOUNT_PENDING_DELETION'
       };
+    }
+
+    // Check if password has expired (90 days)
+    if (user.passwordChangedAt) {
+      const passwordAge = (Date.now() - new Date(user.passwordChangedAt).getTime()) / (1000 * 60 * 60 * 24);
+      if (passwordAge > PASSWORD_EXPIRY_DAYS) {
+        return {
+          error: 'Your password has expired. Please reset your password to continue.',
+          errorCode: 'PASSWORD_EXPIRED'
+        };
+      }
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
