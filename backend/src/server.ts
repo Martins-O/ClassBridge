@@ -65,6 +65,18 @@ app.use(helmet({
 
 app.use(requestIdMiddleware);
 
+// HTTPS enforcement in production
+if (process.env.NODE_ENV === 'production') {
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
+      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+      next();
+    } else {
+      res.redirect(301, `https://${req.headers.host}${req.url}`);
+    }
+  });
+}
+
 app.use(
   cors({
     origin: origins,
@@ -102,9 +114,9 @@ app.get(`${API_PREFIX}/auth/csrf-token`, optionalAuth, (req: any, res) => {
 
   res.cookie('sessionId', sessionId, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: !isDevelopment,
     sameSite: 'strict',
-    maxAge: 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
   res.cookie('csrfToken', csrfToken, {
