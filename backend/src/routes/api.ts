@@ -24,7 +24,7 @@ import uploadRoutes from './upload';
 import { csrfProtection } from '@/middleware/csrf';
 import { jwtAuthMiddleware, optionalAuthMiddleware, AuthenticatedRequest } from '@/lib/auth';
 import { authenticate, AuthRequest } from '@/lib/authorization';
-import { requirePermission, requireSystemAdmin, requireSchoolAdmin, requireAnyPermission } from '@/lib/authorization';
+import { requirePermission, requireSystemAdmin, requireSchoolAdmin, requireSchoolApproved, requireAnyPermission } from '@/lib/authorization';
 import { PERMISSIONS } from '@/lib/permissions';
 import { signupCombinedLimiter, signupEmailRateLimiter, passwordResetLimiter, sensitiveActionLimiter } from '@/middleware/rateLimiter';
 import { captchaVerification } from '@/middleware/captcha';
@@ -592,13 +592,13 @@ router.get('/schools', systemAdminHandler(schoolsController.getSchools));
  *       200:
  *         description: School updated
  */
-router.get('/schools/:id', validateObjectId(), jwtAuthMiddleware, asyncHandler(schoolsController.getSchoolById));
+router.get('/schools/:id', validateObjectId(), jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(schoolsController.getSchoolById));
 router.put('/schools/:id', systemAdminHandler(schoolsController.updateSchool));
 router.patch('/schools/:id/status', systemAdminHandler(schoolsController.updateSchoolStatus));
-router.get('/schools/:id/stats', validateObjectId(), jwtAuthMiddleware, asyncHandler(schoolsController.getSchoolStats));
-router.get('/schools/:id/report', validateObjectId(), jwtAuthMiddleware, asyncHandler(schoolReportController.getSchoolReport));
-router.get('/schools/:id/activity', validateObjectId(), jwtAuthMiddleware, asyncHandler(schoolReportController.getSchoolActivity));
-router.get('/schools/:id/audit-export', validateObjectId(), jwtAuthMiddleware, asyncHandler(schoolReportController.exportSchoolAuditCsv));
+router.get('/schools/:id/stats', validateObjectId(), jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(schoolsController.getSchoolStats));
+router.get('/schools/:id/report', validateObjectId(), jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(schoolReportController.getSchoolReport));
+router.get('/schools/:id/activity', validateObjectId(), jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(schoolReportController.getSchoolActivity));
+router.get('/schools/:id/audit-export', validateObjectId(), jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(schoolReportController.exportSchoolAuditCsv));
 
 /**
  * @swagger
@@ -769,14 +769,14 @@ router.post('/schools/request', jwtAuthMiddleware, csrfHandler(approvalsControll
 router.get('/schools/my-request', jwtAuthMiddleware, asyncHandler(approvalsController.getMySchoolRequest));
 
 // Deletion Request Routes
-router.get('/deletion-requests/pending', jwtAuthMiddleware, asyncHandler(deletionRequestsController.getPendingDeletionRequests));
-router.get('/deletion-requests/pending/count', jwtAuthMiddleware, asyncHandler(deletionRequestsController.getPendingDeletionCount));
-router.get('/deletion-requests', jwtAuthMiddleware, asyncHandler(deletionRequestsController.getAllDeletionRequests));
+router.get('/deletion-requests/pending', jwtAuthMiddleware, requirePermission(PERMISSIONS.REQUEST_DELETE), asyncHandler(deletionRequestsController.getPendingDeletionRequests));
+router.get('/deletion-requests/pending/count', jwtAuthMiddleware, requirePermission(PERMISSIONS.REQUEST_DELETE), asyncHandler(deletionRequestsController.getPendingDeletionCount));
+router.get('/deletion-requests', jwtAuthMiddleware, requirePermission(PERMISSIONS.APPROVE_DELETE), asyncHandler(deletionRequestsController.getAllDeletionRequests));
 router.post('/deletion-requests', jwtAuthMiddleware, csrfHandler(deletionRequestsController.requestDeletion));
-router.get('/deletion-requests/:id', jwtAuthMiddleware, asyncHandler(deletionRequestsController.getDeletionRequestById));
-router.post('/deletion-requests/:id/approve', jwtAuthMiddleware, csrfHandler(deletionRequestsController.approveDeletionRequest));
-router.post('/deletion-requests/:id/reject', jwtAuthMiddleware, csrfHandler(deletionRequestsController.rejectDeletionRequest));
-router.delete('/deletion-requests/:id', jwtAuthMiddleware, csrfHandler(deletionRequestsController.cancelDeletionRequest));
+router.get('/deletion-requests/:id', jwtAuthMiddleware, requirePermission(PERMISSIONS.REQUEST_DELETE), asyncHandler(deletionRequestsController.getDeletionRequestById));
+router.post('/deletion-requests/:id/approve', jwtAuthMiddleware, requirePermission(PERMISSIONS.APPROVE_DELETE), csrfHandler(deletionRequestsController.approveDeletionRequest));
+router.post('/deletion-requests/:id/reject', jwtAuthMiddleware, requirePermission(PERMISSIONS.APPROVE_DELETE), csrfHandler(deletionRequestsController.rejectDeletionRequest));
+router.delete('/deletion-requests/:id', jwtAuthMiddleware, requirePermission(PERMISSIONS.REQUEST_DELETE), csrfHandler(deletionRequestsController.cancelDeletionRequest));
 
 /**
  * @swagger
@@ -804,7 +804,7 @@ router.delete('/deletion-requests/:id', jwtAuthMiddleware, csrfHandler(deletionR
  *       201:
  *         description: Class created
  */
-router.get('/classes', jwtAuthMiddleware, asyncHandler(classesController.getClasses));
+router.get('/classes', jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(classesController.getClasses));
 router.post('/classes', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_CLASSES)(classesController.createClass));
 
 /**
@@ -903,7 +903,7 @@ router.post('/classes/:id/students', validateObjectId(), protectedCsrfHandler(cl
  *       201:
  *         description: Course created
  */
-router.get('/courses', jwtAuthMiddleware, asyncHandler(coursesController.getCourses));
+router.get('/courses', jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(coursesController.getCourses));
 router.post('/courses', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_COURSES)(coursesController.createCourse));
 router.put('/courses/:id', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_COURSES)(coursesController.updateCourse));
 router.delete('/courses/:id', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_COURSES)(coursesController.deleteCourse));
@@ -934,7 +934,7 @@ router.delete('/courses/:id', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_CO
  *       201:
  *         description: Assessment created
  */
-router.get('/assessments', jwtAuthMiddleware, asyncHandler(assessmentsController.getAssessments));
+router.get('/assessments', jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(assessmentsController.getAssessments));
 router.post('/assessments', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_ASSESSMENTS)(assessmentsController.createAssessment));
 
 /**
@@ -1043,7 +1043,7 @@ router.get('/assessments/:id/attempts', validateObjectId(), jwtAuthMiddleware, a
  *       201:
  *         description: Grade created
  */
-router.get('/grades', jwtAuthMiddleware, asyncHandler(gradesController.getGrades));
+router.get('/grades', jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(gradesController.getGrades));
 router.post('/grades', requirePermissionCsrfHandler(PERMISSIONS.GRADE_STUDENTS)(gradesController.createGrade));
 router.post('/grades/bulk', requirePermissionCsrfHandler(PERMISSIONS.GRADE_STUDENTS)(gradesController.bulkCreateGrades));
 router.put('/grades/:id', validateObjectId(), requirePermissionCsrfHandler(PERMISSIONS.GRADE_STUDENTS)(gradesController.updateGrade));
@@ -1116,7 +1116,7 @@ router.post('/users/bulk-import', jwtAuthMiddleware, csrfHandler(usersController
  *       201:
  *         description: Transcript created
  */
-router.get('/transcripts', jwtAuthMiddleware, asyncHandler(transcriptsController.getTranscripts));
+router.get('/transcripts', jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(transcriptsController.getTranscripts));
 router.post('/transcripts', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_TRANSCRIPTS)(transcriptsController.createTranscript));
 router.put('/transcripts/:id', validateObjectId(), requirePermissionCsrfHandler(PERMISSIONS.MANAGE_TRANSCRIPTS)(transcriptsController.updateTranscript));
 router.delete('/transcripts/:id', validateObjectId(), requirePermissionCsrfHandler(PERMISSIONS.MANAGE_TRANSCRIPTS)(transcriptsController.deleteTranscript));

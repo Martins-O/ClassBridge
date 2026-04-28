@@ -245,7 +245,7 @@ export class AuthService extends BaseService {
         role: user.role,
         schoolId: user.schoolId?.toString(),
         schoolApproved: user.isApproved,
-        schoolStatus: 'approved'
+        schoolStatus: schoolStatus
       };
 
       const accessToken = generateAccessToken(tokenPayload);
@@ -579,14 +579,14 @@ export class AuthService extends BaseService {
       token,
       used: false,
       expiresAt: { $gt: new Date() },
-    }).populate('userId');
+    });
 
     if (!resetRecord) {
       return false;
     }
 
     try {
-      const user = resetRecord.userId as any;
+      const user = await User.findById(resetRecord.userId);
 
       await withTransaction(async (session) => {
         const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);

@@ -238,6 +238,12 @@ export async function inviteUser(req: Request, res: Response) {
       if (existingUser.schoolId?.toString() === schoolId) {
         return res.status(400).json({ error: 'User already exists in this school' });
       }
+
+      // Prevent changing system_admin role
+      if (existingUser.role === 'system_admin') {
+        return res.status(403).json({ error: 'Cannot change system admin role', code: 'CANNOT_MODIFY_SYSTEM_ADMIN' });
+      }
+      
       existingUser.role = role;
       existingUser.schoolId = schoolId;
       existingUser.isActive = true;

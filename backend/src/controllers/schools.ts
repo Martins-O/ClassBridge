@@ -250,6 +250,20 @@ export async function updateSchoolStatus(req: Request, res: Response) {
       return res.status(404).json({ error: 'School not found' });
     }
 
+    // Invalidate all refresh tokens for users of this school when status changes to rejected/suspended
+    if (status === 'rejected' || status === 'suspended') {
+      const User = require('@/models/User').default;
+      const RefreshToken = require('@/models/RefreshToken').default;
+      
+      const schoolUsers = await User.find({ schoolId: id }).select('_id');
+      const userIds = schoolUsers.map((u: any) => u._id);
+      
+      await RefreshToken.updateMany(
+        { userId: { $in: userIds }, isRevoked: false },
+        { $set: { isRevoked: true } }
+      );
+    }
+
     return res.json({
       success: true,
       message: `School ${status === 'suspended' ? 'suspended' : 'activated'} successfully`,
