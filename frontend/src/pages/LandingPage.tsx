@@ -2,24 +2,48 @@ import { Link } from 'react-router-dom';
 
 const features = [
   {
-    icon: '🏛️',
+    icon: <ShieldCheck className="h-8 w-8" />,
     title: 'Institutional Governance',
-    description: 'Comprehensive school management with fine-grained role-based access control.',
+    description: 'Comprehensive school management with fine-grained role-based access control. Support for 8 distinct roles including System Admin, School Admin, Office Staff, Admissions, Counselor, Mentor, Student, and Pending Admin.',
+    details: [
+      'Role-based permission system with 18 granular permissions',
+      'Manage users, classes, courses, and assessments',
+      'Approve school registrations and monitor activity',
+    ],
+    color: 'text-primary',
   },
   {
-    icon: '📊',
+    icon: <ClipboardCheck className="h-8 w-8" />,
     title: '360° Assessments',
-    description: 'Evaluate performance through peer, mentor, and self-assessment frameworks.',
+    description: 'Evaluate performance through peer, mentor, and self-assessment frameworks. Create custom assessments, track student progress, and generate detailed reports.',
+    details: [
+      'Multiple assessment types: quizzes, projects, presentations',
+      'Real-time grading and feedback system',
+      'Peer review and mentor evaluation tools',
+    ],
+    color: 'text-accent',
   },
   {
-    icon: '📜',
+    icon: <FileText className="h-8 w-8" />,
     title: 'Digital Transcripts',
-    description: 'Instant generation of official academic records and verified transcripts.',
+    description: 'Instant generation of official academic records and verified transcripts. Students can view their own progress while staff can manage all academic records.',
+    details: [
+      'PDF and CSV export options',
+      'Secure, verifiable academic credentials',
+      'Course history with grades and credits',
+    ],
+    color: 'text-primary',
   },
   {
-    icon: '📱',
+    icon: <Smartphone className="h-8 w-8" />,
     title: 'Mobile Ready',
-    description: 'Access your data on any device - desktop, tablet, or mobile.',
+    description: 'Access your data on any device - desktop, tablet, or mobile. Responsive design ensures seamless experience across all screen sizes.',
+    details: [
+      'Progressive Web App (PWA) support',
+      'Offline mode for basic viewing',
+      'Push notifications for important updates',
+    ],
+    color: 'text-accent',
   },
 ];
 
@@ -104,22 +128,48 @@ export function LandingPage() {
       {/* Features Section */}
       <section id="features" className="py-20 bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
             <h2 className="text-3xl sm:text-4xl font-bold text-text mb-4">
               Everything You Need
             </h2>
             <p className="text-lg text-text-secondary max-w-2xl mx-auto">
               A comprehensive solution for modern educational institutions.
             </p>
-          </div>
+          </motion.div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => (
-              <div key={index} className="card hover:shadow-md transition-shadow">
-                <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="text-lg font-semibold text-text mb-2">{feature.title}</h3>
-                <p className="text-text-secondary">{feature.description}</p>
-              </div>
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ y: -5 }}
+              >
+                <div className="card hover:shadow-lg transition-all h-full">
+                  <div className={`mb-4 ${feature.color}`}>
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-lg font-semibold text-text mb-3">{feature.title}</h3>
+                  <p className="text-text-secondary mb-4">{feature.description}</p>
+                  {feature.details && (
+                    <ul className="space-y-2">
+                      {feature.details.map((detail, i) => (
+                        <li key={i} className="flex items-start text-sm text-text-secondary">
+                          <ArrowRight className="h-4 w-4 text-primary mr-2 mt-0.5 flex-shrink-0" />
+                          {detail}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </motion.div>
             ))}
           </div>
         </div>
