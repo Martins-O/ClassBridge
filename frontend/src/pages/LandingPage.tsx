@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { ShieldCheck, ClipboardCheck, FileText, Smartphone, ArrowRight } from 'lucide-react';
 
 const features = [
   {
@@ -198,19 +200,43 @@ export function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-primary">
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="py-20 bg-gradient-to-r from-primary to-accent"
+      >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            viewport={{ once: true }}
+            className="text-3xl sm:text-4xl font-bold text-white mb-4"
+          >
             Ready to Transform Your School?
-          </h2>
-          <p className="text-lg text-white/80 mb-8">
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            viewport={{ once: true }}
+            className="text-lg text-white/80 mb-8"
+          >
             Join hundreds of schools already using ClassBridge.
-          </p>
-          <Link to="/register" className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg hover:bg-surface-hover transition-colors">
-            Start Free Trial
-          </Link>
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            viewport={{ once: true }}
+          >
+            <Link to="/register" className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg hover:bg-surface-hover transition-colors">
+              Start Free Trial
+            </Link>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Footer */}
       <footer className="bg-surface py-12 border-t border-border">
