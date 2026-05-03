@@ -205,14 +205,60 @@ export function LoginPage() {
             />
             
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary" />
-                <span className="text-sm text-text-secondary">Remember me</span>
-              </label>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                />
+                <Label htmlFor="remember" className="text-sm cursor-pointer">
+                  Remember me
+                </Label>
+              </div>
               <a href="#" className="text-sm text-primary hover:underline">
                 Forgot password?
               </a>
             </div>
+
+            {/* Resend Verification Email */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="pt-4 border-t"
+            >
+              <p className="text-sm text-text-secondary mb-3">
+                Didn't receive verification email?
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={resendEmail}
+                  onChange={(e) => setResendEmail(e.target.value)}
+                  className="flex-1"
+                  disabled={resendStatus === 'sending'}
+                />
+                <Button
+                  variant="outline"
+                  onClick={handleResendVerification}
+                  disabled={resendStatus === 'sending' || resendStatus === 'sent'}
+                >
+                  {resendStatus === 'sending' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : resendStatus === 'sent' ? (
+                    'Sent!'
+                  ) : (
+                    'Resend'
+                  )}
+                </Button>
+              </div>
+              {resendMessage && (
+                <p className={`text-sm mt-2 ${resendStatus === 'error' ? 'text-destructive' : 'text-green-600'}`}>
+                  {resendMessage}
+                </p>
+              )}
+            </motion.div>
             
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Signing in...' : 'Sign In'}
