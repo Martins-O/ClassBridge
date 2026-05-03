@@ -177,6 +177,34 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Stats Section */}
+      <section className="py-16 border-y bg-surface/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {[
+              { number: '500+', label: 'Schools' },
+              { number: '50k+', label: 'Students' },
+              { number: '8', label: 'User Roles' },
+              { number: '18', label: 'Permissions' },
+            ].map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="text-center"
+              >
+                <div className="text-4xl md:text-5xl font-bold text-primary mb-2">
+                  {stat.number}
+                </div>
+                <div className="text-text-secondary">{stat.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Schools Section */}
       <section id="schools" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
