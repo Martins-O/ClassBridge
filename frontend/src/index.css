@@ -1,26 +1,40 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/inter";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --color-primary: #3b82f6;
-  --color-primary-dark: #2563eb;
-  --color-primary-light: #60a5fa;
+  /* Custom Indigo Primary */
+  --color-primary: oklch(0.585 0.233 277.117);
+  --color-primary-dark: oklch(0.521 0.247 277.142);
+  --color-primary-light: oklch(0.672 0.211 277.034);
 
+  /* Custom Teal Accent */
+  --color-accent: oklch(0.697 0.11 178.746);
+  --color-accent-dark: oklch(0.63 0.124 178.756);
+
+  /* Institutional Colors (Academic Theme) */
+  --color-forest-green: #064e3b;
+  --color-forest-green-light: #065f46;
+  --color-gold: #b45309;
+  --color-gold-light: #d97706;
+
+  /* Secondary */
   --color-secondary: #64748b;
-  --color-accent: #10b981;
 
+  /* Background & Surface */
   --color-background: #ffffff;
   --color-surface: #f8fafc;
   --color-surface-hover: #f1f5f9;
 
+  /* Text */
   --color-text: #1e293b;
   --color-text-secondary: #64748b;
   --color-text-muted: #94a3b8;
 
+  /* Border */
   --color-border: #e2e8f0;
   --color-border-light: #f1f5f9;
   --background: oklch(1 0 0);
@@ -156,7 +170,7 @@ body {
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: 'Geist Variable', sans-serif;
+  --font-sans: 'Inter Variable', sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -182,6 +196,8 @@ body {
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-forest-green: var(--color-forest-green);
+  --color-gold: var(--color-gold);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -204,13 +220,13 @@ body {
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.585 0.233 277.117);
+  --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+  --accent: oklch(0.697 0.11 178.746);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
@@ -223,12 +239,21 @@ body {
   --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: oklch(0.585 0.233 277.117);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Dark mode custom colors */
+  --color-background: oklch(0.145 0 0);
+  --color-surface: oklch(0.205 0 0);
+  --color-surface-hover: oklch(0.269 0 0);
+  --color-text: oklch(0.985 0 0);
+  --color-text-secondary: oklch(0.708 0 0);
+  --color-text-muted: oklch(0.556 0 0);
+  --color-border: oklch(1 0 0 / 10%);
 }
 
 @layer base {
