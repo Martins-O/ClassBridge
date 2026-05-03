@@ -1,10 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '../components/Button';
-import { Input } from '../components/Input';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Progress } from '@/components/ui/progress';
+import { Loader2, ChevronLeft, ChevronRight, Check, School, User, FileText } from 'lucide-react';
 import { authService } from '../services/api';
-import { useAuthStore } from '../stores/auth';
-import { Check, X, Mail, Clock } from 'lucide-react';
 
 const passwordRequirements = [
   { id: 'length', label: 'At least 8 characters', test: (p: string) => p.length >= 8 },
@@ -16,17 +21,20 @@ const passwordRequirements = [
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  const login = useAuthStore((state) => state.login);
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: '',
+    schoolName: '',
+    schoolEmail: '',
+    schoolPhone: '',
+    schoolAddress: '',
+    fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    schoolName: '',
+    acceptTerms: false,
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
