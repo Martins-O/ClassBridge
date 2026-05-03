@@ -127,10 +127,41 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-surface flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Animated background shapes */}
+      <motion.div
+        animate={{
+          x: [0, 100, 0],
+          y: [0, -50, 0],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+        className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"
+      />
+      <motion.div
+        animate={{
+          x: [0, -100, 0],
+          y: [0, 50, 0],
+        }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+        className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent/5 rounded-full blur-3xl"
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md relative z-10"
+      >
         <Link to="/" className="inline-flex items-center gap-2 text-text-secondary hover:text-primary mb-6 transition-colors">
-          <span>←</span>
+          <motion.span whileHover={{ x: -5 }}>←</motion.span>
           <span>Back to Home</span>
         </Link>
         
