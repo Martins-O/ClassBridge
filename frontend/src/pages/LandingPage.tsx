@@ -1,6 +1,8 @@
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShieldCheck, ClipboardCheck, FileText, Smartphone, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ShieldCheck, ClipboardCheck, FileText, Smartphone, ArrowRight, Play, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 const features = [
   {
@@ -49,144 +51,81 @@ const features = [
   },
 ];
 
-export function LandingPage() {
+const stats = [
+  { number: '500+', label: 'Schools' },
+  { number: '50k+', label: 'Students' },
+  { number: '8', label: 'User Roles' },
+  { number: '18', label: 'Permissions' },
+];
+
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white relative overflow-hidden">
-      {/* Animated background shapes */}
-      <motion.div
-        animate={{
-          x: [0, 100, 0],
-          y: [0, -50, 0],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-        className="absolute -top-40 -right-40 w-80 h-80 bg-blue-100/30 rounded-full blur-3xl"
-      />
-      <motion.div
-        animate={{
-          x: [0, -100, 0],
-          y: [0, 50, 0],
-        }}
-        transition={{
-          duration: 15,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-        className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-100/30 rounded-full blur-3xl"
-      />
-
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-border z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">CB</span>
-              </div>
-              <span className="text-xl font-bold text-text">ClassBridge</span>
-            </div>
-            
-            <nav className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-text-secondary hover:text-primary transition-colors">Features</a>
-              <a href="#schools" className="text-text-secondary hover:text-primary transition-colors">Schools</a>
-              <a href="#contact" className="text-text-secondary hover:text-primary transition-colors">Contact</a>
-            </nav>
-            
-            <div className="flex items-center gap-3">
-              <Link to="/login" className="btn-secondary">Login</Link>
-              <Link to="/register" className="btn-primary">Get Started</Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text mb-6">
-              Modern School Management{' '}
-              <span className="text-primary">Made Simple</span>
-            </h1>
-            <p className="text-lg sm:text-xl text-text-secondary mb-8">
-              ClassBridge helps educational institutions manage students, courses, grades, 
-              and assessments all in one powerful platform.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/register" className="btn-primary text-lg px-8 py-3">
-                Get Started Free
-              </Link>
-              <Link to="/login" className="btn-outline text-lg px-8 py-3">
-                Sign In
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="py-20 bg-surface">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/10">
+        <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+        
+        <div className="container mx-auto px-4 py-24 md:py-32">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center max-w-4xl mx-auto"
           >
-            <h2 className="text-3xl sm:text-4xl font-bold text-text mb-4">
-              Everything You Need
-            </h2>
-            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-              A comprehensive solution for modern educational institutions.
-            </p>
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-4xl md:text-6xl font-bold tracking-tight mb-6"
+            >
+              Modern School Management
+              <span className="text-primary"> Made Simple</span>
+            </motion.h1>
+            
+            <motion.p
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="text-xl text-text-secondary mb-8 max-w-2xl mx-auto"
+            >
+              Streamline governance, assessments, and academic records with our comprehensive platform. Built for schools of all sizes.
+            </motion.p>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+            >
+              <Link to="/register">
+                <Button size="lg" className="group">
+                  Get Started
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+              <Button size="lg" variant="outline" className="group">
+                <Play className="mr-2 h-4 w-4" />
+                Watch Demo
+              </Button>
+            </motion.div>
           </motion.div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ y: -5 }}
-              >
-                <div className="card hover:shadow-lg transition-all h-full">
-                  <div className={`mb-4 ${feature.color}`}>
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-lg font-semibold text-text mb-3">{feature.title}</h3>
-                  <p className="text-text-secondary mb-4">{feature.description}</p>
-                  {feature.details && (
-                    <ul className="space-y-2">
-                      {feature.details.map((detail, i) => (
-                        <li key={i} className="flex items-start text-sm text-text-secondary">
-                          <ArrowRight className="h-4 w-4 text-primary mr-2 mt-0.5 flex-shrink-0" />
-                          {detail}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 1 }}
+            className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          >
+            <ChevronDown className="h-6 w-6 animate-bounce text-text-muted" />
+          </motion.div>
         </div>
       </section>
 
       {/* Stats Section */}
       <section className="py-16 border-y bg-surface/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { number: '500+', label: 'Schools' },
-              { number: '50k+', label: 'Students' },
-              { number: '8', label: 'User Roles' },
-              { number: '18', label: 'Permissions' },
-            ].map((stat, index) => (
+            {stats.map((stat, index) => (
               <motion.div
                 key={stat.label}
                 initial={{ opacity: 0, y: 20 }}
@@ -205,86 +144,90 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Schools Section */}
-      <section id="schools" className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-text mb-4">
-              Trusted by Institutions
+      {/* Features Section */}
+      <section id="features" className="py-24">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center max-w-2xl mx-auto mb-16"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Everything You Need to <span className="text-primary">Succeed</span>
             </h2>
-            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-              Schools across the country trust ClassBridge for their management needs.
+            <p className="text-text-secondary text-lg">
+              Powerful features designed to streamline every aspect of school management
             </p>
-          </div>
-          
-          <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
-            {['School A', 'School B', 'School C', 'School D', 'School E'].map((school) => (
-              <div key={school} className="text-xl font-semibold text-text-secondary px-6 py-3 border border-border rounded-lg">
-                {school}
-              </div>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+            {features.map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ y: -5 }}
+              >
+                <Card className="p-6 h-full hover:shadow-lg transition-shadow">
+                  <div className={`mb-4 ${feature.color}`}>
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                  <p className="text-text-secondary mb-4">{feature.description}</p>
+                  <ul className="space-y-2">
+                    {feature.details.map((detail) => (
+                      <li key={detail} className="flex items-start">
+                        <ArrowRight className="h-4 w-4 text-primary mr-2 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-text-secondary">{detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="py-20 bg-gradient-to-r from-primary to-accent"
-      >
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            viewport={{ once: true }}
-            className="text-3xl sm:text-4xl font-bold text-white mb-4"
-          >
-            Ready to Transform Your School?
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            viewport={{ once: true }}
-            className="text-lg text-white/80 mb-8"
-          >
-            Join hundreds of schools already using ClassBridge.
-          </motion.p>
+      <section className="py-24 bg-gradient-to-r from-primary to-accent">
+        <div className="container mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
             viewport={{ once: true }}
+            className="max-w-2xl mx-auto"
           >
-            <Link to="/register" className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg hover:bg-surface-hover transition-colors">
-              Start Free Trial
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Ready to Transform Your School?
+            </h2>
+            <p className="text-white/90 text-lg mb-8">
+              Join hundreds of schools already using ClassBridge to streamline their operations
+            </p>
+            <Link to="/register">
+              <Button size="lg" variant="secondary" className="group">
+                Start Free Trial
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
             </Link>
           </motion.div>
         </div>
-      </motion.section>
+      </section>
 
       {/* Footer */}
-      <footer className="bg-surface py-12 border-t border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
-                <span className="text-white text-xs font-bold">CB</span>
-              </div>
-              <span className="font-semibold text-text">ClassBridge</span>
+      <footer className="py-12 border-t">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="text-2xl font-bold text-primary mb-4 md:mb-0">
+              ClassBridge
             </div>
-            
-            <p className="text-text-secondary text-sm">
-              © 2026 ClassBridge. All rights reserved.
-            </p>
-            
-            <div className="flex items-center gap-6">
-              <a href="#" className="text-text-secondary hover:text-primary text-sm transition-colors">Privacy</a>
-              <a href="#" className="text-text-secondary hover:text-primary text-sm transition-colors">Terms</a>
-              <a href="#" className="text-text-secondary hover:text-primary text-sm transition-colors">Contact</a>
+            <div className="flex gap-6 text-sm text-text-secondary">
+              <a href="#" className="hover:text-primary transition-colors">Privacy</a>
+              <a href="#" className="hover:text-primary transition-colors">Terms</a>
+              <a href="#" className="hover:text-primary transition-colors">Contact</a>
             </div>
           </div>
         </div>
@@ -292,5 +235,3 @@ export function LandingPage() {
     </div>
   );
 }
-
-export default LandingPage;

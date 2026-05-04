@@ -7,7 +7,7 @@ const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASSWORD;
 const EMAIL_FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS || 'noreply@classbridge.com';
 const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || 'ClassBridge';
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const FRONTEND_URL = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5173';
 
 const client = EMAIL_HOST && EMAIL_USER && EMAIL_PASS
   ? nodemailer.createTransport({
@@ -74,7 +74,7 @@ export async function sendEmail(emailData: EmailData): Promise<void> {
 }
 
 export function generateStudentInvitationEmail(data: StudentInvitationData): EmailData {
-  const invitationUrl = `${BASE_URL}/student-invitation/${data.invitationToken}`;
+  const invitationUrl = `${FRONTEND_URL}/student-invitation/${data.invitationToken}`;
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -138,7 +138,7 @@ export function generateStudentInvitationEmail(data: StudentInvitationData): Ema
 }
 
 export function generatePasswordResetEmail(data: PasswordResetEmailData): EmailData {
-  const resetUrl = `${BASE_URL}/reset-password/${data.resetToken}`;
+  const resetUrl = `${FRONTEND_URL}/reset-password/${data.resetToken}`;
   const name = data.recipientName || 'there';
 
   const htmlContent = `
@@ -186,7 +186,7 @@ export function generatePasswordResetEmail(data: PasswordResetEmailData): EmailD
 }
 
 export function generateMentorInvitationEmail(data: MentorInvitationData): EmailData {
-  const invitationUrl = `${BASE_URL}/mentor-invitation/${data.invitationToken}`;
+  const invitationUrl = `${FRONTEND_URL}/mentor-invitation/${data.invitationToken}`;
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -490,7 +490,7 @@ export function generateNewSchoolRegistrationAdminEmail(data: NewSchoolRegistrat
       </div>
       <p>Please review the registration and approve or reject it.</p>
       <div style="text-align: center;">
-        <a href="${BASE_URL}/approvals" class="cta-button">Review Registrations</a>
+        <a href="${FRONTEND_URL}/approvals" class="cta-button">Review Registrations</a>
       </div>
     </div>
     <div class="footer">
@@ -539,7 +539,7 @@ export function generateSchoolApprovedNotificationEmail(data: SchoolApprovedNoti
       <p>Great news! Your school <strong>${data.schoolName}</strong> has been approved on ClassBridge.</p>
       <p>You can now access all features and start managing your educational institution.</p>
       <div style="text-align: center; margin: 30px 0;">
-        <a href="${BASE_URL}/dashboard" class="cta-button">Go to Dashboard</a>
+        <a href="${FRONTEND_URL}/dashboard" class="cta-button">Go to Dashboard</a>
       </div>
     </div>
     <div class="footer">
@@ -664,7 +664,7 @@ export function generateDailyDigestEmail(data: DailyDigestData): EmailData {
       ${notificationsHtml}
     </div>
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${BASE_URL}/dashboard" class="cta-button">View All Notifications</a>
+      <a href="${FRONTEND_URL}/dashboard" class="cta-button">View All Notifications</a>
     </div>
     <div class="footer">
       <p>&copy; ${new Date().getFullYear()} ClassBridge</p>
@@ -714,7 +714,7 @@ export function generatePasswordExpiryEmail(data: PasswordExpiryData): EmailData
         <p><strong>Important:</strong> You will not be able to log in until you change your password.</p>
       </div>
       <div style="text-align: center;">
-        <a href="${BASE_URL}/reset-password" class="cta-button">Change Password Now</a>
+        <a href="${FRONTEND_URL}/reset-password" class="cta-button">Change Password Now</a>
       </div>
     </div>
     <div class="footer">
@@ -772,7 +772,7 @@ export function generatePasswordExpiryWarningEmail(data: PasswordExpiryWarningDa
         <p>Please change your password soon to avoid being locked out of your account.</p>
       </div>
       <div style="text-align: center;">
-        <a href="${BASE_URL}/settings" class="cta-button">Change Password Now</a>
+        <a href="${FRONTEND_URL}/settings" class="cta-button">Change Password Now</a>
       </div>
     </div>
     <div class="footer">
@@ -801,7 +801,7 @@ export interface EmailVerificationData {
 }
 
 export function generateEmailVerificationEmail(data: EmailVerificationData): EmailData {
-  const verificationUrl = `${BASE_URL}/verify-email/${data.verificationToken}`;
+  const verificationUrl = `${FRONTEND_URL}/verify-email/${data.verificationToken}`;
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -826,7 +826,7 @@ export function generateEmailVerificationEmail(data: EmailVerificationData): Ema
     <div class="content">
       <p>Hi ${data.recipientName},</p>
       ${data.schoolName ? `<p>Thank you for registering <strong>${data.schoolName}</strong> on ClassBridge!</p>` : ''}
-      <p>Please click the button below to verify your email address. ${data.schoolName ? 'Once verified, our team will review your school registration.' : 'You will be able to log in after verification.'}</p>
+      <p>Please click the button below to verify your email address. You will be able to log in and access your institutional dashboard immediately after verification.</p>
       <p style="text-align: center;">
         <a class="button" href="${verificationUrl}">Verify Email Address</a>
       </p>
@@ -834,7 +834,7 @@ export function generateEmailVerificationEmail(data: EmailVerificationData): Ema
       <p style="word-break: break-all; color: #3b82f6;">${verificationUrl}</p>
       <div class="note">
         <p><strong>Note:</strong> This verification link will expire in 24 hours.</p>
-        ${data.schoolName ? '<p>After verification, a system administrator will review your school registration. You will receive an email once approved.</p>' : ''}
+        ${data.schoolName ? '<p>Your school registration has been pre-approved. Simply verify your email to get started.</p>' : ''}
       </div>
     </div>
     <div class="footer">

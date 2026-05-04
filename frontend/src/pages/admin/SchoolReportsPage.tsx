@@ -6,7 +6,7 @@ import { schoolReportsService, SchoolReport } from '@/services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Download, FileText, RefreshCw, Users, GraduationCap, BookOpen, UserCheck } from 'lucide-react';
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+const COLORS = ['#064e3b', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 export function SchoolReportsPage() {
   const getSchoolId = useAuthStore((state) => state.getSchoolId);
@@ -257,7 +257,7 @@ export function SchoolReportsPage() {
                     <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="value" fill="#3b82f6" />
+                    <Bar dataKey="value" fill="#064e3b" />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (

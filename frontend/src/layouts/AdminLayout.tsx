@@ -32,6 +32,8 @@ const systemAdminNavigation = [
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Classes', href: '/classes', icon: GraduationCap },
   { name: 'Courses', href: '/courses', icon: BookOpen },
+  { name: 'Assessments', href: '/assessments', icon: ClipboardList },
+  { name: 'Transcripts', href: '/transcripts', icon: FileText },
   { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'Audit Logs', href: '/audit-logs', icon: ClipboardList },
   { name: 'System Status', href: '/system-status', icon: Activity },
@@ -43,8 +45,26 @@ const schoolAdminNavigation = [
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Classes', href: '/classes', icon: GraduationCap },
   { name: 'Courses', href: '/courses', icon: BookOpen },
+  { name: 'Assessments', href: '/assessments', icon: ClipboardList },
+  { name: 'Transcripts', href: '/transcripts', icon: FileText },
   { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'School Reports', href: '/school-reports', icon: BarChart3 },
+];
+
+const mentorNavigation = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'My Classes', href: '/classes', icon: GraduationCap },
+  { name: 'Assessments', href: '/assessments', icon: ClipboardList },
+  { name: 'Transcripts', href: '/transcripts', icon: FileText },
+  { name: 'Settings', href: '/settings', icon: Settings },
+];
+
+const studentNavigation = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'My Classes', href: '/classes', icon: GraduationCap },
+  { name: 'My Assessments', href: '/assessments', icon: ClipboardList },
+  { name: 'Transcript & Results', href: '/transcripts', icon: FileText },
+  { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export function AdminLayout() {
@@ -53,8 +73,16 @@ export function AdminLayout() {
   const logout = useAuthStore((state) => state.logout);
   const isSystemAdmin = useAuthStore((state) => state.isSystemAdmin);
   const isSchoolAdmin = useAuthStore((state) => state.isSchoolAdmin);
+  const isMentor = useAuthStore((state) => state.isMentor);
+  const isStudent = useAuthStore((state) => state.isStudent);
   
-  const navigation = isSystemAdmin() ? systemAdminNavigation : schoolAdminNavigation;
+  const navigation = isSystemAdmin() 
+    ? systemAdminNavigation 
+    : isSchoolAdmin() 
+      ? schoolAdminNavigation 
+      : isMentor()
+        ? mentorNavigation
+        : studentNavigation;
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -111,7 +139,10 @@ export function AdminLayout() {
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
           {sidebarOpen && (
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <div className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
+                isSystemAdmin() ? "bg-blue-600" : "bg-[#064e3b]"
+              )}>
                 <span className="text-white font-bold text-sm">CB</span>
               </div>
               <span className="font-semibold text-gray-900">ClassBridge</span>
@@ -142,7 +173,9 @@ export function AdminLayout() {
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-blue-50 text-blue-600'
+                    ? isSystemAdmin() 
+                      ? 'bg-blue-50 text-blue-600' 
+                      : 'bg-emerald-50 text-emerald-700'
                     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 )}
               >
@@ -157,25 +190,48 @@ export function AdminLayout() {
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
           {sidebarOpen ? (
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <Link to="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0">
                 <Avatar className="h-9 w-9">
-                  <AvatarFallback className="bg-blue-100 text-blue-600">
+                  <AvatarFallback className={cn(
+                    "transition-colors",
+                    isSystemAdmin() 
+                      ? "bg-blue-100 text-blue-600" 
+                      : isMentor() 
+                        ? "bg-amber-100 text-amber-700"
+                        : isStudent()
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-emerald-100 text-emerald-700"
+                  )}>
                     {user?.name?.charAt(0) || 'A'}
                   </AvatarFallback>
                 </Avatar>
-                <div className="text-sm">
-                  <p className="font-medium text-gray-900">{user?.name || 'Admin'}</p>
-                  <p className="text-gray-500 capitalize">{user?.role?.replace('_', ' ') || 'Admin'}</p>
+                <div className="text-sm min-w-0">
+                  <p className="font-medium text-gray-900 truncate">{user?.name || 'User'}</p>
+                  <p className="text-gray-500 capitalize truncate text-xs">
+                    {isStudent() ? 'Enrolled Student' : (isMentor() ? 'Faculty Member' : (isSchoolAdmin() ? user?.schoolName : user?.role?.replace('_', ' ' )))}
+                  </p>
                 </div>
-              </div>
+              </Link>
               <Button variant="ghost" size="icon" onClick={logout}>
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
           ) : (
-            <Button variant="ghost" size="icon" onClick={logout} className="w-full justify-center">
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <div className="flex flex-col items-center gap-2">
+              <Link to="/profile" className="hover:opacity-80 transition-opacity">
+                 <Avatar className="h-9 w-9">
+                  <AvatarFallback className={cn(
+                      "transition-colors",
+                      isSystemAdmin() ? "bg-blue-100 text-blue-600" : "bg-emerald-100 text-emerald-700"
+                    )}>
+                      {user?.name?.charAt(0) || 'A'}
+                    </AvatarFallback>
+                 </Avatar>
+              </Link>
+              <Button variant="ghost" size="icon" onClick={logout} className="w-full justify-center">
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           )}
         </div>
       </aside>
@@ -186,7 +242,7 @@ export function AdminLayout() {
         <header className="sticky top-0 z-30 h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
           <div className="flex items-center gap-4">
             <h1 className="text-lg font-semibold text-gray-900">
-              {navigation.find(n => n.href === location.pathname || location.pathname.startsWith(n.href + '/'))?.name || 'Dashboard'}
+              {location.pathname.startsWith('/profile') ? 'Profile' : (navigation.find(n => n.href === location.pathname || location.pathname.startsWith(n.href + '/'))?.name || 'Dashboard')}
             </h1>
           </div>
           <div className="flex items-center gap-3">

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { AuthResponse, ApiResponse, PaginatedResponse, User, School, Class, Course, Grade } from '../types';
+import type { AuthResponse, ApiResponse, PaginatedResponse, User, School, Class, Course, Grade, Assessment } from '../types';
 import { useAuthStore } from '../stores/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
@@ -66,17 +66,32 @@ export const authService = {
   login: (email: string, password: string) =>
     api.post<AuthResponse>('/auth/login', { email, password }),
   
-  register: (data: { email: string; password: string; name: string; schoolName?: string; role?: string }) =>
+  register: (data: { 
+    email: string; 
+    password: string; 
+    name: string; 
+    schoolName: string;
+    schoolEmail?: string;
+    schoolPhone?: string;
+    schoolAddress?: string;
+    role?: string 
+  }) =>
     api.post<AuthResponse>('/auth/register', data),
   
   logout: () => api.post('/auth/logout'),
-  
+   
   refreshToken: (refreshToken: string) =>
     api.post('/auth/refresh', { refreshToken }),
+
+  verifyEmail: (token: string) =>
+    api.post<{ success: boolean; message?: string; error?: string; user?: any }>(`/auth/verify-email/${token}`),
+
+  resendVerificationEmail: (email: string) =>
+    api.post<{ success: boolean; message?: string; error?: string }>('/auth/resend-verification', { email }),
 };
 
 export const userService = {
-  getAll: (params?: { page?: number; limit?: number; schoolId?: string | null }) =>
+  getAll: (params?: { page?: number; limit?: number; schoolId?: string | null; classId?: string; role?: string }) =>
     api.get<PaginatedResponse<User>>('/users', { params }),
   
   getById: (id: string) =>
@@ -87,6 +102,25 @@ export const userService = {
   
   delete: (id: string) =>
     api.delete<ApiResponse<void>>(`/users/${id}`),
+
+  invite: (data: { name: string; email: string; role: string; schoolId: string }) =>
+    api.post<{ success?: boolean; message: string; invitationId?: string; user?: User; isExistingUser?: boolean }>('/users/invite', data),
+};
+
+export const mentorService = {
+  getInvitation: (token: string) =>
+    api.get<{ invitation: any }>(`/mentors/accept-invitation/${token}`),
+  
+  acceptInvitation: (token: string, data: { password: string }) =>
+    api.post<{ message: string; mentor: any }>(`/mentors/accept-invitation/${token}`, data),
+};
+
+export const studentService = {
+  getInvitation: (token: string) =>
+    api.get<{ invitation: any }>(`/students/invitation/${token}`),
+  
+  acceptInvitation: (data: { token: string; password: string }) =>
+    api.post<{ message: string; user: any }>('/students/accept-invitation', data),
 };
 
 export const schoolService = {
@@ -144,6 +178,68 @@ export const courseService = {
   
   delete: (id: string) =>
     api.delete<ApiResponse<void>>(`/courses/${id}`),
+};
+
+export interface AssessmentAttempt {
+  _id: string;
+  assessmentId: string;
+  respondentId: string;
+  classId: string;
+  answers: any[];
+  score?: number;
+  isComplete: boolean;
+  startedAt: string;
+  completedAt?: string;
+}
+
+export const assessmentService = {
+  getAll: (params?: { classId?: string; schoolId?: string | null; page?: number; limit?: number }) =>
+    api.get<PaginatedResponse<Assessment>>('/assessments', { params }),
+  
+  getById: (id: string) =>
+    api.get<ApiResponse<Assessment>>(`/assessments/${id}`),
+  
+  create: (data: Partial<Assessment>) =>
+    api.post<ApiResponse<Assessment>>('/assessments', data),
+  
+  createAttempt: (assessmentId: string, data: { respondentId: string; classId: string }) =>
+    api.post<ApiResponse<AssessmentAttempt>>(`/assessments/${assessmentId}/attempt`, data),
+  
+  getAttempt: (attemptId: string) =>
+    api.get<ApiResponse<AssessmentAttempt>>(`/assessments/attempts/${attemptId}`),
+  
+  updateAttempt: (attemptId: string, data: { answers: any[]; isComplete?: boolean }) =>
+    api.put<ApiResponse<AssessmentAttempt>>(`/assessments/attempts/${attemptId}`, data),
+  
+  getAttempts: (assessmentId: string) =>
+    api.get<{ success: boolean; data: AssessmentAttempt[] }>(`/assessments/${assessmentId}/attempts`),
+};
+
+export interface Transcript {
+  _id: string;
+  studentId: string;
+  studentName?: string;
+  classId: string;
+  className?: string;
+  schoolId: string;
+  grades: any[];
+  gpa: number;
+  status: 'draft' | 'final' | 'void';
+  createdAt: string;
+}
+
+export const transcriptService = {
+  getAll: (params?: { studentId?: string; classId?: string; schoolId?: string | null; page?: number; limit?: number }) =>
+    api.get<PaginatedResponse<Transcript>>('/transcripts', { params }),
+  
+  getById: (id: string) =>
+    api.get<ApiResponse<Transcript>>(`/transcripts/${id}`),
+  
+  create: (data: Partial<Transcript>) =>
+    api.post<ApiResponse<Transcript>>('/transcripts', data),
+  
+  export: (id: string, format: 'pdf' | 'csv' = 'pdf') =>
+    api.get(`/transcripts/${id}/export`, { params: { format }, responseType: 'blob' }),
 };
 
 export interface Approval {

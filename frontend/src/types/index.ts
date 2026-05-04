@@ -10,7 +10,23 @@ export interface User {
   classIds: string[];
   isActive: boolean;
   isApproved: boolean;
-  createdAt?: string;
+  school?: School;
+  classes?: Class[];
+  bio?: string;
+  profileImage?: string;
+  twoFactorEnabled?: boolean;
+  emailVerified?: boolean;
+  lastLoginAt?: string;
+  lastLoginIP?: string;
+  lastLoginDevice?: string;
+  stats?: {
+    gpa: number;
+    academicStanding: string;
+    courseCompletion: number;
+    securityScore: number;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface School {

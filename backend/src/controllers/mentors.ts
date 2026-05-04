@@ -548,7 +548,10 @@ export async function acceptMentorInvitation(req: Request, res: Response) {
       password: hashedPassword,
       role: 'mentor',
       schoolId: invitation.schoolId,
-      isActive: true
+      isActive: true,
+      emailVerified: true,
+      emailVerifiedAt: new Date(),
+      isApproved: true
     });
 
     await newMentor.save();

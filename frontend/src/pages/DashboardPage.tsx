@@ -17,8 +17,8 @@ export function DashboardPage() {
           classService.getAll({ limit: 1 }),
         ]);
         setStats({
-          schools: schoolsRes.data.data?.total || 0,
-          classes: classesRes.data.data?.total || 0,
+          schools: (schoolsRes.data.data as any)?.total || 0,
+          classes: (classesRes.data.data as any)?.total || 0,
           students: 0,
         });
       } catch (error) {

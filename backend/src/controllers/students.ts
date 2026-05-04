@@ -237,7 +237,10 @@ export async function acceptStudentInvitation(req: Request, res: Response) {
       role: 'student',
       schoolId: invitation.schoolId._id,
       studentId: studentId,
-      isActive: true
+      isActive: true,
+      emailVerified: true,
+      emailVerifiedAt: new Date(),
+      isApproved: true
     });
 
     await newUser.save();

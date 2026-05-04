@@ -33,6 +33,7 @@ async function approveAllPendingSchools() {
       // Update the user with schoolId
       admin.schoolId = school._id;
       admin.isApproved = true;
+      admin.isActive = true;
       await admin.save();
 
       // Create an approval record
@@ -73,6 +74,7 @@ async function approveAllPendingSchools() {
       const adminUser = await User.findOne({ _id: school.adminId });
       if (adminUser) {
         adminUser.isApproved = true;
+        adminUser.isActive = true;
         await adminUser.save();
         console.log(`  - Updated admin: ${adminUser.email}`);
       }

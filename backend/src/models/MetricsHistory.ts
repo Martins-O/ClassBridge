@@ -13,7 +13,7 @@ export interface IMetricsHistory extends Document {
 }
 
 const MetricsHistorySchema = new Schema({
-  timestamp: { type: Date, default: Date.now, index: true },
+  timestamp: { type: Date, default: Date.now },
   memoryUsed: { type: Number, required: true },
   memoryTotal: { type: Number, required: true },
   heapUsed: { type: Number, required: true },

@@ -25,18 +25,37 @@ export async function getAssessments(req: Request, res: Response) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     const { searchParams } = new URL(req.url || 'http://localhost');
     const schoolId = searchParams.get('schoolId');
     const classId = searchParams.get('classId');
     const assessmentType = searchParams.get('assessmentType');
 
-    // Build query
-    const query: {
-      createdBy: string;
-      schoolId?: string;
-      classIds?: { $in: string[] };
-      assessmentType?: string;
-    } = { createdBy: userId };
+    // Build query based on role
+    let query: any = {};
+
+    if (user.role === 'student') {
+      // Student only sees active assessments for their classes
+      query = {
+        classIds: { $in: user.classIds || [] },
+        isActive: true
+      };
+    } else if (user.role === 'mentor') {
+      // Mentor sees what they created OR what is assigned to their classes
+      query = {
+        $or: [
+          { createdBy: userId },
+          { classIds: { $in: user.classIds || [] } }
+        ]
+      };
+    } else if (['school_admin', 'system_admin'].includes(user.role)) {
+      // Admins see everything in their scope (handled by schoolId if needed)
+      query = user.role === 'school_admin' ? { schoolId: user.schoolId } : {};
+    }
 
     if (schoolId) {
       query.schoolId = schoolId;

@@ -33,7 +33,6 @@ const EmailVerificationTokenSchema = new Schema({
 
 EmailVerificationTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 EmailVerificationTokenSchema.index({ userId: 1 });
-EmailVerificationTokenSchema.index({ token: 1 });
 
 export default mongoose.models.EmailVerificationToken ||
   mongoose.model<IEmailVerificationToken>('EmailVerificationToken', EmailVerificationTokenSchema);

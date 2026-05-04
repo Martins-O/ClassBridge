@@ -1081,14 +1081,32 @@ router.delete('/grades/:id', validateObjectId(), requirePermissionCsrfHandler(PE
  *       200:
  *         description: User updated
  */
+router.get('/users', jwtAuthMiddleware, asyncHandler(usersController.listUsers));
 router.get('/users/:id', validateObjectId(), jwtAuthMiddleware, asyncHandler(usersController.getUser));
-router.patch('/users/:id', validateObjectId(), requirePermissionCsrfHandler(PERMISSIONS.MANAGE_USERS)(usersController.updateUser));
+router.patch('/users/:id', validateObjectId(), protectedCsrfHandler(usersController.updateUser));
 router.get('/users/:id/password-status', validateObjectId(), jwtAuthMiddleware, asyncHandler(usersController.getPasswordStatus));
 router.post('/users/:id/force-password-change', validateObjectId(), systemAdminHandler(usersController.forcePasswordChange));
 router.post('/users/:id/reset-password', validateObjectId(), systemAdminHandler(usersController.resetPassword));
 router.post('/users/invite', jwtAuthMiddleware, csrfHandler(usersController.inviteUser));
 router.patch('/users/:id/deactivate', jwtAuthMiddleware, csrfHandler(usersController.deactivateUser));
 router.post('/users/bulk-import', jwtAuthMiddleware, csrfHandler(usersController.bulkImportUsers));
+
+// Mentor Routes
+router.get('/mentors', jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(mentorsController.getMentors));
+router.post('/mentors', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_USERS)(mentorsController.createMentor));
+router.put('/mentors', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_USERS)(mentorsController.updateMentorAssignments));
+router.get('/mentors/accept-invitation/:token', asyncHandler(mentorsController.getMentorInvitation));
+router.post('/mentors/accept-invitation/:token', asyncHandler(mentorsController.acceptMentorInvitation));
+router.get('/mentors/:id', validateObjectId(), jwtAuthMiddleware, asyncHandler(mentorsController.getMentor));
+router.put('/mentors/:id', validateObjectId(), requirePermissionCsrfHandler(PERMISSIONS.MANAGE_USERS)(mentorsController.updateMentor));
+router.delete('/mentors/:id', validateObjectId(), requirePermissionCsrfHandler(PERMISSIONS.MANAGE_USERS)(mentorsController.deleteMentor));
+
+// Student Routes
+router.get('/students/invitations', jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(studentsController.getStudentInvitations));
+router.post('/students/invite', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_USERS)(studentsController.inviteStudent));
+router.post('/students/bulk-invite', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_USERS)(studentsController.bulkInviteStudents));
+router.get('/students/invitation/:token', asyncHandler(studentsController.getStudentInvitation));
+router.post('/students/accept-invitation', asyncHandler(studentsController.acceptStudentInvitation));
 
 /**
  * @swagger

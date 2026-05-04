@@ -10,12 +10,71 @@ import { sendEmail, generateStudentInvitationEmail, generateMentorInvitationEmai
 import crypto from 'crypto';
 import School from '@/models/School';
 
+export async function listUsers(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const requestingUser = await userService.getById(userId);
+    if (!requestingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const { schoolId, role, classId, page = '1', limit = '50' } = req.query as Record<string, string>;
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+
+    let query: any = {};
+
+    // System admin can see all users; school admin only sees own school
+    if (requestingUser.role === 'system_admin') {
+      if (schoolId) query.schoolId = schoolId;
+    } else if (['school_admin', 'mentor'].includes(requestingUser.role)) {
+      query.schoolId = requestingUser.schoolId;
+    } else {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (role) query.role = role;
+    if (classId) query.classIds = classId;
+
+    const total = await userService.count(query);
+    const users = await User.find(query)
+      .select('-password -refreshTokens')
+      .populate('schoolId')
+      .populate('classIds')
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum)
+      .sort({ createdAt: -1 });
+
+    return res.json({
+      success: true,
+      data: users.map(serializeUser),
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
+    });
+  } catch (error) {
+    console.error('List users error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 export async function getUser(req: Request, res: Response) {
+
   try {
     await connectDB();
 
     const { id } = req.params;
-    const user = await userService.getById(id);
+    const user = await User.findById(id)
+      .select('-password -refreshTokens')
+      .populate('schoolId')
+      .populate('classIds');
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
