@@ -41,6 +41,12 @@ export interface IUser extends Document {
   lastLoginAt?: Date;
   lastLoginIP?: string;
   lastLoginDevice?: string;
+  stats?: {
+    gpa: number;
+    academicStanding: string;
+    courseCompletion: number;
+    securityScore: number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -56,14 +62,7 @@ const UserSchema = new Schema({
   password: {
     type: String,
     required: true,
-    minlength: 8,
-    validate: {
-      validator: function(v: string) {
-        // Password must contain at least one uppercase, one lowercase, one number, and one special character
-        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(v);
-      },
-      message: 'Password must contain at least 8 characters, including uppercase, lowercase, number and special character'
-    }
+    minlength: 8
   },
   name: {
     type: String,
@@ -176,6 +175,12 @@ const UserSchema = new Schema({
   },
   lastLoginDevice: {
     type: String
+  },
+  stats: {
+    gpa: { type: Number, default: 0 },
+    academicStanding: { type: String, default: 'Neutral' },
+    courseCompletion: { type: Number, default: 0 },
+    securityScore: { type: Number, default: 50 }
   }
 }, {
   timestamps: true

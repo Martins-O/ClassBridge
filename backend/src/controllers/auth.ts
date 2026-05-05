@@ -229,7 +229,7 @@ export async function register(req: Request, res: Response) {
 
     try {
       const user = await authService.register({ name, email, password: userData.password, schoolName });
-
+      
       return res.status(201).json({
         success: true,
         user,
@@ -238,11 +238,16 @@ export async function register(req: Request, res: Response) {
       if (error instanceof Error && error.message.includes('already exists')) {
         return res.status(409).json({ error: error.message });
       }
+      console.error('Registration error details:', error);
       throw error;
     }
   } catch (error) {
     console.error('Register error:', error);
-    return res.status(500).json({ error: 'Failed to register user' });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ 
+      error: 'Failed to register user',
+      details: errorMessage 
+    });
   }
 }
 

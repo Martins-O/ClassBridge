@@ -38,6 +38,7 @@ const getProp = (obj: Record<string, unknown> | null, key: string) =>
 
 export interface SerializedUser {
   id: string | null;
+  _id: string | null;
   name?: unknown;
   email?: unknown;
   role?: unknown;
@@ -51,6 +52,9 @@ export interface SerializedUser {
     description?: unknown;
     subscriptionType?: unknown;
   } | null;
+  schoolId?: string | null;
+  schoolName?: any;
+  classIds: string[];
   classes: Array<{
     id: string | null;
     name?: unknown;
@@ -89,13 +93,20 @@ export const serializeUser = (
 
   const classesArray = Array.isArray(classIds) ? classIds : [];
 
+  const schoolIdValue = getNestedId(schoolRaw);
+  const schoolNameValue = sanitise(getProp(schoolRaw, 'name')) || rest.schoolName;
+
   return {
     id: (id as string | undefined) ?? getNestedId(_id),
+    _id: getNestedId(_id),
     ...rest,
+    schoolId: schoolIdValue,
+    schoolName: schoolNameValue,
+    classIds: classesArray.map((cls) => getNestedId(cls)).filter((id): id is string => id !== null),
     school: schoolRaw
       ? {
-          id: getNestedId(schoolRaw),
-          name: sanitise(getProp(schoolRaw, 'name')),
+          id: schoolIdValue,
+          name: schoolNameValue,
           email: sanitise(getProp(schoolRaw, 'email')),
           phone: sanitise(getProp(schoolRaw, 'phone')),
           address: sanitise(getProp(schoolRaw, 'address')),

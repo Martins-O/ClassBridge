@@ -152,10 +152,11 @@ export class ApprovalService {
         const requestedById = approval.requestedBy.toString();
         console.log('[approveSchool] User ID to update:', requestedById);
         
-    // Validate current role is pending_school_admin before approving
+    // Validate current role before approving
     const userToApprove = await User.findById(requestedById);
-    if (!userToApprove || userToApprove.role !== 'pending_school_admin') {
-      throw new Error('Can only approve users with pending_school_admin role');
+    const allowedRoles = ['pending_school_admin', 'school_admin'];
+    if (!userToApprove || !allowedRoles.includes(userToApprove.role)) {
+      throw new Error(`User with role ${userToApprove?.role} cannot be approved for school admin access`);
     }
 
     const user = await User.findByIdAndUpdate(

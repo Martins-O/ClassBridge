@@ -159,20 +159,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   });
 });
 
-function initEnvironment() {
-  try {
-    initEnvironment();
-  } catch (error) {
-    if (error instanceof Error) {
-      if (isDevelopment) {
-        console.warn(`Environment warning: ${error.message}`);
-      } else {
-        console.error(`FATAL: ${error.message}`);
-        process.exit(1);
-      }
-    }
-  }
-}
+// Removed redundant and recursive initEnvironment function
 
 function gracefulShutdown(signal: string) {
   console.log(`\n${signal} received. Starting graceful shutdown...`);

@@ -66,13 +66,29 @@ export async function withTransaction<T>(
   try {
     let result: T;
     
-    await session.withTransaction(async () => {
-      result = await operation(session);
-    }, {
-      readPreference: 'primary',
-      readConcern: { level: 'majority' },
-      writeConcern: { w: 'majority' }
-    });
+    try {
+      await session.withTransaction(async () => {
+        result = await operation(session);
+      }, {
+        readPreference: 'primary',
+        readConcern: { level: 'majority' },
+        writeConcern: { w: 'majority' }
+      });
+    } catch (transactionError: any) {
+      // Fallback for standalone MongoDB instances (no replica set)
+      const isStandalone = 
+        transactionError.message.includes('replSet') || 
+        transactionError.message.includes('replica set') ||
+        transactionError.code === 20 || // IllegalOperation
+        transactionError.codeName === 'CommandNotFound';
+
+      if (isStandalone) {
+        console.warn('MongoDB Transactions not supported (Standalone mode). Falling back to non-transactional execution.');
+        result = await operation(session);
+      } else {
+        throw transactionError;
+      }
+    }
     
     return result!;
   } finally {

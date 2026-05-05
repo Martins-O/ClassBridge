@@ -12,7 +12,7 @@ import EmailVerificationToken from '@/models/EmailVerificationToken';
 import User from '@/models/User';
 import School from '@/models/School';
 import SchoolApproval from '@/models/SchoolApproval';
-import { sendEmail, generatePasswordResetEmail, generateSchoolRegistrationSubmittedEmail, generateNewSchoolRegistrationAdminEmail, generateEmailVerificationEmail } from '@/lib/email';
+import { sendEmail, generatePasswordResetEmail, generateSchoolRegistrationSubmittedEmail, generateNewSchoolRegistrationAdminEmail, generateEmailVerificationEmail, generateSchoolApprovedNotificationEmail } from '@/lib/email';
 import { withTransaction } from '@/lib/mongodb';
 import { BaseService } from './base.service';
 import { createAuditLog } from '@/lib/auditLogger';
@@ -332,8 +332,8 @@ export class AuthService extends BaseService {
         email: data.email.toLowerCase(),
         password: hashedPassword,
         role: 'school_admin',
-        isActive: false,
-        isApproved: false,
+        isActive: true,
+        isApproved: true,
         emailVerified: false,
       });
 
@@ -341,8 +341,8 @@ export class AuthService extends BaseService {
         name: data.schoolName,
         email: data.email.toLowerCase(),
         adminId: user._id,
-        status: 'pending',
-        isActive: false,
+        status: 'approved',
+        isActive: true,
       });
 
       await SchoolApproval.create({
@@ -351,7 +351,8 @@ export class AuthService extends BaseService {
         schoolEmail: data.email.toLowerCase(),
         requestedBy: user._id,
         adminName: data.name,
-        status: 'pending',
+        status: 'approved',
+        approvedAt: new Date(),
       });
 
       user.schoolId = school._id;
@@ -408,8 +409,8 @@ export class AuthService extends BaseService {
       for (const admin of systemAdmins) {
         await notificationRepository.create({
           userId: admin._id,
-          title: 'New School Registration (Pending Email Verification)',
-          message: `New school "${data.schoolName}" has registered. Waiting for email verification before approval.`,
+          title: 'New School Registered (Auto-Approved)',
+          message: `New school "${data.schoolName}" has registered and was automatically approved.`,
           type: 'new_registration',
         });
       }
@@ -459,30 +460,39 @@ export class AuthService extends BaseService {
       for (const admin of systemAdmins) {
         await notificationRepository.create({
           userId: admin._id,
-          title: 'Email Verified - School Registration',
-          message: `School "${user.name}" has verified their email. You can now review their registration.`,
+          title: 'New School Registered',
+          message: `School "${user.name}" has registered and was automatically approved.`,
           type: 'new_registration',
         });
 
         const school = await School.findById(user.schoolId);
         if (school) {
-          await sendEmail(generateNewSchoolRegistrationAdminEmail({
-            recipientEmail: admin.email,
-            recipientName: admin.name,
-            schoolName: school.name,
-            adminEmail: user.email,
-            adminName: user.name,
-            registrationDate: new Date(),
-          }));
+          try {
+            await sendEmail(generateNewSchoolRegistrationAdminEmail({
+              recipientEmail: admin.email,
+              recipientName: admin.name,
+              schoolName: school.name,
+              adminEmail: user.email,
+              adminName: user.name,
+              registrationDate: new Date(),
+            }));
+          } catch (emailErr) {
+            console.error(`Failed to send notification email to admin ${admin.email}:`, emailErr);
+          }
         }
       }
 
       // Send confirmation email to the user
-      await sendEmail(generateSchoolRegistrationSubmittedEmail({
-        recipientEmail: user.email,
-        recipientName: user.name,
-        schoolName: (await School.findById(user.schoolId))?.name || 'Unknown',
-      }));
+      try {
+        const schoolDoc = await School.findById(user.schoolId);
+        await sendEmail(generateSchoolApprovedNotificationEmail({
+          recipientEmail: user.email,
+          recipientName: user.name,
+          schoolName: schoolDoc?.name || 'Your School',
+        }));
+      } catch (emailErr) {
+        console.error(`Failed to send confirmation email to user ${user.email}:`, emailErr);
+      }
     }
 
     const { password: _, ...userWithoutPassword } = user.toObject ? user.toObject() : user;

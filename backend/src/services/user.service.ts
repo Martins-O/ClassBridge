@@ -1,12 +1,69 @@
 import { userRepository } from '@/repositories';
-import { schoolService } from '@/services/school.service';
 import RefreshToken from '@/models/RefreshToken';
+import { gradeRepository } from '@/repositories/grade.repository';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
 export class UserService {
   async getById(id: string): Promise<any> {
-    return userRepository.findById(id);
+    const user = await userRepository.findById(id);
+    if (!user) return null;
+    
+    // Asynchronously update stats to keep data fresh without blocking significantly
+    // In a production app, this might be triggered by events rather than every getById
+    this.calculateUserStats(id).catch(err => console.error('Failed to update stats:', err));
+    
+    return user;
+  }
+
+  async calculateUserStats(userId: string): Promise<any> {
+    const user = await userRepository.findById(userId);
+    if (!user) return null;
+
+    let gpa = 0;
+    let academicStanding = 'Good Standing';
+    let courseCompletion = 0;
+    let securityScore = 50;
+
+    // Only students have GPA/Course stats
+    if (user.role === 'student') {
+        const grades = await gradeRepository.findByStudent(userId);
+        if (grades.length > 0) {
+            const gpaValues: Record<string, number> = { 
+                'A+': 4.0, 'A': 4.0, 'A-': 3.7, 
+                'B+': 3.3, 'B': 3.0, 'B-': 2.7, 
+                'C+': 2.3, 'C': 2.0, 'C-': 1.7, 
+                'D+': 1.3, 'D': 1.0, 'F': 0.0 
+            };
+            
+            const sum = grades.reduce((acc: number, g: any) => {
+                const gradeStr = (g.grade || '').toUpperCase();
+                return acc + (gpaValues[gradeStr] || 0);
+            }, 0);
+            
+            gpa = Number((sum / grades.length).toFixed(2));
+            
+            if (gpa >= 3.7) academicStanding = 'Principal’s Honor List';
+            else if (gpa >= 3.5) academicStanding = 'Dean’s Honor List';
+            else if (gpa < 2.0) academicStanding = 'Academic Probation';
+        }
+
+        const totalClasses = user.classIds?.length || 0;
+        const completedCourses = grades.length; 
+        courseCompletion = totalClasses > 0 ? Math.min(100, Math.round((completedCourses / totalClasses) * 100)) : 0;
+    }
+
+    // Security Score for everyone
+    if (user.twoFactorEnabled) securityScore += 25;
+    if (user.emailVerified) securityScore += 15;
+    
+    const passwordAgeDays = (Date.now() - new Date(user.passwordChangedAt || user.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+    if (passwordAgeDays < 90) securityScore += 10;
+
+    const stats = { gpa, academicStanding, courseCompletion, securityScore };
+    await userRepository.updateById(userId, { stats });
+    
+    return stats;
   }
 
   async getByIdWithPassword(id: string): Promise<any> {

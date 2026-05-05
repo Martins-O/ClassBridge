@@ -68,7 +68,7 @@ const SchoolSchema = new Schema({
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: false
   },
   subscriptionType: {
     type: String,
