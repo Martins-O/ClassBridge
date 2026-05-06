@@ -353,3 +353,121 @@ export async function getGlobalStats(req: Request, res: Response) {
     return res.status(500).json({ error: 'Failed to fetch global stats' });
   }
 }
+
+export async function getAnalytics(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const userId = getUserFromRequest(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const schoolId = user.schoolId;
+    if (!schoolId) {
+      return res.status(403).json({ error: 'School required for analytics' });
+    }
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    const [
+      enrollmentTrend,
+      gradeDistribution,
+      classPerformance,
+      recentActivity,
+      attendanceMetrics,
+    ] = await Promise.all([
+      User.aggregate([
+        { $match: { role: 'student', schoolId: new Types.ObjectId(schoolId.toString()) } },
+        { $group: {
+          _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+          count: { $sum: 1 },
+        }},
+        { $sort: { _id: 1 } },
+        { $limit: 12 },
+      ]),
+
+      Grade.aggregate([
+        { $match: { schoolId: new Types.ObjectId(schoolId.toString()) } },
+        { $group: {
+          _id: '$letterGrade',
+          count: { $sum: 1 },
+          avgPercentage: { $avg: '$percentage' },
+        }},
+        { $sort: { _id: 1 } },
+      ]),
+
+      Class.aggregate([
+        { $match: { schoolId: new Types.ObjectId(schoolId.toString()) } },
+        { $lookup: {
+          from: 'grades',
+          let: { studentIds: '$studentIds' },
+          pipeline: [
+            { $match: { $expr: { $in: ['$studentId', '$$studentIds'] } } },
+            { $group: { _id: null, avgGrade: { $avg: '$percentage' }, count: { $sum: 1 } } },
+          ],
+          as: 'gradeStats',
+        }},
+        { $project: {
+          name: 1,
+          studentCount: { $size: '$studentIds' },
+          avgGrade: { $ifNull: [{ $arrayElemAt: ['$gradeStats.avgGrade', 0] }, 0] },
+          gradeCount: { $ifNull: [{ $arrayElemAt: ['$gradeStats.count', 0] }, 0] },
+        }},
+        { $sort: { avgGrade: -1 } },
+        { $limit: 10 },
+      ]),
+
+      User.aggregate([
+        { $match: { role: 'student', schoolId: new Types.ObjectId(schoolId.toString()), lastLoginAt: { $gte: thirtyDaysAgo } } },
+        { $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$lastLoginAt' } },
+          count: { $sum: 1 },
+        }},
+        { $sort: { _id: 1 } },
+        { $limit: 30 },
+      ]),
+
+      Grade.aggregate([
+        { $match: { schoolId: new Types.ObjectId(schoolId.toString()), createdAt: { $gte: thirtyDaysAgo } } },
+        { $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          gradesPosted: { $sum: 1 },
+          avgPercentage: { $avg: '$percentage' },
+        }},
+        { $sort: { _id: 1 } },
+        { $limit: 30 },
+      ]),
+    ]);
+
+    const totalStudents = await User.countDocuments({ role: 'student', schoolId });
+    const activeStudents = await User.countDocuments({ role: 'student', schoolId, lastLoginAt: { $gte: thirtyDaysAgo } });
+
+    return res.json({
+      analytics: {
+        enrollmentTrend,
+        gradeDistribution,
+        classPerformance,
+        recentActivity,
+        attendanceMetrics,
+        summary: {
+          totalStudents,
+          activeStudents,
+          activeRate: totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0,
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Failed to build analytics', error);
+    return res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+}
