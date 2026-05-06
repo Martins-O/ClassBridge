@@ -111,25 +111,20 @@ export async function updateCourse(req: Request, res: Response) {
     const { id } = req.params;
     const body = req.body;
 
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
-    if (!token) {
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const { verifyAccessToken } = await import('@/lib/jwt');
-    const payload = verifyAccessToken(token);
-
-    const user = await userRepository.findById(payload.userId);
+    const user = await userRepository.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     const course = await courseService.update(
-      id, 
-      body, 
-      payload.userId, 
+      id,
+      body,
+      userId,
       user.role,
       user.schoolId?.toString()
     );
@@ -150,24 +145,19 @@ export async function deleteCourse(req: Request, res: Response) {
 
     const { id } = req.params;
 
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
-    if (!token) {
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const { verifyAccessToken } = await import('@/lib/jwt');
-    const payload = verifyAccessToken(token);
-
-    const user = await userRepository.findById(payload.userId);
+    const user = await userRepository.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     await courseService.delete(
-      id, 
-      payload.userId, 
+      id,
+      userId,
       user.role,
       user.schoolId?.toString()
     );
