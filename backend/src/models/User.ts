@@ -8,7 +8,8 @@ export type UserRole =
   | 'student'
   | 'admissions'
   | 'counselor'
-  | 'office_staff';
+  | 'office_staff'
+  | 'parent';
 
 export interface IUser extends Document {
   email: string;
@@ -71,7 +72,7 @@ const UserSchema = new Schema({
   },
   role: {
     type: String,
-    enum: ['system_admin', 'school_admin', 'pending_school_admin', 'mentor', 'student', 'admissions', 'counselor', 'office_staff'],
+    enum: ['system_admin', 'school_admin', 'pending_school_admin', 'mentor', 'student', 'admissions', 'counselor', 'office_staff', 'parent'],
     required: true,
     default: 'student'
   },

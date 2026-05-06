@@ -90,6 +90,11 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.VIEW_REPORTS,
     PERMISSIONS.VIEW_OWN_TRANSCRIPT,
   ],
+  parent: [
+    PERMISSIONS.VIEW_GRADES,
+    PERMISSIONS.VIEW_REPORTS,
+    PERMISSIONS.VIEW_OWN_TRANSCRIPT,
+  ],
 };
 
 export function hasPermission(role: UserRole, permission: Permission): boolean {
