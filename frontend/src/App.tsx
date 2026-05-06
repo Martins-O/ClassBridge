@@ -40,6 +40,8 @@ import { TranscriptsListPage } from './pages/admin/TranscriptsListPage';
 import { GenerateTranscriptPage } from './pages/admin/GenerateTranscriptPage';
 import { ProfilePage } from './pages/admin/ProfilePage';
 import { EditProfilePage } from './pages/admin/EditProfilePage';
+import { ImportExportPage } from './pages/admin/ImportExportPage';
+import { AnalyticsPage } from './pages/admin/AnalyticsPage';
 
 const queryClient = new QueryClient();
 
@@ -215,6 +217,17 @@ function App() {
               </Route>
 
               <Route
+                path="/import-export"
+                element={
+                  <ProtectedRoute>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<ImportExportPage />} />
+              </Route>
+
+              <Route
                 path="/profile"
                 element={
                   <ProtectedRoute>
@@ -276,6 +289,17 @@ function App() {
                 }
               >
                 <Route index element={<SchoolReportsPage />} />
+              </Route>
+
+              <Route
+                path="/analytics"
+                element={
+                  <ProtectedRoute>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<AnalyticsPage />} />
               </Route>
             
             {/* 404 Catch-all */}
