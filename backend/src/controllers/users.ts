@@ -6,6 +6,7 @@ import { serializeUser } from '@/lib/serializeUser';
 import User from '@/models/User';
 import StudentInvitation from '@/models/StudentInvitation';
 import MentorInvitation from '@/models/MentorInvitation';
+import RefreshToken from '@/models/RefreshToken';
 import { sendEmail, generateStudentInvitationEmail, generateMentorInvitationEmail } from '@/lib/email';
 import crypto from 'crypto';
 import School from '@/models/School';
@@ -409,6 +410,56 @@ export async function deactivateUser(req: Request, res: Response) {
     return res.json({ message: 'User deactivated successfully', user: serializeUser(targetUser) });
   } catch (error) {
     console.error('Deactivate user error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function deleteUser(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const requestingUser = await userService.getById(userId);
+    if (!requestingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const { id } = req.params;
+
+    if (!['school_admin', 'system_admin'].includes(requestingUser.role)) {
+      return res.status(403).json({ error: 'Only administrators can delete users' });
+    }
+
+    if (userId === id) {
+      return res.status(400).json({ error: 'Cannot delete your own account' });
+    }
+
+    const targetUser = await userService.getById(id);
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (requestingUser.role === 'school_admin') {
+      if (targetUser.schoolId?.toString() !== requestingUser.schoolId?.toString()) {
+        return res.status(403).json({ error: 'You can only manage users in your school' });
+      }
+      if (targetUser.role === 'school_admin' || targetUser.role === 'system_admin') {
+        return res.status(403).json({ error: 'Cannot delete administrators' });
+      }
+    }
+
+    targetUser.isActive = false;
+    await targetUser.save();
+
+    await RefreshToken.deleteMany({ userId: id });
+
+    return res.json({ message: 'User deleted successfully', user: serializeUser(targetUser) });
+  } catch (error) {
+    console.error('Delete user error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
