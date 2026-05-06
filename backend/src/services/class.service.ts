@@ -1,5 +1,8 @@
 import { classRepository } from '@/repositories';
 import { schoolRepository } from '@/repositories';
+import Course from '@/models/Course';
+import Assessment from '@/models/Assessment';
+import User from '@/models/User';
 
 export interface PaginatedClasses {
   classes: any[];
@@ -87,6 +90,22 @@ export class ClassService {
   }
 
   async delete(id: string): Promise<boolean> {
+    return classRepository.deleteById(id);
+  }
+
+  async deleteWithCascade(id: string): Promise<boolean> {
+    await Course.updateMany({ classId: id }, { isActive: false });
+
+    await Assessment.updateMany(
+      { classIds: id },
+      { $pull: { classIds: id } }
+    );
+
+    await User.updateMany(
+      { classIds: id },
+      { $pull: { classIds: id } }
+    );
+
     return classRepository.deleteById(id);
   }
 
