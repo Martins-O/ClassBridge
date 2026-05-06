@@ -617,6 +617,11 @@ export class AuthService extends BaseService {
           { $set: { used: true } },
           { session }
         );
+
+        await RefreshToken.deleteMany(
+          { userId: resetRecord.userId },
+          { session }
+        );
       });
 
       // Audit log for password reset
