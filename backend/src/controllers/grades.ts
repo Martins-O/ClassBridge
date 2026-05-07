@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import connectDB from '@/lib/mongodb';
-import { verifyAccessToken } from '@/lib/jwt';
+import { getUserIdFromRequest } from '@/lib/session';
 import { getPaginationParams, buildPagination } from '@/lib/pagination';
 import { whitelistFields } from '@/lib/fieldUtils';
 import { userRepository } from '@/repositories';
@@ -16,22 +16,18 @@ export async function getGrades(req: Request, res: Response) {
   try {
     await connectDB();
 
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
-    if (!token) {
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const payload = verifyAccessToken(token);
-    const user = await userRepository.findById(payload.userId);
-    
+    const user = await userRepository.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     const { page, limit } = getPaginationParams(req, { defaultLimit: 20, maxLimit: 100 });
-    const result = await gradeService.getAll(payload.userId, user.role, page, limit);
+    const result = await gradeService.getAll(userId, user.role, page, limit);
 
     const response = buildPagination(result.grades, result.total, page, limit);
     return res.json(response);
@@ -45,16 +41,12 @@ export async function createGrade(req: Request, res: Response) {
   try {
     await connectDB();
 
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
-    if (!token) {
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const payload = verifyAccessToken(token);
-    const user = await userRepository.findById(payload.userId);
-    
+    const user = await userRepository.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -74,13 +66,13 @@ export async function createGrade(req: Request, res: Response) {
       studentId,
       courseId,
       classId,
-      mentorId: payload.userId,
+      mentorId: userId,
       academicYear,
       semester,
       grade,
       score,
       comments,
-    }, payload.userId, user.role);
+    }, userId, user.role);
 
     return res.status(201).json({
       message: 'Grade created successfully',
@@ -117,16 +109,12 @@ export async function updateGrade(req: Request, res: Response) {
   try {
     await connectDB();
 
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
-    if (!token) {
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const payload = verifyAccessToken(token);
-    const user = await userRepository.findById(payload.userId);
-    
+    const user = await userRepository.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -138,7 +126,7 @@ export async function updateGrade(req: Request, res: Response) {
     const grade = await gradeService.update(
       id, 
       allowedUpdates, 
-      payload.userId, 
+      userId, 
       user.role,
       user.schoolId?.toString()
     );
@@ -160,16 +148,12 @@ export async function deleteGrade(req: Request, res: Response) {
   try {
     await connectDB();
 
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
-    if (!token) {
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const payload = verifyAccessToken(token);
-    const user = await userRepository.findById(payload.userId);
-    
+    const user = await userRepository.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -177,7 +161,7 @@ export async function deleteGrade(req: Request, res: Response) {
     const { id } = req.params;
     await gradeService.delete(
       id, 
-      payload.userId, 
+      userId, 
       user.role,
       user.schoolId?.toString()
     );
@@ -196,16 +180,12 @@ export async function bulkCreateGrades(req: Request, res: Response) {
   try {
     await connectDB();
 
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
-    if (!token) {
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const payload = verifyAccessToken(token);
-    const user = await userRepository.findById(payload.userId);
-    
+    const user = await userRepository.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -222,10 +202,10 @@ export async function bulkCreateGrades(req: Request, res: Response) {
 
     const gradesWithMentor = grades.map((g: any) => ({
       ...whitelistFields(g, BULK_CREATE_ALLOWED_FIELDS),
-      mentorId: payload.userId,
+      mentorId: userId,
     }));
 
-    const createdGrades = await gradeService.createBulk(gradesWithMentor, payload.userId, user.role);
+    const createdGrades = await gradeService.createBulk(gradesWithMentor, userId, user.role);
 
     return res.status(201).json({
       message: `Successfully created ${createdGrades.length} grades`,

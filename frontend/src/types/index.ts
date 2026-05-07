@@ -70,17 +70,21 @@ export interface Class {
 export interface Course {
   _id: string;
   name: string;
-  code?: string;
   description?: string;
-  category?: string;
-  schoolId: string;
-  schoolName?: string;
   classId: string;
   className?: string;
-  credits: number;
-  duration: string;
+  mentorId: string;
+  mentorName?: string;
   studentIds?: string[];
+  subject?: string;
+  duration: string;
+  startDate?: string;
+  endDate?: string;
   isActive: boolean;
+  maxStudents: number;
+  syllabus?: string;
+  enrolledCount?: number;
+  availableSpots?: number;
 }
 
 export interface Grade {
@@ -98,16 +102,36 @@ export interface Grade {
   weight: number;
 }
 
+export interface IAssessmentQuestion {
+  id: string;
+  type: 'rating' | 'text' | 'multiple-choice' | 'checkbox' | 'scale';
+  question: string;
+  description?: string;
+  options?: string[];
+  required: boolean;
+  weight?: number;
+  category?: string;
+}
+
 export interface Assessment {
   _id: string;
   title: string;
-  description?: string;
-  classId: string;
+  description: string;
+  questions: IAssessmentQuestion[];
+  createdBy: string;
   schoolId: string;
-  mentorId: string;
-  passingScore: number;
-  maxAttempts: number;
+  classIds: string[];
+  targetRole: 'mentor' | 'student';
+  assessorRole: 'mentor' | 'student' | 'self';
+  assessmentType: 'peer' | 'mentor_to_student' | 'student_to_mentor' | 'self';
   isActive: boolean;
+  startDate?: string;
+  endDate?: string;
+  maxAttempts: number;
+  timeLimit?: number;
+  passingScore?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AuthResponse {

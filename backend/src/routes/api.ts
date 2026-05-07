@@ -18,8 +18,10 @@ import * as deletionRequestsController from '@/controllers/deletionRequests';
 import * as auditController from '@/controllers/audit';
 import * as settingsController from '@/controllers/settings';
 import * as systemController from '@/controllers/system';
+import * as parentsController from '@/controllers/parents';
 import * as reportsController from '@/controllers/reports';
 import * as schoolReportController from '@/controllers/schoolReport';
+import * as importExportController from '@/controllers/importExport';
 import uploadRoutes from './upload';
 import { csrfProtection } from '@/middleware/csrf';
 import { jwtAuthMiddleware, optionalAuthMiddleware, AuthenticatedRequest } from '@/lib/auth';
@@ -841,6 +843,7 @@ router.post('/classes', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_CLASSES)
  */
 router.get('/classes/:id', validateObjectId(), jwtAuthMiddleware, asyncHandler(classesController.getClassById));
 router.put('/classes/:id', validateObjectId(), protectedCsrfHandler(classesController.updateClass));
+router.delete('/classes/:id', validateObjectId(), protectedCsrfHandler(classesController.deleteClass));
 
 /**
  * @swagger
@@ -1049,6 +1052,13 @@ router.post('/grades/bulk', requirePermissionCsrfHandler(PERMISSIONS.GRADE_STUDE
 router.put('/grades/:id', validateObjectId(), requirePermissionCsrfHandler(PERMISSIONS.GRADE_STUDENTS)(gradesController.updateGrade));
 router.delete('/grades/:id', validateObjectId(), requirePermissionCsrfHandler(PERMISSIONS.GRADE_STUDENTS)(gradesController.deleteGrade));
 
+router.post('/import/students', jwtAuthMiddleware, requireSchoolApproved(), requirePermission(PERMISSIONS.MANAGE_USERS), importExportController.uploadMiddleware, asyncHandler(importExportController.importStudents));
+router.post('/import/classes', jwtAuthMiddleware, requireSchoolApproved(), requirePermission(PERMISSIONS.MANAGE_CLASSES), importExportController.uploadMiddleware, asyncHandler(importExportController.importClasses));
+
+router.get('/export/students', jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(importExportController.exportStudents));
+router.get('/export/classes', jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(importExportController.exportClasses));
+router.get('/export/grades', jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(importExportController.exportGrades));
+
 /**
  * @swagger
  * /users/{id}:
@@ -1089,6 +1099,7 @@ router.post('/users/:id/force-password-change', validateObjectId(), systemAdminH
 router.post('/users/:id/reset-password', validateObjectId(), systemAdminHandler(usersController.resetPassword));
 router.post('/users/invite', jwtAuthMiddleware, csrfHandler(usersController.inviteUser));
 router.patch('/users/:id/deactivate', jwtAuthMiddleware, csrfHandler(usersController.deactivateUser));
+router.delete('/users/:id', validateObjectId(), protectedCsrfHandler(usersController.deleteUser));
 router.post('/users/bulk-import', jwtAuthMiddleware, csrfHandler(usersController.bulkImportUsers));
 
 // Mentor Routes
@@ -1223,6 +1234,7 @@ router.delete('/notifications/:id', protectedCsrfHandler(notificationsController
  */
 router.get('/stats', jwtAuthMiddleware, asyncHandler(statsController.getStats));
 router.get('/stats/global', systemAdminHandler(statsController.getGlobalStats));
+router.get('/stats/analytics', jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(statsController.getAnalytics));
 
 router.use('/upload', uploadRoutes);
 
@@ -1233,5 +1245,12 @@ router.get('/audit-logs/recent', systemAdminHandler(auditController.getRecentLog
 // Settings Routes
 router.get('/settings', jwtAuthMiddleware, asyncHandler(settingsController.getSettings));
 router.put('/settings', jwtAuthMiddleware, csrfHandler(settingsController.updateSettings));
+
+// Parent Routes
+router.get('/parents/children', jwtAuthMiddleware, asyncHandler(parentsController.getMyChildren));
+router.post('/parents/children', protectedCsrfHandler(parentsController.addChild));
+router.delete('/parents/children/:studentId', protectedCsrfHandler(parentsController.removeChild));
+router.get('/parents/children/:studentId/grades', jwtAuthMiddleware, asyncHandler(parentsController.getChildGrades));
+router.get('/parents/children/:studentId/classes', jwtAuthMiddleware, asyncHandler(parentsController.getChildClasses));
 
 export default router;

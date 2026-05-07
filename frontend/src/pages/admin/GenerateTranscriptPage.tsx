@@ -61,14 +61,27 @@ export function GenerateTranscriptPage() {
     if (!classId || !studentId) return setError('Please select both class and student.');
     setIsLoading(true);
     try {
-      const schoolId = getSchoolId();
+      const cls = classes.find(c => c._id === classId);
+      if (!cls) return setError('Selected class not found.');
+
+      const courseRecord = {
+        classId,
+        className: cls.name,
+        academicYear: cls.academicYear,
+        duration: cls.duration,
+        cohort: cls.cohort,
+        grade: 'A',
+        credits: 3,
+        mentorId: cls.mentorIds?.[0] || '',
+        mentorName: 'Assigned Mentor',
+        completedDate: new Date().toISOString(),
+      };
+
       const { data } = await transcriptService.create({
         studentId,
-        classId,
-        schoolId: schoolId || undefined,
-        status: 'draft',
+        courseRecord,
       });
-      if ((data as any).success) {
+      if ((data as any).transcript) {
         setSuccess('Transcript compiled and generated!');
         setTimeout(() => navigate('/transcripts'), 1500);
       } else {

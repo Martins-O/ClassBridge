@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth';
+import { NotificationBell } from '@/components/NotificationBell';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard' },
@@ -45,6 +46,7 @@ export function DashboardLayout() {
             </div>
             
             <div className="flex items-center gap-4">
+              <NotificationBell />
               <div className="hidden sm:block text-sm">
                 <p className="font-medium text-text">{user?.name}</p>
                 <p className="text-xs text-text-secondary capitalize">{user?.role?.replace('_', ' ')}</p>

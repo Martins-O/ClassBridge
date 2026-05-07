@@ -215,17 +215,39 @@ export const assessmentService = {
     api.get<{ success: boolean; data: AssessmentAttempt[] }>(`/assessments/${assessmentId}/attempts`),
 };
 
+export interface CourseRecord {
+  classId: string;
+  className: string;
+  academicYear: string;
+  duration: string;
+  cohort: string;
+  grade: string;
+  credits: number;
+  mentorId: string;
+  mentorName: string;
+  completedDate: string;
+  notes?: string;
+}
+
 export interface Transcript {
   _id: string;
   studentId: string;
-  studentName?: string;
-  classId: string;
-  className?: string;
   schoolId: string;
-  grades: any[];
-  gpa: number;
-  status: 'draft' | 'final' | 'void';
+  studentInfo: {
+    name: string;
+    email: string;
+    studentNumber: string;
+    enrollmentDate: string;
+  };
+  courseRecords: CourseRecord[];
+  academicSummary: {
+    totalCredits: number;
+    gpa: number;
+    overallGrade: string;
+  };
+  isActive: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export const transcriptService = {
@@ -322,6 +344,9 @@ export const notificationService = {
   
   markAllAsRead: () =>
     api.patch<{ success: boolean }>('/notifications/read-all'),
+
+  deleteNotification: (id: string) =>
+    api.delete<{ success: boolean }>(`/notifications/${id}`),
 };
 
 export interface Settings {

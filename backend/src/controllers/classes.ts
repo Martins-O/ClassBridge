@@ -41,6 +41,22 @@ function formatClassDocument(classDoc: any) {
   };
 }
 
+function canAccessClass(user: any, cls: any): boolean {
+  if (user.role === 'system_admin') return true;
+  if (user.role === 'school_admin' && user.schoolId?.toString() === cls.schoolId?.toString()) return true;
+  const classMentorIds = (cls.mentorIds || []).map((m: any) => m._id?.toString() || m.toString());
+  if (user.role === 'mentor' && classMentorIds.includes(user._id.toString())) return true;
+  const classStudentIds = (cls.studentIds || []).map((s: any) => s._id?.toString() || s.toString());
+  if (user.role === 'student' && classStudentIds.includes(user._id.toString())) return true;
+  return false;
+}
+
+function canManageClass(user: any, cls: any): boolean {
+  if (user.role === 'system_admin') return true;
+  if (user.role === 'school_admin' && user.schoolId?.toString() === cls.schoolId?.toString()) return true;
+  return false;
+}
+
 export async function getClasses(req: Request, res: Response) {
   try {
     await connectDB();
@@ -145,6 +161,11 @@ export async function getClassById(req: Request, res: Response) {
       return res.status(404).json({ error: 'Class not found' });
     }
 
+    const canAccess = canAccessClass(user, cls);
+    if (!canAccess) {
+      return res.status(403).json({ error: 'You do not have access to this class' });
+    }
+
     return res.json({ class: formatClassDocument(cls) });
   } catch (error) {
     console.error('Get class by id error:', error);
@@ -197,7 +218,22 @@ export async function getClassStudents(req: Request, res: Response) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     const { id } = req.params;
+    const cls = await classService.getById(id);
+
+    if (!cls) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+
+    if (!canAccessClass(user, cls)) {
+      return res.status(403).json({ error: 'You do not have access to this class' });
+    }
+
     const students = await classService.getStudents(id);
 
     const formattedStudents = students.map((student: any) => ({
@@ -219,6 +255,16 @@ export async function addStudentToClass(req: Request, res: Response) {
   try {
     await connectDB();
 
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     const { id } = req.params;
     const { studentIds } = req.body;
 
@@ -226,14 +272,57 @@ export async function addStudentToClass(req: Request, res: Response) {
       return res.status(400).json({ error: 'Student IDs array is required' });
     }
 
-    const cls = await classService.addStudents(id, studentIds);
+    const cls = await classService.getById(id);
+    if (!cls) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+
+    if (!canManageClass(user, cls)) {
+      return res.status(403).json({ error: 'Only administrators can add students to classes' });
+    }
+
+    const updatedClass = await classService.addStudents(id, studentIds);
 
     return res.json({
       message: 'Students added successfully',
-      class: formatClassDocument(cls),
+      class: formatClassDocument(updatedClass),
     });
   } catch (error) {
     console.error('Add student to class error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function deleteClass(req: Request, res: Response) {
+  try {
+    await connectDB();
+
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const { id } = req.params;
+    const cls = await classService.getById(id);
+
+    if (!cls) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+
+    if (!canManageClass(user, cls)) {
+      return res.status(403).json({ error: 'Only administrators can delete classes' });
+    }
+
+    await classService.deleteWithCascade(id);
+
+    return res.json({ message: 'Class deleted successfully' });
+  } catch (error) {
+    console.error('Delete class error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
