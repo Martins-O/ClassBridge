@@ -54,7 +54,9 @@ const schoolAdminNavigation = [
 const mentorNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'My Classes', href: '/classes', icon: GraduationCap },
+  { name: 'Courses', href: '/courses', icon: BookOpen },
   { name: 'Assessments', href: '/assessments', icon: ClipboardList },
+  { name: 'Grades', href: '/grades', icon: FileText },
   { name: 'Transcripts', href: '/transcripts', icon: FileText },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];

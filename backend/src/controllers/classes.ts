@@ -5,6 +5,11 @@ import { getPaginationParams, buildPagination } from '@/lib/pagination';
 import { userRepository } from '@/repositories';
 import { classService } from '@/services';
 
+function getSchoolId(doc: any): string | undefined {
+  const school = doc.schoolId?._id || doc.schoolId;
+  return school?.toString();
+}
+
 function formatClassDocument(classDoc: any) {
   return {
     _id: classDoc._id?.toString(),
@@ -17,7 +22,7 @@ function formatClassDocument(classDoc: any) {
     semester: classDoc.semester,
     cohort: classDoc.cohort,
     duration: classDoc.duration,
-    schoolId: classDoc.schoolId?.toString(),
+    schoolId: getSchoolId(classDoc),
     mentorIds: classDoc.mentorIds?.map((mentor: any) => mentor._id?.toString() || mentor.toString()),
     mentors: classDoc.mentorIds?.map((mentor: any) => ({
       _id: mentor._id?.toString(),
@@ -43,7 +48,7 @@ function formatClassDocument(classDoc: any) {
 
 function canAccessClass(user: any, cls: any): boolean {
   if (user.role === 'system_admin') return true;
-  if (user.role === 'school_admin' && user.schoolId?.toString() === cls.schoolId?.toString()) return true;
+  if (user.role === 'school_admin' && user.schoolId?.toString() === getSchoolId(cls)) return true;
   const classMentorIds = (cls.mentorIds || []).map((m: any) => m._id?.toString() || m.toString());
   if (user.role === 'mentor' && classMentorIds.includes(user._id.toString())) return true;
   const classStudentIds = (cls.studentIds || []).map((s: any) => s._id?.toString() || s.toString());
@@ -53,7 +58,7 @@ function canAccessClass(user: any, cls: any): boolean {
 
 function canManageClass(user: any, cls: any): boolean {
   if (user.role === 'system_admin') return true;
-  if (user.role === 'school_admin' && user.schoolId?.toString() === cls.schoolId?.toString()) return true;
+  if (user.role === 'school_admin' && user.schoolId?.toString() === getSchoolId(cls)) return true;
   return false;
 }
 
