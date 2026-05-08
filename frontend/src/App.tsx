@@ -164,13 +164,7 @@ function App() {
                 path="/courses"
                 element={
                   <ProtectedRoute>
-                    {/* Only admins can manage courses */}
-                    {(() => {
-                      const isSystemAdmin = useAuthStore.getState().isSystemAdmin;
-                      const isSchoolAdmin = useAuthStore.getState().isSchoolAdmin;
-                      if (!isSystemAdmin() && !isSchoolAdmin()) return <Navigate to="/dashboard" replace />;
-                      return <AdminLayout />;
-                    })()}
+                    <AdminLayout />
                   </ProtectedRoute>
                 }
               >
@@ -190,6 +184,17 @@ function App() {
                 <Route index element={<AssessmentsListPage />} />
                 <Route path="create" element={<CreateAssessmentPage />} />
                 <Route path=":id" element={<ComingSoonPage />} />
+              </Route>
+
+              <Route
+                path="/grades"
+                element={
+                  <ProtectedRoute>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<ComingSoonPage />} />
               </Route>
 
               <Route

@@ -37,6 +37,22 @@ export async function getTranscripts(req: Request, res: Response) {
     } else if (canViewAllGrades(currentUser.role as UserRole)) {
       query.schoolId = currentUser.schoolId;
       if (studentId) query.studentId = studentId;
+    } else if (currentUser.role === 'mentor') {
+      // Mentors can view transcripts for students in their classes
+      const mentorClasses = await Class.find({ mentorIds: userId }).select('_id');
+      const classIds = mentorClasses.map((c: any) => c._id);
+      if (studentId) {
+        // Verify student is in one of mentor's classes
+        const student = await User.findById(studentId);
+        if (!student || !student.classIds?.some((cid: any) => classIds.some((mcid: any) => mcid.equals(cid)))) {
+          return res.status(403).json({ error: 'You can only view transcripts for students in your classes' });
+        }
+        query.studentId = studentId;
+      } else {
+        // Return transcripts for all students in mentor's classes
+        const studentIds = await User.find({ classIds: { $in: classIds }, role: 'student' }).distinct('_id');
+        query.studentId = { $in: studentIds };
+      }
     } else if (canViewOwnGradesOnly(currentUser.role as UserRole)) {
       query.studentId = userId;
     } else {
