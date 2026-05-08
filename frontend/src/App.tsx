@@ -42,6 +42,7 @@ import { ProfilePage } from './pages/admin/ProfilePage';
 import { EditProfilePage } from './pages/admin/EditProfilePage';
 import { ImportExportPage } from './pages/admin/ImportExportPage';
 import { AnalyticsPage } from './pages/admin/AnalyticsPage';
+import { GradesListPage } from './pages/admin/GradesListPage';
 
 const queryClient = new QueryClient();
 
@@ -194,7 +195,7 @@ function App() {
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<ComingSoonPage />} />
+                <Route index element={<GradesListPage />} />
               </Route>
 
               <Route
