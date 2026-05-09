@@ -24,6 +24,7 @@ import * as schoolReportController from '@/controllers/schoolReport';
 import * as importExportController from '@/controllers/importExport';
 import uploadRoutes from './upload';
 import { csrfProtection } from '@/middleware/csrf';
+import { generateCsrfToken } from '@/lib/csrf';
 import { jwtAuthMiddleware, optionalAuthMiddleware, AuthenticatedRequest } from '@/lib/auth';
 import { authenticate, AuthRequest } from '@/lib/authorization';
 import { requirePermission, requireSystemAdmin, requireSchoolAdmin, requireSchoolApproved, requireAnyPermission } from '@/lib/authorization';
@@ -272,6 +273,17 @@ router.get('/reports/activity', systemAdminHandler(reportsController.getActivity
  *         description: Invalid credentials
  */
 router.post('/auth/login', csrfHandler(authController.login));
+
+router.get('/auth/csrf-token', (req: Request, res: Response) => {
+  const token = generateCsrfToken('');
+  res.cookie('csrfToken', token, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000,
+  });
+  res.json({ csrfToken: token });
+});
 
 /**
  * @swagger
