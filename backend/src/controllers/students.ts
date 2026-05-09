@@ -329,7 +329,7 @@ export async function getStudentInvitation(req: Request, res: Response) {
     // Return invitation details
     const inviter = invitation.invitedBy as { name: string; role: string };
     const school = invitation.schoolId as { name: string; _id: string };
-    const classData = invitation.classId as { name: string; _id: string; subject?: string; grade?: string };
+    const classData = invitation.classId as { name: string; _id: string; subject?: string; grade?: string } | null;
 
     return res.json({
       invitation: {
@@ -339,12 +339,12 @@ export async function getStudentInvitation(req: Request, res: Response) {
           name: school.name,
           id: school._id
         },
-        class: {
+        class: classData ? {
           name: classData.name,
           id: classData._id,
           subject: classData.subject,
           grade: classData.grade
-        },
+        } : null,
         inviter: {
           name: inviter.name,
           role: inviter.role
