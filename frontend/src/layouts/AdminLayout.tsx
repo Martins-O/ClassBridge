@@ -30,6 +30,7 @@ const systemAdminNavigation = [
   { name: 'Schools', href: '/schools', icon: Building2 },
   { name: 'Approvals', href: '/approvals', icon: FileText },
   { name: 'Users', href: '/users', icon: Users },
+  { name: 'Students', href: '/students', icon: GraduationCap },
   { name: 'Classes', href: '/classes', icon: GraduationCap },
   { name: 'Courses', href: '/courses', icon: BookOpen },
   { name: 'Assessments', href: '/assessments', icon: ClipboardList },
@@ -43,6 +44,7 @@ const systemAdminNavigation = [
 const schoolAdminNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Users', href: '/users', icon: Users },
+  { name: 'Students', href: '/students', icon: GraduationCap },
   { name: 'Classes', href: '/classes', icon: GraduationCap },
   { name: 'Courses', href: '/courses', icon: BookOpen },
   { name: 'Assessments', href: '/assessments', icon: ClipboardList },
