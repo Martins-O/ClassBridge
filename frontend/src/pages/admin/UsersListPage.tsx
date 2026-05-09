@@ -23,22 +23,28 @@ export function UsersListPage() {
   const [roleFilter, setRoleFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const getSchoolId = useAuthStore((state) => state.getSchoolId);
   const isSystemAdmin = useAuthStore((state) => state.isSystemAdmin);
 
   useEffect(() => {
     async function fetchUsers() {
       setIsLoading(true);
+      setError(null);
       try {
         const schoolId = isSystemAdmin() ? undefined : getSchoolId();
         const params: any = { limit: 100 };
         if (schoolId) params.schoolId = schoolId;
         if (roleFilter !== 'all') params.role = roleFilter;
+        console.log('Fetching users with params:', params);
         const { data } = await userService.getAll(params);
-        setUsers((data as { data?: User[] })?.data || []);
-        setTotal((data as any).total || 0);
-      } catch (error) {
-        console.error('Failed to fetch users:', error);
+        console.log('API Response:', data);
+        const usersData = data as { data?: User[]; success?: boolean; total?: number };
+        setUsers(usersData?.data || []);
+        setTotal(usersData?.total || 0);
+      } catch (err: any) {
+        console.error('Failed to fetch users:', err);
+        setError(err.response?.data?.error || 'Failed to load users');
       } finally {
         setIsLoading(false);
       }
@@ -55,6 +61,17 @@ export function UsersListPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-12 h-12 border-4 border-[#064e3b] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-500 font-bold">{error}</p>
+          <Button onClick={() => window.location.reload()} className="mt-4">Retry</Button>
+        </div>
       </div>
     );
   }
