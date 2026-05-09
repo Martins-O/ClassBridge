@@ -245,11 +245,13 @@ export async function acceptStudentInvitation(req: Request, res: Response) {
 
     await newUser.save();
 
-    // Add student to the class
-    await Class.findByIdAndUpdate(
-      invitation.classId._id,
-      { $addToSet: { studentIds: newUser._id } }
-    );
+    // Add student to the class if a class was specified
+    if (invitation.classId) {
+      await Class.findByIdAndUpdate(
+        invitation.classId._id,
+        { $addToSet: { studentIds: newUser._id } }
+      );
+    }
 
     // Mark invitation as accepted
     invitation.status = 'accepted';
