@@ -33,7 +33,7 @@ const StudentInvitationSchema = new Schema({
   classId: {
     type: Schema.Types.ObjectId,
     ref: 'Class',
-    required: true
+    required: false
   },
   invitedBy: {
     type: Schema.Types.ObjectId,

@@ -4,32 +4,53 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Edit } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search, Eye, Edit, Users } from 'lucide-react';
 import { userService } from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
 import type { User } from '@/types';
 
+const ROLE_OPTIONS = [
+  { value: 'all', label: 'All Roles' },
+  { value: 'school_admin', label: 'School Admin' },
+  { value: 'mentor', label: 'Mentor' },
+  { value: 'student', label: 'Student' },
+];
+
 export function UsersListPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const getSchoolId = useAuthStore((state) => state.getSchoolId);
   const isSystemAdmin = useAuthStore((state) => state.isSystemAdmin);
 
   useEffect(() => {
     async function fetchUsers() {
+      setIsLoading(true);
+      setError(null);
       try {
         const schoolId = isSystemAdmin() ? undefined : getSchoolId();
-        const { data } = await userService.getAll({ limit: 100, schoolId });
-        setUsers((data as { data?: User[] })?.data || []);
-      } catch (error) {
-        console.error('Failed to fetch users:', error);
+        const params: any = { limit: 100 };
+        if (schoolId) params.schoolId = schoolId;
+        if (roleFilter !== 'all') params.role = roleFilter;
+        console.log('Fetching users with params:', params);
+        const { data } = await userService.getAll(params);
+        console.log('API Response:', data);
+        const usersData = data as { data?: User[]; success?: boolean; total?: number };
+        setUsers(usersData?.data || []);
+        setTotal(usersData?.total || 0);
+      } catch (err: any) {
+        console.error('Failed to fetch users:', err);
+        setError(err.response?.data?.error || 'Failed to load users');
       } finally {
         setIsLoading(false);
       }
     }
     fetchUsers();
-  }, [getSchoolId, isSystemAdmin]);
+  }, [getSchoolId, isSystemAdmin, roleFilter]);
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -44,28 +65,44 @@ export function UsersListPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-500 font-bold">{error}</p>
+          <Button onClick={() => window.location.reload()} className="mt-4">Retry</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 pb-12">
-      {/* Premium Header */}
       <div className="relative overflow-hidden rounded-3xl bg-[#064e3b] p-8 text-white shadow-2xl">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <h2 className="text-3xl font-black tracking-tight text-[#fef3c7]">Users Directory</h2>
             <p className="mt-2 text-emerald-100/80 font-medium">Manage and monitor institutional access and roles</p>
           </div>
-          <Link to="/users/create">
-            <Button className="bg-[#fbbf24] hover:bg-[#d97706] text-[#064e3b] font-bold px-8 h-12 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 border-none">
-              Invite New User
-            </Button>
-          </Link>
+          <div className="flex gap-3">
+            <Link to="/students">
+              <Button className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 h-12 rounded-xl shadow-lg transition-all hover:scale-105 border-none">
+                <Users className="w-4 h-4 mr-2" />
+                All Students
+              </Button>
+            </Link>
+            <Link to="/users/create">
+              <Button className="bg-[#fbbf24] hover:bg-[#d97706] text-[#064e3b] font-bold px-8 h-12 rounded-xl shadow-lg transition-all hover:scale-105 border-none">
+                Invite New User
+              </Button>
+            </Link>
+          </div>
         </div>
         
-        {/* Abstract background shape */}
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
         <div className="absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
       </div>
 
-      {/* Search and Filters Bar */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1 group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-[#064e3b] transition-colors" />
@@ -76,14 +113,16 @@ export function UsersListPage() {
             className="pl-12 h-14 bg-white border-slate-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-[#064e3b]/20 focus:border-[#064e3b] transition-all text-lg"
           />
         </div>
-        <div className="flex gap-2">
-            <Button variant="outline" className="h-14 px-6 rounded-2xl border-slate-200 font-bold text-slate-600 hover:bg-slate-50">
-                Filter by Role
-            </Button>
-            <Button variant="outline" className="h-14 px-6 rounded-2xl border-slate-200 font-bold text-slate-600 hover:bg-slate-50">
-                Sorted by Status
-            </Button>
-        </div>
+        <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <SelectTrigger className="h-14 w-[200px] rounded-2xl border-slate-200 font-bold">
+            <SelectValue placeholder="Filter by Role" />
+          </SelectTrigger>
+          <SelectContent>
+            {ROLE_OPTIONS.map(opt => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Users Grid/Table */}
@@ -186,7 +225,7 @@ export function UsersListPage() {
       
       {/* Pagination Placeholder */}
       <div className="flex items-center justify-between text-sm text-slate-500 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-          <p>Displaying <span className="font-bold text-slate-900">{filteredUsers.length}</span> of <span className="font-bold text-slate-900">{users.length}</span> members in your institutional network</p>
+          <p>Displaying <span className="font-bold text-slate-900">{filteredUsers.length}</span> of <span className="font-bold text-slate-900">{total}</span> members in your institutional network</p>
           <div className="flex gap-2">
               <Button variant="outline" size="sm" className="rounded-lg border-slate-200" disabled>Previous</Button>
               <Button variant="outline" size="sm" className="rounded-lg border-slate-200" disabled>Next</Button>

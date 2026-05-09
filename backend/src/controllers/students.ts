@@ -245,11 +245,13 @@ export async function acceptStudentInvitation(req: Request, res: Response) {
 
     await newUser.save();
 
-    // Add student to the class
-    await Class.findByIdAndUpdate(
-      invitation.classId._id,
-      { $addToSet: { studentIds: newUser._id } }
-    );
+    // Add student to the class if a class was specified
+    if (invitation.classId) {
+      await Class.findByIdAndUpdate(
+        invitation.classId._id,
+        { $addToSet: { studentIds: newUser._id } }
+      );
+    }
 
     // Mark invitation as accepted
     invitation.status = 'accepted';
@@ -329,7 +331,7 @@ export async function getStudentInvitation(req: Request, res: Response) {
     // Return invitation details
     const inviter = invitation.invitedBy as { name: string; role: string };
     const school = invitation.schoolId as { name: string; _id: string };
-    const classData = invitation.classId as { name: string; _id: string; subject?: string; grade?: string };
+    const classData = invitation.classId as { name: string; _id: string; subject?: string; grade?: string } | null;
 
     return res.json({
       invitation: {
@@ -339,12 +341,12 @@ export async function getStudentInvitation(req: Request, res: Response) {
           name: school.name,
           id: school._id
         },
-        class: {
+        class: classData ? {
           name: classData.name,
           id: classData._id,
           subject: classData.subject,
           grade: classData.grade
-        },
+        } : null,
         inviter: {
           name: inviter.name,
           role: inviter.role

@@ -43,6 +43,7 @@ import { EditProfilePage } from './pages/admin/EditProfilePage';
 import { ImportExportPage } from './pages/admin/ImportExportPage';
 import { AnalyticsPage } from './pages/admin/AnalyticsPage';
 import { GradesListPage } from './pages/admin/GradesListPage';
+import { StudentsListPage } from './pages/admin/StudentsListPage';
 
 const queryClient = new QueryClient();
 
@@ -196,6 +197,17 @@ function App() {
                 }
               >
                 <Route index element={<GradesListPage />} />
+              </Route>
+
+              <Route
+                path="/students"
+                element={
+                  <ProtectedRoute>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<StudentsListPage />} />
               </Route>
 
               <Route
