@@ -63,8 +63,11 @@ api.interceptors.response.use(
 );
 
 export const authService = {
-  login: (email: string, password: string) =>
-    api.post<AuthResponse>('/auth/login', { email, password }),
+  login: (email: string, password: string, csrfToken?: string) =>
+    api.post<AuthResponse>('/auth/login', { email, password }, {
+      headers: csrfToken ? { 'x-csrf-token': csrfToken } : {},
+      withCredentials: true,
+    }),
   
   register: (data: { 
     email: string; 

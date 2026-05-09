@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { authService } from '../services/api';
 import { useAuthStore } from '../stores/auth';
 import { Loader2, ShieldCheck, Mail, Lock, ArrowRight, Sparkles, Building2 } from 'lucide-react';
+import axios from 'axios';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -24,6 +25,13 @@ export function LoginPage() {
   const [resendEmail, setResendEmail] = useState('');
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [resendMessage, setResendMessage] = useState('');
+  const [csrfToken, setCsrfToken] = useState('');
+
+  useEffect(() => {
+    axios.get('/api/v1/auth/csrf-token', { withCredentials: true })
+      .then(res => setCsrfToken(res.data.csrfToken))
+      .catch(err => console.error('Failed to fetch CSRF token:', err));
+  }, []);
 
   useEffect(() => {
     if (location.state?.message) {
@@ -59,7 +67,7 @@ export function LoginPage() {
     setError('');
     setIsLoading(true);
     try {
-      const { data } = await authService.login(email, password);
+      const { data } = await authService.login(email, password, csrfToken);
       if (data.success && data.accessToken && data.user) {
         login(data.user, data.accessToken, data.refreshToken || '');
         navigate('/dashboard');
