@@ -10,6 +10,7 @@ import RefreshToken from '@/models/RefreshToken';
 import { sendEmail, generateStudentInvitationEmail, generateMentorInvitationEmail } from '@/lib/email';
 import crypto from 'crypto';
 import School from '@/models/School';
+import Class from '@/models/Class';
 
 export async function listUsers(req: Request, res: Response) {
   try {
@@ -274,7 +275,7 @@ export async function inviteUser(req: Request, res: Response) {
       return res.status(403).json({ error: 'Only school administrators can invite users' });
     }
 
-    const { name, email, role, schoolId } = req.body;
+    const { name, email, role, schoolId, classId } = req.body;
 
     if (!name || !email || !role || !schoolId) {
       return res.status(400).json({ error: 'Name, email, role, and school ID are required' });
@@ -335,8 +336,16 @@ export async function inviteUser(req: Request, res: Response) {
       schoolId,
       invitedBy: userId,
       token,
-      expiresAt
+      expiresAt,
+      ...(classId && role === 'student' ? { classId } : {})
     });
+
+    let className = '';
+    if (classId && role === 'student') {
+      const cls = await Class.findById(classId).select('name');
+      className = cls?.name || '';
+    }
+
     await invitation.save();
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
@@ -357,7 +366,7 @@ export async function inviteUser(req: Request, res: Response) {
         studentEmail: email.toLowerCase(),
         studentName: name,
         schoolName: school.name,
-        className: '',
+        className,
         invitationToken: token,
         inviterName: requestingUser.name
       }));
