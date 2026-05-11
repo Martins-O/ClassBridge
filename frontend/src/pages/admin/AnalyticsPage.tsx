@@ -82,56 +82,28 @@ export function AnalyticsPage() {
       </motion.div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-50">
-              <Users className="w-5 h-5 text-blue-600" />
+      <div className="grid gap-6 md:grid-cols-4">
+        {[
+          { label: 'Total Students', value: analytics.summary.totalStudents, icon: Users, color: 'blue' },
+          { label: 'Active Students', value: analytics.summary.activeStudents, icon: Activity, color: 'emerald' },
+          { label: 'Engagement Rate', value: `${analytics.summary.activeRate}%`, icon: TrendingUp, color: 'purple' },
+          { label: 'Classes Tracked', value: analytics.classPerformance.length, icon: Award, color: 'amber' }
+        ].map((stat, i) => (
+          <div key={i} className="bg-white rounded-[2rem] border-none shadow-xl p-6 flex items-center gap-4 transition-all hover:scale-[1.02] hover:shadow-2xl">
+            <div className={`p-3 rounded-2xl bg-${stat.color}-50`}>
+              <stat.icon className={`w-6 h-6 text-${stat.color}-600`} />
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-bold uppercase">Total Students</p>
-              <p className="text-2xl font-black text-slate-900">{analytics.summary.totalStudents}</p>
+              <p className="text-xs text-slate-400 font-black uppercase tracking-widest">{stat.label}</p>
+              <p className="text-2xl font-black text-slate-900">{stat.value}</p>
             </div>
           </div>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-50">
-              <Activity className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 font-bold uppercase">Active Students</p>
-              <p className="text-2xl font-black text-slate-900">{analytics.summary.activeStudents}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-purple-50">
-              <TrendingUp className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 font-bold uppercase">Engagement Rate</p>
-              <p className="text-2xl font-black text-slate-900">{analytics.summary.activeRate}%</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-50">
-              <Award className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 font-bold uppercase">Classes Tracked</p>
-              <p className="text-2xl font-black text-slate-900">{analytics.classPerformance.length}</p>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Grade Distribution */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-[2rem] border-none shadow-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-slate-400" />
             <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Grade Distribution</span>
@@ -164,7 +136,7 @@ export function AnalyticsPage() {
         </div>
 
         {/* Class Performance */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-[2rem] border-none shadow-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
             <Award className="w-4 h-4 text-slate-400" />
             <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Top Classes</span>
@@ -192,7 +164,7 @@ export function AnalyticsPage() {
         </div>
 
         {/* Enrollment Trend */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-[2rem] border-none shadow-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-slate-400" />
             <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Enrollment Trend</span>
@@ -218,7 +190,7 @@ export function AnalyticsPage() {
         </div>
 
         {/* Activity Trend */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-[2rem] border-none shadow-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
             <Activity className="w-4 h-4 text-slate-400" />
             <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Recent Activity</span>
@@ -233,7 +205,7 @@ export function AnalyticsPage() {
                   const height = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
                   return (
                     <div key={day._id} className="flex-1 flex flex-col items-center gap-1">
-                      <div className="w-full bg-blue-500/30 rounded-t-sm" style={{ height: `${height}%` }} />
+                      <div className="w-full bg-[#064e3b]/20 rounded-t-sm" style={{ height: `${height}%` }} />
                       <span className="text-[10px] text-slate-500">{day._id.slice(8)}</span>
                     </div>
                   );

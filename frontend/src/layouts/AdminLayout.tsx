@@ -49,7 +49,7 @@ const schoolAdminNavigation = [
   { name: 'Courses', href: '/courses', icon: BookOpen },
   { name: 'Assessments', href: '/assessments', icon: ClipboardList },
   { name: 'Transcripts', href: '/transcripts', icon: FileText },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'School Profile', href: '/school-settings', icon: Building2 },
   { name: 'School Reports', href: '/school-reports', icon: BarChart3 },
 ];
 
@@ -91,7 +91,26 @@ export function AdminLayout() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [schoolName, setSchoolName] = useState<string>(user?.schoolName || '');
   const notificationRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    async function fetchSchool() {
+      const schoolId = useAuthStore.getState().getSchoolId();
+      if (!schoolName && schoolId && !isSystemAdmin()) {
+        try {
+          const { schoolService } = await import('@/services/api');
+          const response = await schoolService.getById(schoolId);
+          if (response.data?.data?.name) {
+            setSchoolName(response.data.data.name);
+          }
+        } catch (error) {
+          console.error('Failed to fetch school name:', error);
+        }
+      }
+    }
+    fetchSchool();
+  }, [schoolName, isSystemAdmin]);
 
   useEffect(() => {
     async function fetchNotifications() {
@@ -143,13 +162,17 @@ export function AdminLayout() {
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
           {sidebarOpen && (
             <Link to="/" className="flex items-center gap-2">
-              <div className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
-                isSystemAdmin() ? "bg-blue-600" : "bg-[#064e3b]"
-              )}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors bg-[#064e3b]">
                 <span className="text-white font-bold text-sm">CB</span>
               </div>
-              <span className="font-semibold text-gray-900">ClassBridge</span>
+              <div className="flex flex-col">
+                <span className="font-semibold text-gray-900 leading-tight">ClassBridge</span>
+                {(schoolName || user?.schoolName) && !isSystemAdmin() && (
+                  <span className="text-[10px] text-gray-500 font-medium truncate max-w-[120px]">
+                    {schoolName || user?.schoolName}
+                  </span>
+                )}
+              </div>
             </Link>
           )}
           <Button
@@ -177,9 +200,7 @@ export function AdminLayout() {
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                   isActive
-                    ? isSystemAdmin() 
-                      ? 'bg-blue-50 text-blue-600' 
-                      : 'bg-emerald-50 text-emerald-700'
+                    ? 'bg-emerald-50 text-emerald-700'
                     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 )}
               >
@@ -196,23 +217,14 @@ export function AdminLayout() {
             <div className="flex items-center justify-between">
               <Link to="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0">
                 <Avatar className="h-9 w-9">
-                  <AvatarFallback className={cn(
-                    "transition-colors",
-                    isSystemAdmin() 
-                      ? "bg-blue-100 text-blue-600" 
-                      : isMentor() 
-                        ? "bg-amber-100 text-amber-700"
-                        : isStudent()
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-emerald-100 text-emerald-700"
-                  )}>
+                  <AvatarFallback className="bg-emerald-100 text-emerald-700 transition-colors">
                     {user?.name?.charAt(0) || 'A'}
                   </AvatarFallback>
                 </Avatar>
                 <div className="text-sm min-w-0">
                   <p className="font-medium text-gray-900 truncate">{user?.name || 'User'}</p>
                   <p className="text-gray-500 capitalize truncate text-xs">
-                    {isStudent() ? 'Enrolled Student' : (isMentor() ? 'Faculty Member' : (isSchoolAdmin() ? user?.schoolName : user?.role?.replace('_', ' ' )))}
+                    {isStudent() ? 'Enrolled Student' : (isMentor() ? 'Faculty Member' : (isSchoolAdmin() ? (schoolName || user?.schoolName) : user?.role?.replace('_', ' ' )))}
                   </p>
                 </div>
               </Link>
@@ -245,7 +257,10 @@ export function AdminLayout() {
         {/* Top header */}
         <header className="sticky top-0 z-30 h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
           <div className="flex items-center gap-4">
-            <h1 className="text-lg font-semibold text-gray-900">
+            <h1 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              {(schoolName || user?.schoolName) && !isSystemAdmin() && (
+                <span className="text-gray-400 font-normal hidden md:inline">{schoolName || user?.schoolName} /</span>
+              )}
               {location.pathname.startsWith('/profile') ? 'Profile' : (navigation.find(n => n.href === location.pathname || location.pathname.startsWith(n.href + '/'))?.name || 'Dashboard')}
             </h1>
           </div>
@@ -279,7 +294,7 @@ export function AdminLayout() {
                           to={notif.link || '/approvals'}
                           className={cn(
                             "block p-3 hover:bg-gray-50",
-                            !notif.isRead && "bg-blue-50"
+                            !notif.isRead && "bg-emerald-50"
                           )}
                           onClick={() => setShowNotifications(false)}
                         >

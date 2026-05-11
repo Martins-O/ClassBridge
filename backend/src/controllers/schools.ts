@@ -5,7 +5,7 @@ import { getPaginationParams, buildPagination } from '@/lib/pagination';
 import { getQueryParams, buildQuery } from '@/lib/queryBuilder';
 import { userRepository } from '@/repositories';
 import { schoolService } from '@/services';
-import { sendSuccess, sendError, sendPaginated } from '@/lib/apiResponse';
+import { sendSuccess, sendError, sendPaginated, sendCreated } from '@/lib/apiResponse';
 import { isSystemAdmin } from '@/lib/permissions';
 import { UserRole } from '@/models/User';
 
@@ -80,10 +80,7 @@ export async function createSchool(req: Request, res: Response) {
         status: 'approved',
       });
 
-      return res.status(201).json({
-        message: 'School created successfully',
-        school,
-      });
+      return sendCreated(res, school, 'School created successfully');
     } catch (error) {
       if (error instanceof Error) {
         return res.status(400).json({ error: error.message });
@@ -122,7 +119,7 @@ export async function getSchoolById(req: Request, res: Response) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    return res.json({ school });
+    return sendSuccess(res, school);
   } catch (error) {
     console.error('Get school by id error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -181,7 +178,7 @@ export async function getSchoolsForUser(req: Request, res: Response) {
 
     const schools = await schoolService.getForUser(userId, user.role);
 
-    return res.json({ schools });
+    return sendSuccess(res, schools);
   } catch (error) {
     console.error('Get schools for user error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -212,7 +209,7 @@ export async function getSchoolStatus(req: Request, res: Response) {
       return res.status(404).json({ error: 'School not found' });
     }
 
-    return res.json({ status });
+    return sendSuccess(res, status);
   } catch (error) {
     console.error('Get school status error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -297,10 +294,7 @@ export async function getSchoolStats(req: Request, res: Response) {
 
     const stats = await schoolService.getSchoolStats(id);
 
-    return res.json({
-      success: true,
-      ...stats,
-    });
+    return sendSuccess(res, stats);
   } catch (error) {
     console.error('Get school stats error:', error);
     return res.status(500).json({ error: 'Internal server error' });

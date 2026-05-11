@@ -7,6 +7,8 @@ export interface ISchool extends Document {
   email: string;
   phone?: string;
   address?: string;
+  city?: string;
+  state?: string;
   website?: string;
   description?: string;
   adminId: mongoose.Types.ObjectId;
@@ -41,6 +43,14 @@ const SchoolSchema = new Schema({
     trim: true
   },
   address: {
+    type: String,
+    trim: true
+  },
+  city: {
+    type: String,
+    trim: true
+  },
+  state: {
     type: String,
     trim: true
   },

@@ -18,57 +18,34 @@
   /* Institutional Colors (Academic Theme) */
   --color-forest-green: #064e3b;
   --color-forest-green-light: #065f46;
-  --color-gold: #b45309;
-  --color-gold-light: #d97706;
+  --color-gold: #fbbf24;
+  --color-gold-light: #f59e0b;
 
-  /* Secondary */
-  --color-secondary: #64748b;
+  /* Standardizing Shadcn Variables to Institutional Theme */
+  --primary: #064e3b;
+  --primary-foreground: #ffffff;
+  
+  --accent: #fbbf24;
+  --accent-foreground: #064e3b;
 
-  /* Background & Surface */
-  --color-background: #ffffff;
-  --color-surface: #f8fafc;
-  --color-surface-hover: #f1f5f9;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1e293b;
 
-  /* Text */
-  --color-text: #1e293b;
-  --color-text-secondary: #64748b;
-  --color-text-muted: #94a3b8;
+  --muted: #f8fafc;
+  --muted-foreground: #64748b;
 
-  /* Border */
-  --color-border: #e2e8f0;
-  --color-border-light: #f1f5f9;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #064e3b;
+
+  --radius: 1.25rem; /* Larger default radius for premium feel */
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
 }
 
 body {

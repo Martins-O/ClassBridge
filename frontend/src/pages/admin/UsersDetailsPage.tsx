@@ -12,6 +12,7 @@ import {
   Smartphone, Monitor, Globe as GlobeIcon, Key
 } from 'lucide-react';
 import { userService } from '@/services/api';
+import { useAuthStore } from '@/stores/auth';
 import type { User } from '@/types';
 import { format } from 'date-fns';
 
@@ -149,12 +150,14 @@ export function UsersDetailsPage() {
           </div>
         </div>
         <div className="flex items-center gap-3 self-end md:self-center">
-          <Link to={`/users/${user._id}/edit`}>
-            <Button className="bg-primary hover:bg-primary-dark text-white px-6">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Profile
-            </Button>
-          </Link>
+          {useAuthStore.getState().isSystemAdmin() && (
+            <Link to={`/users/${user._id}/edit`}>
+              <Button className="bg-primary hover:bg-primary-dark text-white px-6">
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Profile
+              </Button>
+            </Link>
+          )}
           <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => setShowDeleteDialog(true)}>
             <Trash2 className="h-4 w-4 mr-2" />
             Delete
@@ -423,15 +426,15 @@ export function UsersDetailsPage() {
       </div>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-red-600">Delete System User</DialogTitle>
+            <DialogTitle>Delete System User</DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <p className="text-gray-700">Are you sure you want to delete <strong>{user.name}</strong>?</p>
             <p className="text-sm text-gray-500 mt-2">This will permanently remove the user from ClassBridge and revoke all access. This action cannot be reversed.</p>
           </div>
-          <DialogFooter className="gap-2">
+          <DialogFooter>
             <Button variant="outline" className="flex-1" onClick={() => setShowDeleteDialog(false)}>
               Keep User
             </Button>
