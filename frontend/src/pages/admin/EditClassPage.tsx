@@ -199,11 +199,11 @@ export function EditClassPage() {
               <Select value={mentorId} onValueChange={setMentorId}>
                 <SelectTrigger className="h-11 rounded-xl border-slate-200">
                   <SelectValue placeholder={mentors.length ? 'Choose a mentor (optional)' : 'No mentors available'}>
-                    {(() => {
-                      if (!mentorId) return null;
-                      const mentor = mentors.find(m => m._id === mentorId);
-                      return mentor ? `${mentor.name} (${mentor.email})` : mentorId;
-                    })()}
+                    {(value) => {
+                      if (!value) return null;
+                      const m = mentors.find(mm => mm._id === value);
+                      return m ? `${m.name} (${m.email})` : value;
+                    }}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">

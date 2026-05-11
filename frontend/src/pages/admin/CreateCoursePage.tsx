@@ -205,11 +205,11 @@ export function CreateCoursePage() {
                 <Select value={classId} onValueChange={setClassId}>
                   <SelectTrigger className="h-11 rounded-xl border-slate-200">
                     <SelectValue placeholder="Which class is this for?">
-                      {(() => {
-                        if (!classId) return null;
-                        const cls = classes.find(c => c._id === classId);
-                        return cls ? `${cls.name} (${cls.cohort})` : classId;
-                      })()}
+                      {(value) => {
+                        if (!value) return null;
+                        const c = classes.find(c => c._id === value);
+                        return c ? `${c.name} (${c.cohort})` : value;
+                      }}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
