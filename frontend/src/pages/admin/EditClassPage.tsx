@@ -1,19 +1,20 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, ArrowLeft, GraduationCap, Users, CalendarDays, Clock, CheckCircle2, Shield, BookOpen } from 'lucide-react';
-import { classService, courseService, userService } from '@/services/api';
+import { Loader2, ArrowLeft, GraduationCap, Users, CalendarDays, CheckCircle2, Shield } from 'lucide-react';
+import { classService, userService } from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
 import { cn } from '@/lib/utils';
-import type { Course, User } from '@/types';
+import type { User } from '@/types';
 
-const DURATIONS = ['1 month','2 months','3 months','4 months','6 months','1 year','2 years'];
-const ACADEMIC_YEARS = ['2023/2024','2024/2025','2025/2026','2026/2027'];
+const DURATIONS = ['1 month', '2 months', '3 months', '4 months', '6 months', '1 year', '2 years'];
+const ACADEMIC_YEARS = ['2023/2024', '2024/2025', '2025/2026', '2026/2027'];
 
-export function CreateClassPage() {
+export function EditClassPage() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const getSchoolId = useAuthStore((state) => state.getSchoolId);
 
@@ -32,18 +33,32 @@ export function CreateClassPage() {
 
   useEffect(() => {
     async function fetchData() {
+      if (!id) return;
       try {
         const schoolId = getSchoolId();
-        const { data } = await userService.getAll({ schoolId, role: 'mentor', limit: 100 });
-        setMentors((data as any)?.data || []);
+        const [classRes, usersRes] = await Promise.all([
+          classService.getById(id),
+          userService.getAll({ schoolId, role: 'mentor', limit: 100 }),
+        ]);
+        const cls = (classRes.data as any)?.class;
+        if (cls) {
+          setName(cls.name || '');
+          setCohort(cls.cohort || '');
+          setAcademicYear(cls.academicYear || '');
+          setDuration(cls.duration || '');
+          setDescription(cls.description || '');
+          if (cls.mentorIds?.length) setMentorId(cls.mentorIds[0]?._id || cls.mentorIds[0] || '');
+        }
+        setMentors((usersRes.data as any)?.data || []);
       } catch (e) {
-        console.error(e);
+        console.error('Failed to load class data:', e);
+        setError('Failed to load class information.');
       } finally {
         setIsFetching(false);
       }
     }
     fetchData();
-  }, [getSchoolId]);
+  }, [id, getSchoolId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,24 +69,22 @@ export function CreateClassPage() {
     if (!cohort.trim()) return setError('Cohort identifier is required.');
     setIsLoading(true);
     try {
-      const schoolId = getSchoolId();
-      const { data } = await classService.create({
+      const { data } = await classService.update(id!, {
         name: name.trim(),
         cohort: cohort.trim(),
         academicYear,
         duration,
         mentorIds: mentorId ? [mentorId] : [],
-        schoolId: schoolId || undefined,
         description: description.trim() || undefined,
       } as any);
       if ((data as any).success) {
-        setSuccess('Class created successfully!');
-        setTimeout(() => navigate('/classes'), 1500);
+        setSuccess('Class updated successfully!');
+        setTimeout(() => navigate(`/classes/${id}`), 1500);
       } else {
-        setError((data as any).error || 'Failed to create class.');
+        setError((data as any).error || 'Failed to update class.');
       }
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Failed to create class. Please try again.');
+      setError(err?.response?.data?.error || 'Failed to update class. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -79,20 +92,24 @@ export function CreateClassPage() {
 
   if (isFetching) return (
     <div className="flex items-center justify-center h-64">
-      <Loader2 className="w-8 h-8 animate-spin text-[#064e3b]" />
+      <Loader2 className="w-10 h-10 animate-spin text-[#064e3b]" />
     </div>
   );
 
   return (
     <div className="min-h-screen bg-slate-50/60 -m-6 p-6 md:p-10">
       <div className="max-w-2xl mx-auto space-y-8">
+        {/* Header */}
         <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-3">
-          <button onClick={() => navigate('/classes')} className="flex items-center justify-center w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-all shadow-sm">
+          <button
+            onClick={() => navigate(`/classes/${id}`)}
+            className="flex items-center justify-center w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-all shadow-sm"
+          >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Create New Class</h1>
-            <p className="text-sm text-slate-500 font-medium">Set up an academic class unit for your school.</p>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Edit Class</h1>
+            <p className="text-sm text-slate-500 font-medium">Update the academic class information below.</p>
           </div>
         </motion.div>
 
@@ -122,12 +139,14 @@ export function CreateClassPage() {
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-black text-slate-500 uppercase tracking-widest">Class Name *</Label>
-                <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Senior Secondary 3A" className="h-11 rounded-xl border-slate-200 font-medium" required />
+                <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Senior Secondary 3A"
+                  className="h-11 rounded-xl border-slate-200 font-medium" required />
               </div>
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-black text-slate-500 uppercase tracking-widest">Cohort</Label>
-                <Input value={cohort} onChange={e => setCohort(e.target.value)} placeholder="e.g. Cohort 2025, Set A, Batch 1" className="h-11 rounded-xl border-slate-200 font-medium" />
+                <Input value={cohort} onChange={e => setCohort(e.target.value)} placeholder="e.g. Cohort 2025, Set A, Batch 1"
+                  className="h-11 rounded-xl border-slate-200 font-medium" />
               </div>
 
               <div className="space-y-1.5">
@@ -140,7 +159,7 @@ export function CreateClassPage() {
             </div>
           </motion.div>
 
-          {/* Schedule card */}
+          {/* Schedule Card */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
@@ -169,7 +188,7 @@ export function CreateClassPage() {
             </div>
           </motion.div>
 
-          {/* Mentor card */}
+          {/* Mentor Card */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
             className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
@@ -188,18 +207,27 @@ export function CreateClassPage() {
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  {mentors.map(m => <SelectItem key={m._id} value={m._id}>{m.name} <span className="text-slate-400 text-xs ml-1">({m.email})</span></SelectItem>)}
+                  {mentors.map(m => (
+                    <SelectItem key={m._id} value={m._id}>
+                      {m.name} <span className="text-slate-400 text-xs ml-1">({m.email})</span>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-3">Mentors can be added or changed at any time.</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-3">Mentors can be changed at any time.</p>
             </div>
           </motion.div>
 
           {/* Submit */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <button type="submit" disabled={isLoading || !!success}
-              className={cn('w-full h-14 flex items-center justify-center gap-3 rounded-2xl font-black text-base transition-all duration-200 bg-[#064e3b] hover:bg-[#065f46] text-white shadow-xl shadow-emerald-900/20 disabled:opacity-60 disabled:cursor-not-allowed', !isLoading && !success && 'hover:-translate-y-0.5 active:translate-y-0')}>
-              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : success ? <><CheckCircle2 className="w-5 h-5" /> Class Created!</> : <><GraduationCap className="w-5 h-5" /> Create Class</>}
+              className={cn(
+                'w-full h-14 flex items-center justify-center gap-3 rounded-2xl font-black text-base transition-all duration-200 bg-[#064e3b] hover:bg-[#065f46] text-white shadow-xl shadow-emerald-900/20 disabled:opacity-60 disabled:cursor-not-allowed',
+                !isLoading && !success && 'hover:-translate-y-0.5 active:translate-y-0'
+              )}>
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" />
+                : success ? <><CheckCircle2 className="w-5 h-5" /> Class Updated!</>
+                : <><GraduationCap className="w-5 h-5" /> Save Changes</>}
             </button>
           </motion.div>
         </form>
@@ -208,4 +236,4 @@ export function CreateClassPage() {
   );
 }
 
-export default CreateClassPage;
+export default EditClassPage;

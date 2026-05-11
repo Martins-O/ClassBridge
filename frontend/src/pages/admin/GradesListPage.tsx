@@ -197,7 +197,13 @@ export function GradesListPage() {
         </div>
         <Select value={filterClass} onValueChange={setFilterClass}>
           <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="All Classes" />
+            <SelectValue placeholder="All Classes">
+              {(() => {
+                if (!filterClass) return null;
+                const cls = classes.find(c => c._id === filterClass);
+                return cls ? cls.name : filterClass;
+              })()}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Classes</SelectItem>
@@ -307,7 +313,13 @@ export function GradesListPage() {
               <Label>Class *</Label>
               <Select value={newGrade.classId} onValueChange={(v) => setNewGrade(prev => ({ ...prev, classId: v, studentId: '' }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a class" />
+                  <SelectValue placeholder="Select a class">
+                    {(() => {
+                      if (!newGrade.classId) return null;
+                      const cls = classes.find(c => c._id === newGrade.classId);
+                      return cls ? cls.name : newGrade.classId;
+                    })()}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {classes.map(cls => (
@@ -321,7 +333,13 @@ export function GradesListPage() {
               <Label>Student *</Label>
               <Select value={newGrade.studentId} onValueChange={(v) => setNewGrade(prev => ({ ...prev, studentId: v }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a student" />
+                  <SelectValue placeholder="Select a student">
+                    {(() => {
+                      if (!newGrade.studentId) return null;
+                      const s = students.find(s => s._id === newGrade.studentId);
+                      return s ? s.name : newGrade.studentId;
+                    })()}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {students.map(s => (

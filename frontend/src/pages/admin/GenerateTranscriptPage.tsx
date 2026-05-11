@@ -142,7 +142,13 @@ export function GenerateTranscriptPage() {
                   <SelectTrigger className="h-14 rounded-2xl border-slate-200 text-lg transition-all focus:ring-[#064e4b]/10">
                     <div className="flex items-center gap-3">
                       <GraduationCap className="w-5 h-5 text-slate-400" />
-                      <SelectValue placeholder="Chose academic class..." />
+                      <SelectValue placeholder="Chose academic class...">
+                        {(() => {
+                          if (!classId) return null;
+                          const cls = classes.find(c => c._id === classId);
+                          return cls ? `${cls.name} (${cls.cohort})` : classId;
+                        })()}
+                      </SelectValue>
                     </div>
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border-slate-200">
@@ -157,7 +163,13 @@ export function GenerateTranscriptPage() {
                   <SelectTrigger className="h-14 rounded-2xl border-slate-200 text-lg transition-all focus:ring-[#064e4b]/10">
                     <div className="flex items-center gap-3">
                       <Users className="w-5 h-5 text-slate-400" />
-                      <SelectValue placeholder={classId ? "Select student candidate..." : "Select class first"} />
+                      <SelectValue placeholder={classId ? "Select student candidate..." : "Select class first"}>
+                        {(() => {
+                          if (!studentId) return null;
+                          const s = students.find(s => s._id === studentId);
+                          return s ? `${s.name} (${s.email})` : studentId;
+                        })()}
+                      </SelectValue>
                     </div>
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border-slate-200">

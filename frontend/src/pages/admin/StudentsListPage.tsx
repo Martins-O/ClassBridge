@@ -71,7 +71,7 @@ export function StudentsListPage() {
   const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(search.toLowerCase()) ||
     student.email.toLowerCase().includes(search.toLowerCase()) ||
-    student.studentId?.toLowerCase().includes(search.toLowerCase())
+    (student as any).studentId?.toLowerCase().includes(search.toLowerCase())
   );
 
   if (isLoading) {
@@ -84,39 +84,38 @@ export function StudentsListPage() {
 
   return (
     <div className="space-y-8 pb-12">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-600 to-indigo-600 p-8 text-white shadow-2xl">
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#064e3b] to-[#065f46] p-10 text-white shadow-2xl">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h2 className="text-3xl font-black tracking-tight text-white">Students Management</h2>
-            <p className="mt-2 text-purple-100/80 font-medium">View and manage all enrolled students</p>
+            <h2 className="text-3xl font-black tracking-tight text-[#fef3c7]">Students Directory</h2>
+            <p className="mt-2 text-emerald-100/80 font-medium text-lg">View and manage all enrolled students</p>
           </div>
           <div className="flex gap-3">
             <Link to="/students/invitations">
-              <Button className="bg-white/20 hover:bg-white/30 text-white font-bold px-6 h-12 rounded-xl shadow-lg transition-all border border-white/20 backdrop-blur-sm">
+              <Button className="h-12 px-6 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 text-white font-bold transition-all">
                 <Mail className="w-4 h-4 mr-2" />
                 Invitations
               </Button>
             </Link>
             <Link to="/students/create">
-              <Button className="bg-white text-purple-700 hover:bg-purple-50 font-bold px-6 h-12 rounded-xl shadow-lg transition-all hover:scale-105 border-none">
+              <Button className="bg-[#fbbf24] hover:bg-[#d97706] text-[#064e3b] font-bold px-8 h-12 rounded-xl shadow-lg transition-all hover:scale-105 border-none">
                 <UserPlus className="w-4 h-4 mr-2" />
                 Invite Student
               </Button>
             </Link>
           </div>
         </div>
-        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-purple-500/20 blur-3xl" />
-        <div className="absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="absolute top-0 right-0 h-64 w-64 bg-white/5 blur-[100px] rounded-full translate-x-32 -translate-y-32" />
       </div>
 
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1 group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-purple-600 transition-colors" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-[#064e3b] transition-colors" />
           <Input
             placeholder="Search by name, email, or student ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-12 h-14 bg-white border-slate-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all text-lg"
+            className="pl-12 h-14 bg-white border-slate-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-[#064e3b]/20 focus:border-[#064e3b] transition-all text-lg"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -131,7 +130,7 @@ export function StudentsListPage() {
         </Select>
       </div>
 
-      <Card className="overflow-hidden border-none shadow-xl rounded-3xl bg-white/70 backdrop-blur-md">
+      <Card className="overflow-hidden border-none shadow-xl rounded-[2rem] bg-white/70 backdrop-blur-md">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -147,14 +146,14 @@ export function StudentsListPage() {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {filteredStudents.map((student) => (
-                  <tr key={student._id} className="hover:bg-purple-50/30 transition-all group">
+                  <tr key={student._id} className="hover:bg-emerald-50/30 transition-all group">
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-2xl bg-purple-100 flex items-center justify-center text-purple-700 font-black text-xl shadow-inner group-hover:scale-110 transition-transform">
+                        <div className="h-12 w-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-[#064e3b] font-black text-xl shadow-inner group-hover:scale-110 transition-transform">
                           {student.name.charAt(0)}
                         </div>
                         <div>
-                          <span className="block font-bold text-slate-900 group-hover:text-purple-600 transition-colors text-lg">
+                          <span className="block font-bold text-slate-900 group-hover:text-[#064e3b] transition-colors text-lg">
                             {student.name}
                           </span>
                           <span className="text-sm text-slate-400">{student.email}</span>
@@ -163,14 +162,14 @@ export function StudentsListPage() {
                     </td>
                     <td className="px-8 py-6">
                       <span className="text-sm font-medium text-slate-600 font-mono">
-                        {student.studentId || 'N/A'}
+                        {(student as any).studentId || 'N/A'}
                       </span>
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex flex-wrap gap-1">
                         {student.classIds && student.classIds.length > 0 ? (
                           student.classIds.map((cls: any) => (
-                            <Badge key={cls._id || cls} className="bg-indigo-100 text-indigo-700 border-none font-medium text-xs">
+                            <Badge key={cls._id || cls} className="bg-emerald-100 text-emerald-700 border-none font-medium text-xs">
                               {cls.name || cls}
                             </Badge>
                           ))
@@ -206,7 +205,7 @@ export function StudentsListPage() {
                     <td className="px-8 py-6 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Link to={`/students/${student._id}`}>
-                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-purple-100 hover:text-purple-600">
+                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-emerald-100 hover:text-[#064e3b]">
                             <Eye className="h-5 w-5" />
                           </Button>
                         </Link>
@@ -225,8 +224,8 @@ export function StudentsListPage() {
           
           {filteredStudents.length === 0 && (
             <div className="text-center py-24 bg-slate-50/50">
-              <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-purple-100 shadow-lg mb-6">
-                <Search className="h-10 w-10 text-purple-400" />
+              <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-100 shadow-lg mb-6">
+                <Search className="h-10 w-10 text-[#064e3b]/40" />
               </div>
               <h3 className="text-xl font-bold text-slate-900">No students found</h3>
               <p className="text-slate-500 mt-2 max-w-sm mx-auto">

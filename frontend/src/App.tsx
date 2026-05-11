@@ -29,6 +29,7 @@ import { CoursesDetailsPage } from './pages/admin/CoursesDetailsPage';
 import { SettingsPage } from './pages/admin/SettingsPage';
 import { CreateUserPage } from './pages/admin/CreateUserPage';
 import { CreateClassPage } from './pages/admin/CreateClassPage';
+import { EditClassPage } from './pages/admin/EditClassPage';
 import { CreateCoursePage } from './pages/admin/CreateCoursePage';
 import { AuditLogsPage } from './pages/admin/AuditLogsPage';
 import { SystemStatusPage } from './pages/admin/SystemStatusPage';
@@ -161,6 +162,7 @@ function App() {
                 <Route index element={<ClassesListPage />} />
                 <Route path="create" element={<CreateClassPage />} />
                 <Route path=":id" element={<ClassesDetailsPage />} />
+                <Route path=":id/edit" element={<EditClassPage />} />
               </Route>
 
               <Route

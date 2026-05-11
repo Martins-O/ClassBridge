@@ -18,6 +18,11 @@ export function ClassesListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const getSchoolId = useAuthStore((state) => state.getSchoolId);
   const isSystemAdmin = useAuthStore((state) => state.isSystemAdmin);
+  const isSchoolAdmin = useAuthStore((state) => state.isSchoolAdmin);
+  const isMentor = useAuthStore((state) => state.isMentor);
+
+  const canCreate = isSystemAdmin() || isSchoolAdmin();
+  const canEdit = isSystemAdmin() || isSchoolAdmin() || isMentor();
 
   useEffect(() => {
     async function fetchClasses() {
@@ -61,11 +66,13 @@ export function ClassesListPage() {
                 <p className="mt-2 text-emerald-100/80 font-medium italic">Manage cohorts, durations, and instructional sessions</p>
               </div>
           </div>
-          <Link to="/classes/create">
-            <Button className="bg-[#fbbf24] hover:bg-[#d97706] text-[#064e3b] font-bold px-10 h-14 rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95 border-none text-lg">
-              Initialize New Class
-            </Button>
-          </Link>
+          {canCreate && (
+            <Link to="/classes/create">
+              <Button className="bg-[#fbbf24] hover:bg-[#d97706] text-[#064e3b] font-bold px-10 h-14 rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95 border-none text-lg">
+                Initialize New Class
+              </Button>
+            </Link>
+          )}
         </div>
         
         {/* Background Accents */}
@@ -97,11 +104,13 @@ export function ClassesListPage() {
                   {cls.isActive ? 'Active' : 'Inactive'}
                 </Badge>
                 <div className="flex gap-2">
-                    <Link to={`/classes/${cls._id}/edit`}>
-                        <Button variant="ghost" size="icon" className="rounded-xl h-10 w-10 hover:bg-amber-50 text-amber-600">
-                            <Edit className="h-5 w-5" />
-                        </Button>
-                    </Link>
+                    {canEdit && (
+                        <Link to={`/classes/${cls._id}/edit`}>
+                            <Button variant="ghost" size="icon" className="rounded-xl h-10 w-10 hover:bg-amber-50 text-amber-600">
+                                <Edit className="h-5 w-5" />
+                            </Button>
+                        </Link>
+                    )}
                 </div>
               </div>
 
