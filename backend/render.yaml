@@ -24,12 +24,20 @@ services:
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
-      - key: BREVO_API_KEY
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_SECURE
+        value: "false"
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASSWORD
         sync: false
       - key: EMAIL_FROM_NAME
         value: ClassBridge
       - key: EMAIL_FROM_ADDRESS
-        value: noreply@classbridge.com
+        sync: false
       - key: NEXT_PUBLIC_BASE_URL
         fromService:
           type: web
