@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,8 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, ChevronLeft, ChevronRight, Check, School, User, ArrowRight, ShieldCheck, Mail, Lock, Phone, MapPin } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, Check, School, User, ArrowRight, ShieldCheck, Mail, Lock, Phone, MapPin, Eye, EyeOff } from 'lucide-react';
 import { authService } from '../services/api';
+
+const PASSWORD_RULES = [
+  { label: 'At least 8 characters', test: (p: string) => p.length >= 8 },
+  { label: 'At least 1 uppercase letter', test: (p: string) => /[A-Z]/.test(p) },
+  { label: 'At least 1 lowercase letter', test: (p: string) => /[a-z]/.test(p) },
+  { label: 'At least 1 number', test: (p: string) => /[0-9]/.test(p) },
+  { label: 'At least 1 special character (!@#$%^&*(),.?":{}|<>)', test: (p: string) => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
+];
 
 interface FormData {
   schoolName: string;
@@ -41,6 +49,15 @@ export function RegisterPage() {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const passwordChecks = useMemo(() =>
+    PASSWORD_RULES.map(r => ({ ...r, passed: r.test(formData.password) })),
+    [formData.password]
+  );
+
+  const isPasswordValid = passwordChecks.every(c => c.passed);
 
   const updateField = (field: keyof FormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -55,7 +72,7 @@ export function RegisterPage() {
     if (currentStep === 2) {
       if (!formData.fullName.trim()) { setError('Full Name is required'); return false; }
       if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) { setError('Valid Admin Email is required'); return false; }
-      if (formData.password.length < 8) { setError('Password must be at least 8 characters'); return false; }
+      if (!isPasswordValid) { setError('Password does not meet all requirements'); return false; }
       if (formData.password !== formData.confirmPassword) { setError('Passwords do not match'); return false; }
     }
     return true;
@@ -218,22 +235,43 @@ export function RegisterPage() {
                          <Input type="email" value={formData.email} onChange={(e) => updateField('email', e.target.value)} placeholder="admin@stpeters.edu" className="pl-12 h-13 rounded-2xl bg-slate-50 border-slate-200" required />
                        </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                       <div className="space-y-2">
-                        <Label className="font-bold text-slate-700 ml-1">Password</Label>
-                        <div className="relative group">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-[#064e3b] transition-colors" />
-                          <Input type="password" value={formData.password} onChange={(e) => updateField('password', e.target.value)} placeholder="••••••••" className="pl-12 h-13 rounded-2xl bg-slate-50 border-slate-200" />
-                        </div>
+                     <div className="space-y-2">
+                       <Label className="font-bold text-slate-700 ml-1">Password</Label>
+                       <div className="relative group">
+                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-[#064e3b] transition-colors" />
+                         <Input type={showPassword ? 'text' : 'password'} value={formData.password} onChange={(e) => updateField('password', e.target.value)} placeholder="••••••••" className="pl-12 pr-12 h-13 rounded-2xl bg-slate-50 border-slate-200" />
+                         <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer" tabIndex={-1}>
+                           {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                         </button>
                        </div>
-                       <div className="space-y-2">
-                        <Label className="font-bold text-slate-700 ml-1">Confirm</Label>
-                        <div className="relative group">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-[#064e3b] transition-colors" />
-                          <Input type="password" value={formData.confirmPassword} onChange={(e) => updateField('confirmPassword', e.target.value)} placeholder="••••••••" className="pl-12 h-13 rounded-2xl bg-slate-50 border-slate-200" />
-                        </div>
+                       {formData.password && (
+                         <div className="space-y-1 mt-2">
+                           {passwordChecks.map((c, i) => (
+                             <div key={i} className={`flex items-center gap-2 text-xs font-bold transition-colors ${c.passed ? 'text-emerald-600' : 'text-slate-400'}`}>
+                               <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${c.passed ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300'}`}>
+                                 {c.passed && <Check className="w-2.5 h-2.5 text-emerald-600" />}
+                               </div>
+                               {c.label}
+                             </div>
+                           ))}
+                         </div>
+                       )}
+                     </div>
+                     <div className="space-y-2">
+                       <Label className="font-bold text-slate-700 ml-1">Confirm</Label>
+                       <div className="relative group">
+                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-[#064e3b] transition-colors" />
+                         <Input type={showConfirm ? 'text' : 'password'} value={formData.confirmPassword} onChange={(e) => updateField('confirmPassword', e.target.value)} placeholder="••••••••" className="pl-12 pr-12 h-13 rounded-2xl bg-slate-50 border-slate-200" />
+                         <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer" tabIndex={-1}>
+                           {showConfirm ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                         </button>
                        </div>
-                    </div>
+                       {formData.confirmPassword && (
+                         <p className={`text-xs font-bold mt-1 ${formData.password === formData.confirmPassword ? 'text-emerald-600' : 'text-red-500'}`}>
+                           {formData.password === formData.confirmPassword ? 'Passwords match' : 'Passwords do not match'}
+                         </p>
+                       )}
+                     </div>
                   </div>
                 )}
 
