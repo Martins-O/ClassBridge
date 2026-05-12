@@ -920,6 +920,7 @@ router.post('/classes/:id/students', validateObjectId(), protectedCsrfHandler(cl
  */
 router.get('/courses', jwtAuthMiddleware, requireSchoolApproved(), asyncHandler(coursesController.getCourses));
 router.post('/courses', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_COURSES)(coursesController.createCourse));
+router.get('/courses/:id', validateObjectId(), jwtAuthMiddleware, asyncHandler(coursesController.getCourseById));
 router.put('/courses/:id', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_COURSES)(coursesController.updateCourse));
 router.delete('/courses/:id', requirePermissionCsrfHandler(PERMISSIONS.MANAGE_COURSES)(coursesController.deleteCourse));
 

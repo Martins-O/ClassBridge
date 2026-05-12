@@ -30,10 +30,7 @@ export async function getAssessments(req: Request, res: Response) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const { searchParams } = new URL(req.url || 'http://localhost');
-    const schoolId = searchParams.get('schoolId');
-    const classId = searchParams.get('classId');
-    const assessmentType = searchParams.get('assessmentType');
+    const { schoolId, classId, assessmentType } = req.query as { schoolId?: string; classId?: string; assessmentType?: string };
 
     // Build query based on role
     let query: any = {};
@@ -369,8 +366,7 @@ export async function getAssessmentAttempts(req: Request, res: Response) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const { searchParams } = new URL(req.url || 'http://localhost');
-    const respondentId = searchParams.get('respondentId');
+    const { respondentId } = req.query as { respondentId?: string };
 
     // Build query
     const query: { assessmentId: string; respondentId?: string; assessorId?: string } = { assessmentId: id };

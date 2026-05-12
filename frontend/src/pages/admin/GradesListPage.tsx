@@ -197,7 +197,13 @@ export function GradesListPage() {
         </div>
         <Select value={filterClass} onValueChange={setFilterClass}>
           <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="All Classes" />
+            <SelectValue placeholder="All Classes">
+              {(value) => {
+                if (!value) return null;
+                const c = classes.find(c => c._id === value);
+                return c ? c.name : value;
+              }}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Classes</SelectItem>
@@ -307,7 +313,13 @@ export function GradesListPage() {
               <Label>Class *</Label>
               <Select value={newGrade.classId} onValueChange={(v) => setNewGrade(prev => ({ ...prev, classId: v, studentId: '' }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a class" />
+                  <SelectValue placeholder="Select a class">
+                    {(value) => {
+                      if (!value) return null;
+                      const c = classes.find(c => c._id === value);
+                      return c ? c.name : value;
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {classes.map(cls => (
@@ -321,7 +333,13 @@ export function GradesListPage() {
               <Label>Student *</Label>
               <Select value={newGrade.studentId} onValueChange={(v) => setNewGrade(prev => ({ ...prev, studentId: v }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a student" />
+                  <SelectValue placeholder="Select a student">
+                    {(value) => {
+                      if (!value) return null;
+                      const s = students.find(s => s._id === value);
+                      return s ? s.name : value;
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {students.map(s => (

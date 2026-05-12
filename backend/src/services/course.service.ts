@@ -63,7 +63,7 @@ export class CourseService {
       throw new Error('Class not found');
     }
 
-    if (userRole === 'mentor' && !cls.mentorIds.includes(data.mentorId)) {
+    if (userRole === 'mentor' && !cls.mentorIds.some((id: any) => id.toString() === data.mentorId)) {
       throw new Error('You can only create courses for classes you are assigned to');
     }
 

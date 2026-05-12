@@ -13,6 +13,25 @@ import type { Class } from '@/types';
 
 const durations = ['1 week', '2 weeks', '1 month', '2 months', '3 months', '6 months'];
 
+function calculateEndDateFromDuration(start: string, dur: string): string {
+  if (!start || !dur) return '';
+  const date = new Date(start);
+  const match = dur.match(/^(\d+)\s*(week|weeks|month|months)$/);
+  if (!match) return '';
+  const num = parseInt(match[1]);
+  const unit = match[2];
+  if (unit.startsWith('week')) {
+    date.setDate(date.getDate() + num * 7);
+  } else {
+    date.setMonth(date.getMonth() + num);
+  }
+  return date.toISOString().split('T')[0];
+}
+
+function todayString(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
 export function CreateCoursePage() {
   const navigate = useNavigate();
   const getSchoolId = useAuthStore((state) => state.getSchoolId);
@@ -47,6 +66,25 @@ export function CreateCoursePage() {
     }
     fetchData();
   }, [getSchoolId]);
+
+  useEffect(() => {
+    if (!duration) return;
+    if (startDate) {
+      const calculated = calculateEndDateFromDuration(startDate, duration);
+      if (calculated) setEndDate(calculated);
+    } else {
+      const today = todayString();
+      setStartDate(today);
+      const calculated = calculateEndDateFromDuration(today, duration);
+      if (calculated) setEndDate(calculated);
+    }
+  }, [duration]);
+
+  useEffect(() => {
+    if (!startDate || !duration) return;
+    const calculated = calculateEndDateFromDuration(startDate, duration);
+    if (calculated) setEndDate(calculated);
+  }, [startDate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,7 +204,13 @@ export function CreateCoursePage() {
                 <Label className="text-xs font-black text-slate-500 uppercase tracking-widest">Target Class *</Label>
                 <Select value={classId} onValueChange={setClassId}>
                   <SelectTrigger className="h-11 rounded-xl border-slate-200">
-                    <SelectValue placeholder="Which class is this for?" />
+                    <SelectValue placeholder="Which class is this for?">
+                      {(value) => {
+                        if (!value) return null;
+                        const c = classes.find(c => c._id === value);
+                        return c ? `${c.name} (${c.cohort})` : value;
+                      }}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
                     {classes.map(cls => (
