@@ -368,13 +368,13 @@ export class AuthService extends BaseService {
         expiresAt,
       });
 
-      // Send verification email
-      await sendEmail(generateEmailVerificationEmail({
+      // Send verification email (non-blocking to avoid timeout)
+      sendEmail(generateEmailVerificationEmail({
         recipientEmail: data.email.toLowerCase(),
         recipientName: data.name,
         verificationToken,
         schoolName: data.schoolName,
-      }));
+      })).catch(err => console.error('[Email] Background send failed:', err));
 
     } else {
       user = await User.create({
@@ -397,11 +397,11 @@ export class AuthService extends BaseService {
         expiresAt,
       });
 
-      await sendEmail(generateEmailVerificationEmail({
+      sendEmail(generateEmailVerificationEmail({
         recipientEmail: data.email.toLowerCase(),
         recipientName: data.name,
         verificationToken,
-      }));
+      })).catch(err => console.error('[Email] Background send failed:', err));
     }
 
     if (data.schoolName) {
@@ -533,12 +533,12 @@ export class AuthService extends BaseService {
       schoolName = school?.name;
     }
 
-    await sendEmail(generateEmailVerificationEmail({
+    sendEmail(generateEmailVerificationEmail({
       recipientEmail: user.email,
       recipientName: user.name,
       verificationToken,
       schoolName,
-    }));
+    })).catch(err => console.error('[Email] Background send failed:', err));
 
     return { success: true };
   }
@@ -569,7 +569,7 @@ export class AuthService extends BaseService {
       resetToken: token,
     });
 
-    await sendEmail(emailPayload);
+    sendEmail(emailPayload).catch(err => console.error('[Email] Background send failed:', err));
 
     return true;
   }
