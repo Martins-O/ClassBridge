@@ -3,7 +3,7 @@ import { AuthenticatedRequest } from '@/lib/auth';
 import { verifyCsrfToken, extractCsrfToken } from '@/lib/csrf';
 
 const CSRF_SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
-const CSRF_SAFE_PATHS = ['/auth/login', '/auth/csrf-token'];
+const CSRF_SAFE_PATHS = ['/auth/login', '/auth/register', '/auth/csrf-token'];
 
 export function csrfProtection(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
   if (CSRF_SAFE_METHODS.includes(req.method)) {
