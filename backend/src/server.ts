@@ -213,7 +213,15 @@ async function seedAdminIfNeeded() {
     const existingAdmin = await User.findOne({ role: 'system_admin' });
 
     if (existingAdmin) {
-      console.log('System admin already exists, skipping seed.');
+      if (!existingAdmin.emailVerified) {
+        await User.updateOne(
+          { _id: existingAdmin._id },
+          { $set: { emailVerified: true, emailVerifiedAt: new Date() } }
+        );
+        console.log('System admin already exists, fixed emailVerified flag.');
+      } else {
+        console.log('System admin already exists, skipping seed.');
+      }
       return;
     }
 
