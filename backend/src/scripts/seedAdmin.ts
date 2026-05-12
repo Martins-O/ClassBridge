@@ -30,6 +30,8 @@ async function seedAdmin() {
       password: hashedPassword,
       isActive: true,
       isApproved: true,
+      emailVerified: true,
+      emailVerifiedAt: new Date(),
     });
 
     await admin.save();

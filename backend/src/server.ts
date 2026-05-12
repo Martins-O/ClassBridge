@@ -226,6 +226,8 @@ async function seedAdminIfNeeded() {
       password: hashedPassword,
       isActive: true,
       isApproved: true,
+      emailVerified: true,
+      emailVerifiedAt: new Date(),
     });
 
     await admin.save();
