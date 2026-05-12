@@ -44,6 +44,7 @@ import { ImportExportPage } from './pages/admin/ImportExportPage';
 import { AnalyticsPage } from './pages/admin/AnalyticsPage';
 import { GradesListPage } from './pages/admin/GradesListPage';
 import { StudentsListPage } from './pages/admin/StudentsListPage';
+import { SchoolSettingsPage } from './pages/admin/SchoolSettingsPage';
 
 const queryClient = new QueryClient();
 
@@ -307,6 +308,19 @@ function App() {
                 }
               >
                 <Route index element={<SchoolReportsPage />} />
+              </Route>
+
+              <Route
+                path="/school-settings"
+                element={
+                  <ProtectedRoute>
+                    <SchoolAdminRoute>
+                      <AdminLayout />
+                    </SchoolAdminRoute>
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<SchoolSettingsPage />} />
               </Route>
 
               <Route

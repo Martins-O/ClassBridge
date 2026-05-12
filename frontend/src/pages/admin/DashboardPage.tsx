@@ -144,60 +144,57 @@ export function DashboardPage() {
               setSchoolInfo(schoolRes.data.data);
             }
           }
-        } else if (isMentor()) {
-          const [userRes, assessmentsRes] = await Promise.all([
+        } else if (isMentor() || isStudent()) {
+          const schoolId = getSchoolId();
+          const [userRes, assessmentsRes, gradesRes, schoolRes] = await Promise.all([
             api.get<{ user: any }>(`/users/${user?._id}`),
             api.get<{ assessments: any[] }>('/assessments'),
+            isStudent() ? api.get<{ grades: any[] }>('/grades') : Promise.resolve({ data: { grades: [] } }),
+            schoolId ? schoolService.getById(schoolId) : Promise.resolve({ data: { data: null } }),
           ]);
 
           const userData = userRes.data?.user;
           const assessments = assessmentsRes.data?.assessments || [];
-
-          setAssignedClasses(userData?.classIds || []);
-          setMentorStats({
-            totalClasses: userData?.classIds?.length || 0,
-            totalAssessments: assessments.length,
-            totalStudents: userData?.classIds?.reduce((acc: number, c: any) => acc + (c.studentCount || 0), 0) || 0,
-            pendingGrades: 0,
-          });
-
-          setRecentActivity(assessments.slice(0, 5).map((a: any) => ({
-            id: a._id,
-            action: 'Created Assessment',
-            description: a.title,
-            timestamp: a.createdAt,
-            type: 'school' as const,
-          })));
-        } else if (isStudent()) {
-          const [userRes, assessmentsRes, gradesRes] = await Promise.all([
-            api.get<{ user: any }>(`/users/${user?._id}`),
-            api.get<{ assessments: any[] }>('/assessments'),
-            api.get<{ grades: any[] }>('/grades'),
-          ]);
-
-          const userData = userRes.data?.user;
-          const assessments = assessmentsRes.data?.assessments || [];
-          const grades = gradesRes.data?.grades || [];
+          if (schoolRes.data?.data) {
+            setSchoolInfo(schoolRes.data.data);
+          }
 
           setAssignedClasses(userData?.classIds || []);
           
-          // Calculate mock GPA for now
-          const mockGpa = grades.length > 0 ? 3.5 + (Math.random() * 0.5) : 0.0;
+          if (isMentor()) {
+            setMentorStats({
+              totalClasses: userData?.classIds?.length || 0,
+              totalAssessments: assessments.length,
+              totalStudents: userData?.classIds?.reduce((acc: number, c: any) => acc + (c.studentCount || 0), 0) || 0,
+              pendingGrades: 0,
+            });
 
-          setStudentStats({
-            gpa: mockGpa,
-            totalClasses: userData?.classIds?.length || 0,
-            completedAssessments: grades.length,
-            pendingAssessments: assessments.filter((a: any) => a.isActive).length,
-          });
+            setRecentActivity(assessments.slice(0, 5).map((a: any) => ({
+              id: a._id,
+              action: 'Created Assessment',
+              description: a.title,
+              timestamp: a.createdAt,
+              type: 'school' as const,
+            })));
+          } else {
+            const grades = gradesRes.data?.grades || [];
+            const mockGpa = grades.length > 0 ? 3.5 + (Math.random() * 0.5) : 0.0;
 
-          setRecentActivity(grades.slice(0, 5).map((g: any) => ({
-            id: g._id,
-            action: 'Received Grade',
-            description: `${g.grade} in ${g.courseId?.name || 'Class'}`,
-            timestamp: g.createdAt,
-            type: 'school' as const,
-          })));
+            setStudentStats({
+              gpa: mockGpa,
+              totalClasses: userData?.classIds?.length || 0,
+              completedAssessments: grades.length,
+              pendingAssessments: assessments.filter((a: any) => a.isActive).length,
+            });
+
+            setRecentActivity(grades.slice(0, 5).map((g: any) => ({
+              id: g._id,
+              action: 'Received Grade',
+              description: `${g.grade} in ${g.courseId?.name || 'Class'}`,
+              timestamp: g.createdAt,
+              type: 'school' as const,
+            })));
+          }
         }
       } catch (error) {
         console.error('Failed to fetch stats:', error);
@@ -383,7 +380,7 @@ export function DashboardPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-[#064e3b] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -411,30 +408,30 @@ export function DashboardPage() {
 
   const bannerTitle = isSysAdmin 
     ? 'System Admin Dashboard' 
-    : isSchAdmin 
-      ? 'School Admin Dashboard' 
-      : isMentorUser
-        ? 'Faculty Portal'
-        : 'Student Learning Portal';
+    : (schoolInfo?.name || user?.schoolName)
+      ? `${schoolInfo?.name || user?.schoolName}`
+      : isSchAdmin
+        ? 'School Admin Dashboard'
+        : isMentorUser
+          ? 'Faculty Portal'
+          : 'Student Learning Portal';
 
   const bannerSub = isSysAdmin 
     ? "Welcome back! Here's an overview of your system." 
     : isSchAdmin
-      ? `Welcome back! Here's an overview of ${user?.schoolName || 'your school'}.`
+      ? `Welcome back! Here's your administrative overview.`
       : isMentorUser
-        ? `Welcome back, Prof. ${user?.name.split(' ')[0]}. Here is your academic overview.`
-        : `Welcome back, ${user?.name.split(' ')[0]}. Ready to continue your journey?`;
+        ? `Welcome back, Prof. ${user?.name.split(' ')[0]}. Here is your faculty overview.`
+        : `Welcome back, ${user?.name.split(' ')[0]}. Here is your student overview.`;
 
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
       <div className={cn(
-        "rounded-lg p-8 text-white relative overflow-hidden",
+        "rounded-[2.5rem] p-10 text-white relative overflow-hidden shadow-2xl",
         isSysAdmin 
-          ? "bg-gradient-to-r from-blue-600 to-blue-800 shadow-lg shadow-blue-200" 
-          : isStudentUser
-            ? "bg-gradient-to-r from-emerald-600 to-teal-700 shadow-lg shadow-emerald-100"
-            : "bg-gradient-to-r from-[#064e3b] to-[#065f46] shadow-lg shadow-emerald-100"
+          ? "bg-slate-900 shadow-slate-200" 
+          : "bg-gradient-to-br from-[#064e3b] via-[#065f46] to-[#042f24] shadow-emerald-200/50"
       )}>
         <div className="relative z-10 flex items-center justify-between">
           <div>
@@ -442,13 +439,16 @@ export function DashboardPage() {
               {bannerTitle}
               {!isSysAdmin && <Badge className="bg-amber-400 text-amber-950 hover:bg-amber-500 border-none">{isMentorUser ? 'Faculty' : isStudentUser ? 'Student' : 'Institutional'}</Badge>}
             </h1>
-            <p className={cn("mt-2 text-lg", isSysAdmin ? "text-blue-100" : "text-emerald-50")}>
+            <p className={cn("mt-2 text-lg font-medium", isSysAdmin ? "text-slate-300" : "text-emerald-100")}>
               {bannerSub}
             </p>
           </div>
-          {!isSysAdmin && <div className="hidden md:block opacity-20"><GraduationCap className="h-24 w-24" /></div>}
+          {!isSysAdmin && <div className="hidden md:block opacity-10 blur-[1px]"><GraduationCap className="h-40 w-40" /></div>}
         </div>
         
+        {/* Visual Accents */}
+        <div className="absolute top-0 right-0 h-64 w-64 bg-white/5 blur-[100px] rounded-full translate-x-32 -translate-y-32" />
+        <div className="absolute bottom-0 left-0 h-64 w-64 bg-emerald-400/10 blur-[100px] rounded-full -translate-x-32 translate-y-32" />
         {/* Abstract design elements for non-sysadmins */}
         {!isSysAdmin && (
           <div className="absolute top-0 right-0 h-full w-1/3 pointer-events-none overflow-hidden">
@@ -579,7 +579,7 @@ export function DashboardPage() {
 
         {/* School Information (School Admin only) */}
         {isSchAdmin && schoolInfo && (
-          <Card>
+          <Card className="rounded-[2.5rem] border-none shadow-xl transition-all hover:shadow-2xl hover:-translate-y-1">
             <CardHeader>
               <CardTitle>School Information</CardTitle>
               <CardDescription>Official school details</CardDescription>
@@ -588,7 +588,7 @@ export function DashboardPage() {
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">Address</p>
                 <p className="text-sm font-medium text-gray-900">
-                  {schoolInfo.address}, {schoolInfo.city}, {schoolInfo.state}
+                  {[schoolInfo.address, schoolInfo.city, schoolInfo.state].filter(Boolean).join(', ') || 'No address provided'}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -607,7 +607,7 @@ export function DashboardPage() {
                   </Badge>
                 </div>
               </div>
-              <Link to="/settings" className="block mt-4 text-center text-sm text-emerald-700 hover:underline font-medium">
+              <Link to="/school-settings" className="block mt-4 text-center text-sm text-emerald-700 hover:underline font-medium">
                 Manage Profile →
               </Link>
             </CardContent>

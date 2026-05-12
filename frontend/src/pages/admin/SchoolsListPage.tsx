@@ -97,108 +97,127 @@ export function SchoolsListPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-[#064e3b] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Schools</h2>
-          <p className="text-gray-500">View and manage schools in the system</p>
+    <div className="space-y-8 pb-12">
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-[#064e3b] p-10 text-white shadow-2xl">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h2 className="text-3xl font-black tracking-tight text-[#fef3c7]">Institutional Directory</h2>
+            <p className="mt-2 text-emerald-100/80 font-medium text-lg">Oversee all registered schools and academic hubs</p>
+          </div>
+          <div className="flex gap-4">
+             <div className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 text-center">
+                <p className="text-xs text-emerald-200 uppercase tracking-widest font-bold mb-1">Total</p>
+                <p className="text-2xl font-black text-white">{schools.length}</p>
+             </div>
+          </div>
         </div>
+        
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
+        <div className="absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
       </div>
 
-      <div className="flex gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1 group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-[#064e3b] transition-colors" />
           <Input
-            placeholder="Search schools..."
+            placeholder="Search schools by name or domain..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
+            className="pl-12 h-14 bg-white border-slate-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-[#064e3b]/20 focus:border-[#064e3b] transition-all text-lg"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          className="px-6 py-2 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 h-14 focus:ring-2 focus:ring-[#064e3b]/20 outline-none shadow-sm"
         >
-          <option value="all">All Status</option>
-          <option value="approved">Approved</option>
-          <option value="pending">Pending</option>
-          <option value="rejected">Rejected</option>
+          <option value="all">All Ecosystem Status</option>
+          <option value="approved">Approved & Active</option>
+          <option value="pending">Awaiting Review</option>
+          <option value="rejected">Declined Access</option>
           <option value="suspended">Suspended</option>
         </select>
       </div>
 
-      <Card>
+      <Card className="rounded-[2.5rem] border-none shadow-xl bg-white/70 backdrop-blur-md overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subscription</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-100">
+                  <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Institution Name</th>
+                  <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Official Email</th>
+                  <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Status</th>
+                  <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Service Plan</th>
+                  <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Onboarded</th>
+                  <th className="px-8 py-5 text-right text-xs font-black text-slate-400 uppercase tracking-widest">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-50">
                 {filteredSchools.map((school) => (
-                  <tr key={school._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <Link to={`/schools/${school._id}`} className="font-medium text-gray-900 hover:text-blue-600">
-                        {school.name}
-                      </Link>
-                      {school.status === 'suspended' && (
-                        <p className="text-xs text-red-500 mt-1">
-                          Suspended: {school.suspensionReason || 'No reason provided'}
-                        </p>
-                      )}
+                  <tr key={school._id} className="hover:bg-emerald-50/30 transition-all group">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-[#064e3b] font-black text-xl shadow-inner group-hover:scale-110 transition-transform">
+                          {school.name.charAt(0)}
+                        </div>
+                        <div>
+                          <Link to={`/schools/${school._id}`} className="block font-bold text-slate-900 group-hover:text-[#064e3b] transition-colors text-lg">
+                            {school.name}
+                          </Link>
+                          {school.status === 'suspended' && (
+                            <p className="text-xs text-red-500 mt-1 font-medium italic">
+                              Suspended: {school.suspensionReason || 'Security Policy Violation'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-gray-500">{school.email}</td>
-                    <td className="px-6 py-4">{getStatusBadge(school.status)}</td>
-                    <td className="px-6 py-4">
-                      <Badge variant="outline">{school.subscriptionType}</Badge>
+                    <td className="px-8 py-6 text-slate-500 font-medium">{school.email}</td>
+                    <td className="px-8 py-6">{getStatusBadge(school.status)}</td>
+                    <td className="px-8 py-6">
+                      <Badge className="bg-slate-100 text-slate-700 border-none font-bold capitalize">{school.subscriptionType}</Badge>
                     </td>
-                    <td className="px-6 py-4 text-gray-500">
+                    <td className="px-8 py-6 text-slate-500 font-medium">
                       {new Date(school.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-8 py-6 text-right">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         {school.status === 'suspended' ? (
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleActivateClick(school)}
+                            className="h-10 rounded-xl border-emerald-200 text-emerald-700 hover:bg-emerald-50 px-4 font-bold"
                           >
-                            <Power className="h-4 w-4 mr-1" />
-                            Activate
+                            <Power className="h-4 w-4 mr-2" />
+                            Recover
                           </Button>
                         ) : (
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleSuspendClick(school)}
-                            className="text-red-600 border-red-200 hover:bg-red-50"
+                            className="h-10 rounded-xl text-red-600 border-red-200 hover:bg-red-50 px-4 font-bold"
                           >
-                            <AlertTriangle className="h-4 w-4 mr-1" />
+                            <AlertTriangle className="h-4 w-4 mr-2" />
                             Suspend
                           </Button>
                         )}
                         <Link to={`/schools/${school._id}`}>
-                          <Button variant="ghost" size="icon">
-                            <Eye className="h-4 w-4" />
+                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-emerald-100 hover:text-[#064e3b]">
+                            <Eye className="h-5 w-5" />
                           </Button>
                         </Link>
                         <Link to={`/schools/${school._id}/edit`}>
-                          <Button variant="ghost" size="icon">
-                            <Edit className="h-4 w-4" />
+                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-amber-100 hover:text-amber-600">
+                            <Edit className="h-5 w-5" />
                           </Button>
                         </Link>
                       </div>

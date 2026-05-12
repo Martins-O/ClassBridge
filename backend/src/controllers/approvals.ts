@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import { approvalService } from '@/services/approval.service';
 import { auditService } from '@/services/audit.service';
-import { requireSystemAdmin } from '@/lib/authorization';
 import { AuthRequest } from '@/lib/authorization';
+import { sendSuccess, sendCreated } from '@/lib/apiResponse';
 
 export async function requestSchool(req: AuthRequest, res: Response) {
   try {
@@ -54,11 +54,10 @@ export async function requestSchool(req: AuthRequest, res: Response) {
       );
     }
 
-    return res.status(201).json({
-      message: result.message,
-      schoolId: result.schoolId,
-      approvalId: result.approvalId,
-    });
+      return sendCreated(res, {
+        schoolId: result.schoolId,
+        approvalId: result.approvalId,
+      }, result.message);
   } catch (error) {
     console.error('Request school error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -68,7 +67,7 @@ export async function requestSchool(req: AuthRequest, res: Response) {
 export async function getPendingApprovals(req: Request, res: Response) {
   try {
     const approvals = await approvalService.getPendingApprovals();
-    return res.json({ approvals });
+    return sendSuccess(res, approvals);
   } catch (error) {
     console.error('Get pending approvals error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -84,7 +83,7 @@ export async function getApprovalById(req: Request, res: Response) {
       return res.status(404).json({ error: 'Approval not found' });
     }
 
-    return res.json({ approval });
+    return sendSuccess(res, approval);
   } catch (error) {
     console.error('Get approval error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -98,7 +97,7 @@ export async function getMySchoolRequest(req: AuthRequest, res: Response) {
     }
 
     const requests = await approvalService.getMyRequest(req.user.userId);
-    return res.json({ requests });
+    return sendSuccess(res, requests);
   } catch (error) {
     console.error('Get my school request error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -132,10 +131,7 @@ export async function approveSchool(req: AuthRequest, res: Response) {
       req.headers['user-agent']
     );
 
-    return res.json({
-      message: result.message,
-      schoolId: result.schoolId,
-    });
+    return sendSuccess(res, { schoolId: result.schoolId }, result.message);
   } catch (error) {
     console.error('Approve school error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -175,10 +171,7 @@ export async function rejectSchool(req: AuthRequest, res: Response) {
       req.headers['user-agent']
     );
 
-    return res.json({
-      message: result.message,
-      schoolId: result.schoolId,
-    });
+    return sendSuccess(res, { schoolId: result.schoolId }, result.message);
   } catch (error) {
     console.error('Reject school error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -188,7 +181,7 @@ export async function rejectSchool(req: AuthRequest, res: Response) {
 export async function getPendingApprovalCount(req: Request, res: Response) {
   try {
     const count = await approvalService.getPendingCount();
-    return res.json({ count });
+    return sendSuccess(res, count);
   } catch (error) {
     console.error('Get pending count error:', error);
     return res.status(500).json({ error: 'Internal server error' });

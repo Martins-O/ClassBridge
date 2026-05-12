@@ -18,7 +18,7 @@ export function SchoolsDetailsPage() {
       if (!id) return;
       try {
         const response = await schoolService.getById(id);
-        const schoolData = (response.data as any)?.school;
+        const schoolData = (response.data as any)?.data;
         if (schoolData) setSchool(schoolData);
       } catch (error) {
         console.error('Failed to fetch school:', error);
@@ -32,7 +32,7 @@ export function SchoolsDetailsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-[#064e3b] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -64,47 +64,55 @@ export function SchoolsDetailsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/schools">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarFallback className="text-xl bg-blue-100 text-blue-600">
-                {getInitials(school.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">{school.name}</h2>
-              <div className="flex items-center gap-2 mt-1">
-                {getStatusBadge(school.status)}
-                <Badge variant="outline">{school.subscriptionType}</Badge>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Premium Header */}
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#064e3b] to-[#065f46] p-10 text-white shadow-2xl">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="flex items-center gap-6">
+            <Link to="/schools">
+              <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 text-white">
+                <ArrowLeft className="h-6 w-6" />
+              </Button>
+            </Link>
+            <div className="flex items-center gap-5">
+              <Avatar className="h-24 w-24 ring-4 ring-white/10 shadow-xl">
+                <AvatarFallback className="text-3xl bg-white text-[#064e3b] font-black">
+                  {getInitials(school.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h1 className="text-4xl font-black tracking-tight text-[#fef3c7]">{school.name}</h1>
+                <div className="flex items-center gap-3 mt-3">
+                  {getStatusBadge(school.status)}
+                  <Badge className="bg-emerald-600/30 text-emerald-100 border-emerald-500/30 px-3 py-1 backdrop-blur-sm">
+                    {school.subscriptionType.charAt(0).toUpperCase() + school.subscriptionType.slice(1)} Plan
+                  </Badge>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link to={`/schools/${school._id}/edit`}>
-            <Button variant="outline">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
+          
+          <div className="flex items-center gap-3">
+            <Link to={`/schools/${school._id}/edit`}>
+              <Button className="h-12 px-6 rounded-xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold shadow-lg shadow-amber-900/20 border-none transition-all hover:scale-105">
+                <Edit className="h-4 w-4 mr-2" />
+                Modify Profile
+              </Button>
+            </Link>
+            <Button variant="outline" className="h-12 px-6 rounded-xl border-white/20 bg-white/10 hover:bg-red-500 hover:border-red-500 text-white font-bold transition-all">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Terminate
             </Button>
-          </Link>
-          <Button variant="destructive">
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </Button>
+          </div>
         </div>
+        
+        {/* Visual Accents */}
+        <div className="absolute top-0 right-0 h-64 w-64 bg-white/5 blur-[100px] rounded-full translate-x-32 -translate-y-32" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Contact Information */}
-        <Card className="lg:col-span-2">
+        <Card className="rounded-[2.5rem] border-none shadow-xl bg-white overflow-hidden lg:col-span-2">
           <CardHeader>
             <CardTitle>Contact Information</CardTitle>
           </CardHeader>
@@ -142,7 +150,7 @@ export function SchoolsDetailsPage() {
         </Card>
 
         {/* Stats */}
-        <Card>
+        <Card className="rounded-[2.5rem] border-none shadow-xl bg-white overflow-hidden">
           <CardHeader>
             <CardTitle>Statistics</CardTitle>
           </CardHeader>

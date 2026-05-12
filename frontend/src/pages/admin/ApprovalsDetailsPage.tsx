@@ -62,7 +62,7 @@ export function ApprovalsDetailsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-[#064e3b] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -85,23 +85,33 @@ export function ApprovalsDetailsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link to="/approvals">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Approval Request</h2>
-          <p className="text-gray-500">Review school registration request</p>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+      {/* Premium Header */}
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#064e3b] to-[#065f46] p-10 text-white shadow-2xl">
+        <div className="relative z-10 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <Link to="/approvals">
+              <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 text-white transition-all">
+                <ArrowLeft className="h-6 w-6" />
+              </Button>
+            </Link>
+            <div>
+              <h2 className="text-3xl font-black tracking-tight text-[#fef3c7]">Verification Request</h2>
+              <p className="mt-1 text-emerald-100/80 font-medium text-lg">Case ID: {id?.slice(-8).toUpperCase()}</p>
+            </div>
+          </div>
+          <div className="hidden md:block">
+            {getStatusBadge(approval.status)}
+          </div>
         </div>
+        
+        {/* Visual Accents */}
+        <div className="absolute top-0 right-0 h-64 w-64 bg-white/5 blur-[100px] rounded-full translate-x-32 -translate-y-32" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Request Details */}
-        <Card>
+        <Card className="rounded-[2.5rem] border-none shadow-xl bg-white overflow-hidden">
           <CardHeader>
             <CardTitle>Request Details</CardTitle>
           </CardHeader>
@@ -147,7 +157,7 @@ export function ApprovalsDetailsPage() {
 
         {/* Actions */}
         {approval.status === 'pending' && (
-          <Card>
+          <Card className="rounded-[2.5rem] border-none shadow-xl bg-white overflow-hidden">
             <CardHeader>
               <CardTitle>Actions</CardTitle>
             </CardHeader>
@@ -186,7 +196,7 @@ export function ApprovalsDetailsPage() {
 
         {/* Already Processed */}
         {approval.status !== 'pending' && (
-          <Card>
+          <Card className="rounded-[2.5rem] border-none shadow-xl bg-white overflow-hidden">
             <CardHeader>
               <CardTitle>Processing Complete</CardTitle>
             </CardHeader>

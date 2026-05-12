@@ -191,11 +191,13 @@ export function UsersListPage() {
                             <Eye className="h-5 w-5" />
                           </Button>
                         </Link>
-                        <Link to={`/users/${user._id}/edit`}>
-                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-amber-100 hover:text-amber-600">
-                            <Edit className="h-5 w-5" />
-                          </Button>
-                        </Link>
+                        {isSystemAdmin() && (
+                          <Link to={`/users/${user._id}/edit`}>
+                            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-amber-100 hover:text-amber-600">
+                              <Edit className="h-5 w-5" />
+                            </Button>
+                          </Link>
+                        )}
                       </div>
                     </td>
                   </tr>
